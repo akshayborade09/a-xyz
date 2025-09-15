@@ -18,6 +18,7 @@ import {
   HelpCircle,
   Home,
   Key,
+  Boxes,
   Globe,
 } from "lucide-react"
 
@@ -88,6 +89,15 @@ export const navigationStructure: NavCategory[] = [
           { title: "VPC", href: "/network/vpc" },
           { title: "Security Groups", href: "/network/security-groups" },
           { title: "DNS", href: "/networking/dns" },
+        ],
+      },
+      {
+        title: "Kubernetes",
+        href: "/kubernetes",
+        icon: <Boxes className="h-5 w-5" />,
+        items: [
+          { title: "Manage Kubernetes", href: "/kubernetes/manage" },
+          { title: "Kubernetes Configuration Manager", href: "/kubernetes/config-manager" },
         ],
       },
     ],

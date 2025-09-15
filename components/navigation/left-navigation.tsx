@@ -215,22 +215,6 @@ const navigationConfig = {
       },
     ],
   },
-  kubernetes: {
-    href: "/kubernetes",
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="h-[18px] w-[18px] text-[#64748b]">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-      </svg>
-    ),
-    label: "Kubernetes",
-    isCategory: true,
-    subItems: [
-      {
-        href: "/kubernetes",
-        label: "Managed Kubernetes",
-      },
-    ],
-  },
   maps: {
     href: "/maps",
     icon: <MapIcon className="h-[18px] w-[18px] text-[#64748b]" />,
@@ -838,21 +822,6 @@ export function LeftNavigation({ onClose }: LeftNavigationProps) {
             expandedTertiaryItem={expandedTertiaryItem}
           />
 
-          {/* Kubernetes */}
-          <NavItem
-            href={navigationConfig.kubernetes.href}
-            icon={navigationConfig.kubernetes.icon}
-            label={navigationConfig.kubernetes.label}
-            exactActive={isExactActive(navigationConfig.kubernetes.href)}
-            active={isActive(navigationConfig.kubernetes.href)}
-            expanded={expandedItem}
-            onExpand={handleExpand}
-            subItems={navigationConfig.kubernetes.subItems}
-            isCategory={navigationConfig.kubernetes.isCategory}
-            expandedSubItem={expandedSubItem}
-            onSubItemExpand={handleSubItemExpand}
-            expandedTertiaryItem={expandedTertiaryItem}
-          />
 
           {/* Maps */}
           <div className="mt-[10px]">

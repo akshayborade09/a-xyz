@@ -3428,7 +3428,8 @@ export interface AutoScalingGroup {
   id: string
   name: string
   status: "Creating" | "Active" | "Failed" | "Updating"
-  instanceType: string
+  type: "CPU" | "GPU"
+  flavour: string
   desiredCapacity: number
   minCapacity: number
   maxCapacity: number
@@ -3448,7 +3449,8 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     id: "asg-1",
     name: "worker-node-asg",
     status: "Creating",
-    instanceType: "t3.xlarge",
+    type: "CPU",
+    flavour: "t3.xlarge",
     desiredCapacity: 5,
     minCapacity: 3,
     maxCapacity: 15,
@@ -3465,7 +3467,8 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     id: "asg-2",
     name: "media-processing-asg",
     status: "Active",
-    instanceType: "t3.xlarge",
+    type: "GPU",
+    flavour: "t3.xlarge",
     desiredCapacity: 4,
     minCapacity: 2,
     maxCapacity: 8,
@@ -3482,7 +3485,8 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     id: "asg-3",
     name: "analytics-asg",
     status: "Failed",
-    instanceType: "t3.2xlarge",
+    type: "CPU",
+    flavour: "t3.2xlarge",
     desiredCapacity: 6,
     minCapacity: 3,
     maxCapacity: 12,
@@ -3499,7 +3503,8 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     id: "asg-4",
     name: "cache-asg",
     status: "Active",
-    instanceType: "t3.medium",
+    type: "CPU",
+    flavour: "t3.medium",
     desiredCapacity: 2,
     minCapacity: 1,
     maxCapacity: 4,
@@ -3515,7 +3520,8 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     id: "asg-5",
     name: "ml-training-asg",
     status: "Updating",
-    instanceType: "g4dn.xlarge",
+    type: "GPU",
+    flavour: "g4dn.xlarge",
     desiredCapacity: 8,
     minCapacity: 4,
     maxCapacity: 20,
@@ -3531,7 +3537,8 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     id: "asg-6",
     name: "staging-asg",
     status: "Active",
-    instanceType: "t3.small",
+    type: "CPU",
+    flavour: "t3.small",
     desiredCapacity: 1,
     minCapacity: 1,
     maxCapacity: 3,
@@ -3547,7 +3554,8 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     id: "asg-7",
     name: "app-server-asg",
     status: "Active",
-    instanceType: "t3.large",
+    type: "CPU",
+    flavour: "t3.large",
     desiredCapacity: 2,
     minCapacity: 1,
     maxCapacity: 5,
@@ -3564,7 +3572,8 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     id: "asg-8",
     name: "web-server-asg",
     status: "Active",
-    instanceType: "t3.medium",
+    type: "CPU",
+    flavour: "t3.medium",
     desiredCapacity: 3,
     minCapacity: 2,
     maxCapacity: 10,
@@ -3585,7 +3594,8 @@ export interface AutoScalingTemplate {
   id: string
   name: string
   description: string
-  instanceType: string
+  type: "CPU" | "GPU"
+  flavour: string
   isLatest: boolean
   imageId: string
   keyName: string
@@ -3604,7 +3614,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-1",
     name: "analytics-template",
     description: "Template for analytics processing auto scaling gr...",
-    instanceType: "t3.2xlarge",
+    type: "CPU",
+    flavour: "t3.2xlarge",
     isLatest: true,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "analytics-keypair",
@@ -3621,7 +3632,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-2",
     name: "cache-server-template",
     description: "Template for cache server auto scaling groups",
-    instanceType: "t3.medium",
+    type: "CPU",
+    flavour: "t3.medium",
     isLatest: true,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "production-keypair",
@@ -3638,7 +3650,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-3",
     name: "ml-training-template",
     description: "Template for ML training auto scaling groups",
-    instanceType: "g4dn.xlarge",
+    type: "GPU",
+    flavour: "g4dn.xlarge",
     isLatest: true,
     imageId: "ami-0d70546e43a941d70",
     keyName: "ml-keypair",
@@ -3655,7 +3668,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-4",
     name: "staging-template",
     description: "Template for staging environment auto scaling gr...",
-    instanceType: "t3.small",
+    type: "CPU",
+    flavour: "t3.small",
     isLatest: true,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "staging-keypair",
@@ -3672,7 +3686,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-5",
     name: "worker-node-template",
     description: "Template for worker node auto scaling groups",
-    instanceType: "t3.xlarge",
+    type: "CPU",
+    flavour: "t3.xlarge",
     isLatest: true,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "production-keypair",
@@ -3689,7 +3704,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-6",
     name: "app-server-template",
     description: "Template for application server auto scaling grou...",
-    instanceType: "t3.large",
+    type: "CPU",
+    flavour: "cpu-4x-16gb",
     isLatest: true,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "production-keypair",
@@ -3706,7 +3722,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-7",
     name: "web-server-template",
     description: "Standard template for web server auto scaling gr...",
-    instanceType: "t3.medium",
+    type: "CPU",
+    flavour: "cpu-2x-8gb",
     isLatest: true,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "production-keypair",
@@ -3723,7 +3740,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-8",
     name: "app-server-template",
     description: "Original template for application server auto scali...",
-    instanceType: "t3.medium",
+    type: "CPU",
+    flavour: "t3.medium",
     isLatest: false,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "production-keypair",
@@ -3740,7 +3758,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-9",
     name: "media-processing-template",
     description: "Template for media processing auto scaling grou...",
-    instanceType: "t3.large",
+    type: "GPU",
+    flavour: "t3.large",
     isLatest: false,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "production-keypair",
@@ -3751,23 +3770,6 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     createdOn: "2024-01-10T13:30:00Z",
     lastModified: "2024-01-10T13:30:00Z",
     version: 1,
-    tags: { Environment: "Production", Purpose: "Media Processing", Team: "Media" }
-  },
-  {
-    id: "lt-10",
-    name: "media-processing-template",
-    description: "Template for media processing auto scaling grou...",
-    instanceType: "t3.xlarge",
-    isLatest: true,
-    imageId: "ami-0c7217cdde317cfec",
-    keyName: "production-keypair",
-    securityGroups: ["sg-media-processing"],
-    userData: "#!/bin/bash\nyum update -y\nyum install -y ffmpeg",
-    iamInstanceProfile: "EC2-MediaProcessing-Role",
-    monitoring: true,
-    createdOn: "2024-01-10T13:30:00Z",
-    lastModified: "2024-01-10T13:30:00Z",
-    version: 8,
     tags: { Environment: "Production", Purpose: "Media Processing", Team: "Media" }
   }
 ]

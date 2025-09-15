@@ -1,11 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { AlertTriangle, Info, CheckCircle, XCircle, ArrowRight } from "lucide-react"
+import { AlertTriangle, Info, CheckCircle, XCircle, ArrowRight, ChevronDown } from "lucide-react"
 import { MKSCluster, getNextK8sVersion, getNextAddonVersion } from "@/lib/mks-data"
 
 interface ClusterUpgradeModalProps {
@@ -17,6 +17,8 @@ interface ClusterUpgradeModalProps {
 
 export function ClusterUpgradeModal({ cluster, isOpen, onClose, onConfirm }: ClusterUpgradeModalProps) {
   const [isUpgrading, setIsUpgrading] = useState(false)
+  const [showScrollIndicator, setShowScrollIndicator] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
   
   if (!cluster) return null
   
@@ -44,6 +46,20 @@ export function ClusterUpgradeModal({ cluster, isOpen, onClose, onConfirm }: Clu
       setIsUpgrading(false)
     }
   }
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10
+    setShowScrollIndicator(!isAtBottom)
+  }
+
+  // Check if content is scrollable when modal opens
+  useEffect(() => {
+    if (isOpen && scrollRef.current) {
+      const { scrollHeight, clientHeight } = scrollRef.current
+      setShowScrollIndicator(scrollHeight > clientHeight)
+    }
+  }, [isOpen, cluster])
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -61,7 +77,7 @@ export function ClusterUpgradeModal({ cluster, isOpen, onClose, onConfirm }: Clu
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-1 overflow-y-auto space-y-6 px-1 pb-4" style={{ maxHeight: 'calc(85vh - 180px)' }}>
+        <div ref={scrollRef} className="relative flex-1 overflow-y-auto space-y-6 px-1 pb-4" style={{ maxHeight: 'calc(85vh - 180px)' }} onScroll={handleScroll}>
           <div className="space-y-6">
           {/* Kubernetes Version Upgrade */}
           {canUpgrade ? (
@@ -153,6 +169,16 @@ export function ClusterUpgradeModal({ cluster, isOpen, onClose, onConfirm }: Clu
             </div>
           )}
           </div>
+          
+          {/* Scroll Indicator */}
+          {showScrollIndicator && (
+            <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none flex items-end justify-center pb-2">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground bg-white/80 px-2 py-1 rounded-full border">
+                <ChevronDown className="h-3 w-3" />
+                <span>Scroll for more info</span>
+              </div>
+            </div>
+          )}
         </div>
         
         {/* Footer Actions */}

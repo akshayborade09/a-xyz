@@ -93,7 +93,7 @@ export const navigationStructure: NavCategory[] = [
       },
       {
         title: "Kubernetes",
-        href: "/kubernetes/manage",
+        href: "/kubernetes",
         icon: <Boxes className="h-5 w-5" />,
       },
     ],

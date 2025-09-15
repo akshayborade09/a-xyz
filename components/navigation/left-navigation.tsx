@@ -142,7 +142,7 @@ const navigationConfig = {
         ],
       },
       {
-        href: "/kubernetes/manage",
+        href: "/kubernetes",
         label: "Kubernetes",
       },
     ],

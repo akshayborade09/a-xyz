@@ -3434,6 +3434,8 @@ export interface AutoScalingGroup {
   minCapacity: number
   maxCapacity: number
   vpc: string
+  region?: string
+  subnet?: string
   createdOn: string
   healthCheckType: string
   healthCheckGracePeriod: number
@@ -3441,6 +3443,10 @@ export interface AutoScalingGroup {
   availabilityZones: string[]
   loadBalancers?: string[]
   targetGroups?: string[]
+  sshKey?: string
+  securityGroups?: string
+  bootableVolumeSize?: string
+  machineImage?: string
   tags: Record<string, string>
 }
 
@@ -3455,12 +3461,18 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     minCapacity: 3,
     maxCapacity: 15,
     vpc: "vpc-main-prod",
+    region: "US East N. Virginia",
+    subnet: "subnet-5",
     createdOn: "2024-12-19T14:45:00Z",
     healthCheckType: "ELB",
     healthCheckGracePeriod: 300,
     defaultCooldown: 300,
     availabilityZones: ["us-east-1a", "us-east-1b", "us-east-1c"],
     loadBalancers: ["elb-worker-nodes"],
+    sshKey: "ssh-3",
+    securityGroups: "sg-12345f789abcd2",
+    bootableVolumeSize: "20 GB",
+    machineImage: "Ubuntu 22.04 LTS",
     tags: { Environment: "Production", Purpose: "Worker Nodes", Team: "Backend" }
   },
   {
@@ -3473,12 +3485,18 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     minCapacity: 2,
     maxCapacity: 8,
     vpc: "vpc-media",
+    region: "US East N. Virginia",
+    subnet: "subnet-media",
     createdOn: "2024-03-05T21:40:00Z",
     healthCheckType: "EC2",
     healthCheckGracePeriod: 300,
     defaultCooldown: 300,
     availabilityZones: ["us-east-1a", "us-east-1b"],
     targetGroups: ["tg-media-processing"],
+    sshKey: "ssh-media",
+    securityGroups: "sg-media-processing",
+    bootableVolumeSize: "50 GB",
+    machineImage: "Ubuntu 20.04 LTS GPU",
     tags: { Environment: "Production", Purpose: "Media Processing", Team: "Media" }
   },
   {

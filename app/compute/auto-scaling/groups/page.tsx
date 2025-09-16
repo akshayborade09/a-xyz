@@ -1,19 +1,8 @@
-import { PageLayout } from '@/components/page-layout';
+'use client';
+
+import { redirect } from 'next/navigation';
 
 export default function AutoScalingGroupsPage() {
-  return (
-    <PageLayout
-      title='Auto Scaling Groups'
-      description='Manage your auto scaling groups'
-    >
-      <div className='flex items-center justify-center h-[400px] border rounded-lg'>
-        <div className='text-center'>
-          <h3 className='text-xl font-bold mb-2'>Auto Scaling Groups</h3>
-          <p className='text-muted-foreground'>
-            This is a placeholder for the Auto Scaling Groups content
-          </p>
-        </div>
-      </div>
-    </PageLayout>
-  );
+  // Redirect to main Auto Scaling page
+  redirect('/compute/auto-scaling');
 }

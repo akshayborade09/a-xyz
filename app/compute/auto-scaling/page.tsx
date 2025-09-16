@@ -66,10 +66,7 @@ function AutoScalingGroupsSection() {
   }
 
   const handleViewDetails = (asg: AutoScalingGroup) => {
-    toast({
-      title: "View Details",
-      description: `Viewing details for ${asg.name}...`,
-    })
+    window.location.href = `/compute/auto-scaling/groups/${asg.id}`
   }
 
   const handleSettings = (asg: AutoScalingGroup) => {
@@ -88,7 +85,7 @@ function AutoScalingGroupsSection() {
       searchable: true,
       render: (value: string, row: AutoScalingGroup) => (
         <a
-          href={`/compute/auto-scaling/${row.id}`}
+          href={`/compute/auto-scaling/groups/${row.id}`}
           className="text-primary font-medium hover:underline leading-5"
         >
           {value}
@@ -266,10 +263,7 @@ function TemplatesSection() {
   }
 
   const handleViewDetails = (template: AutoScalingTemplate) => {
-    toast({
-      title: "View Details",
-      description: `Viewing details for ${template.name}...`,
-    })
+    window.location.href = `/compute/auto-scaling/templates/${template.id}`
   }
 
   const handleClone = (template: AutoScalingTemplate) => {
@@ -286,8 +280,13 @@ function TemplatesSection() {
       label: "Name",
       sortable: true,
       searchable: true,
-      render: (value: string) => (
-        <div className="font-medium leading-5">{value}</div>
+      render: (value: string, row: AutoScalingTemplate) => (
+        <a
+          href={`/compute/auto-scaling/templates/${row.id}`}
+          className="text-primary font-medium hover:underline leading-5"
+        >
+          {value}
+        </a>
       ),
     },
     {

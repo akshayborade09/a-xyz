@@ -18,10 +18,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 
 export default function TemplateDetailsPage() {
   const { id } = useParams();
   const { toast } = useToast();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const template = autoScalingTemplates.find(t => t.id === id);
 
@@ -107,10 +109,17 @@ export default function TemplateDetailsPage() {
   };
 
   const handleDelete = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
     toast({
-      title: 'Delete Template',
-      description: `Deleting ${template.name}...`,
+      title: "Template deleted",
+      description: `${template.name} has been deleted successfully.`,
     });
+    setIsDeleteModalOpen(false);
+    // In a real app, you would navigate back to the listing page
+    // window.location.href = '/compute/auto-scaling';
   };
 
   return (
@@ -580,6 +589,15 @@ export default function TemplateDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        resourceName={template.name}
+        resourceType="Template"
+        onConfirm={handleDeleteConfirm}
+      />
     </PageLayout>
   );
 }

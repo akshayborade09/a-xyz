@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { 
   Table,
   TableBody,
@@ -30,6 +31,7 @@ import {
 export default function AutoScalingGroupDetailsPage() {
   const { id } = useParams();
   const { toast } = useToast();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const asg = autoScalingGroups.find(a => a.id === id);
 
@@ -117,10 +119,17 @@ export default function AutoScalingGroupDetailsPage() {
   };
 
   const handleDelete = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
     toast({
-      title: 'Delete Auto Scaling Group',
-      description: `Deleting ${asg.name}...`,
+      title: "Auto Scaling Group deleted",
+      description: `${asg.name} has been deleted successfully.`,
     });
+    setIsDeleteModalOpen(false);
+    // In a real app, you would navigate back to the listing page
+    // window.location.href = '/compute/auto-scaling';
   };
 
   const handlePause = () => {
@@ -663,6 +672,15 @@ export default function AutoScalingGroupDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        resourceName={asg.name}
+        resourceType="Auto Scaling Group"
+        onConfirm={handleDeleteConfirm}
+      />
     </PageLayout>
   );
 }

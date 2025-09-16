@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import {
   Stethoscope,
   Building2,
@@ -63,13 +64,13 @@ export function IndustrySolutionsMockup() {
               </div>
               <CardFooter className='bg-background p-4'>
                 <Button variant='outline' className='w-full' asChild>
-                  <a
+                  <Link
                     href='/solutions/healthcare'
                     className='flex items-center justify-between'
                   >
                     <span>Explore Healthcare Solutions</span>
                     <ArrowRight className='h-4 w-4 ml-2' />
-                  </a>
+                  </Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -89,13 +90,13 @@ export function IndustrySolutionsMockup() {
               </div>
               <CardFooter className='bg-background p-4'>
                 <Button variant='outline' className='w-full' asChild>
-                  <a
+                  <Link
                     href='/solutions/finance'
                     className='flex items-center justify-between'
                   >
                     <span>Explore Financial Solutions</span>
                     <ArrowRight className='h-4 w-4 ml-2' />
-                  </a>
+                  </Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -115,13 +116,13 @@ export function IndustrySolutionsMockup() {
               </div>
               <CardFooter className='bg-background p-4'>
                 <Button variant='outline' className='w-full' asChild>
-                  <a
+                  <Link
                     href='/solutions/retail'
                     className='flex items-center justify-between'
                   >
                     <span>Explore Retail Solutions</span>
                     <ArrowRight className='h-4 w-4 ml-2' />
-                  </a>
+                  </Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -139,13 +140,13 @@ export function IndustrySolutionsMockup() {
               </div>
               <CardFooter className='bg-background p-4'>
                 <Button variant='outline' className='w-full' asChild>
-                  <a
+                  <Link
                     href='/solutions/manufacturing'
                     className='flex items-center justify-between'
                   >
                     <span>Explore Manufacturing Solutions</span>
                     <ArrowRight className='h-4 w-4 ml-2' />
-                  </a>
+                  </Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -165,13 +166,13 @@ export function IndustrySolutionsMockup() {
               </div>
               <CardFooter className='bg-background p-4'>
                 <Button variant='outline' className='w-full' asChild>
-                  <a
+                  <Link
                     href='/solutions/media'
                     className='flex items-center justify-between'
                   >
                     <span>Explore Media Solutions</span>
                     <ArrowRight className='h-4 w-4 ml-2' />
-                  </a>
+                  </Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -297,7 +298,7 @@ export function IndustrySolutionsMockup() {
               </CardContent>
               <CardFooter>
                 <Button variant='outline' className='w-full' asChild>
-                  <a href='/solutions/healthcare/imaging'>Learn More</a>
+                  <Link href='/solutions/healthcare/imaging'>Learn More</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -336,7 +337,7 @@ export function IndustrySolutionsMockup() {
               </CardContent>
               <CardFooter>
                 <Button variant='outline' className='w-full' asChild>
-                  <a href='/solutions/healthcare/documentation'>Learn More</a>
+                  <Link href='/solutions/healthcare/documentation'>Learn More</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -375,7 +376,7 @@ export function IndustrySolutionsMockup() {
               </CardContent>
               <CardFooter>
                 <Button variant='outline' className='w-full' asChild>
-                  <a href='/solutions/healthcare/patient-care'>Learn More</a>
+                  <Link href='/solutions/healthcare/patient-care'>Learn More</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -412,7 +413,7 @@ export function IndustrySolutionsMockup() {
               </CardContent>
               <CardFooter>
                 <Button variant='outline' className='w-full' asChild>
-                  <a href='/solutions/healthcare/compliance'>Learn More</a>
+                  <Link href='/solutions/healthcare/compliance'>Learn More</Link>
                 </Button>
               </CardFooter>
             </Card>

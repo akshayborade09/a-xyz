@@ -1,18 +1,8 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Plus, Trash2, HelpCircle } from 'lucide-react';
-import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Tag {
   key: string;
@@ -31,9 +21,9 @@ interface ScriptsTagsSectionProps {
 }
 
 const sshKeys = [
-  { value: 'key-production', label: 'production-keypair' },
-  { value: 'key-development', label: 'development-keypair' },
-  { value: 'key-staging', label: 'staging-keypair' },
+  { value: "key-production", label: "production-keypair" },
+  { value: "key-development", label: "development-keypair" },
+  { value: "key-staging", label: "staging-keypair" },
 ];
 
 export function ScriptsTagsSection({
@@ -49,14 +39,14 @@ export function ScriptsTagsSection({
   return (
     <>
       {/* SSH Key */}
-      <div className='space-y-4'>
-        <div className='space-y-2'>
-          <Label htmlFor='sshKey'>
-            SSH Key <span className='text-red-500'>*</span>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="sshKey">
+            SSH Key <span className="text-red-500">*</span>
           </Label>
           <Select value={sshKey} onValueChange={onUpdateSshKey}>
             <SelectTrigger>
-              <SelectValue placeholder='Select SSH Key to securely access your VMs' />
+              <SelectValue placeholder="Select SSH Key to securely access your VMs" />
             </SelectTrigger>
             <SelectContent>
               {sshKeys.map(key => (
@@ -70,17 +60,17 @@ export function ScriptsTagsSection({
       </div>
 
       {/* Startup Script */}
-      <div className='space-y-4'>
-        <div className='space-y-2'>
-          <Label htmlFor='startupScript'>Startup Script</Label>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="startupScript">Startup Script</Label>
           <Textarea
-            id='startupScript'
-            placeholder='#!/bin/bash&#10;# Enter your bash script here'
+            id="startupScript"
+            placeholder="#!/bin/bash&#10;# Enter your bash script here"
             value={startupScript}
-            onChange={e => onUpdateStartupScript(e.target.value)}
+            onChange={(e) => onUpdateStartupScript(e.target.value)}
             rows={6}
           />
-          <p className='text-xs text-muted-foreground'>
+          <p className="text-xs text-muted-foreground">
             Only bash format is supported. Script will run on first boot.
           </p>
         </div>

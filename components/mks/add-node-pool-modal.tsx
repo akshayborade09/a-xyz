@@ -31,10 +31,19 @@ import {
 import { Plus, Trash2, Info, X } from 'lucide-react';
 import {
   type MKSNodePool,
-  availableNodeFlavors,
 } from '@/lib/mks-data';
 import { mockSubnets } from '@/lib/cluster-creation-data';
 import { useToast } from '@/hooks/use-toast';
+
+// Instance flavors with pricing (matching cluster creation)
+const instanceFlavors = [
+  { id: 'cpu-1x-4gb', name: 'CPU-1x-4GB', vcpus: 1, memory: 4, pricePerHour: 3 },
+  { id: 'cpu-2x-8gb', name: 'CPU-2x-8GB', vcpus: 2, memory: 8, pricePerHour: 6 },
+  { id: 'cpu-4x-16gb', name: 'CPU-4x-16GB', vcpus: 4, memory: 16, pricePerHour: 13 },
+  { id: 'cpu-8x-32gb', name: 'CPU-8x-32GB', vcpus: 8, memory: 32, pricePerHour: 25 },
+  { id: 'cpu-16x-64gb', name: 'CPU-16x-64GB', vcpus: 16, memory: 64, pricePerHour: 49 },
+  { id: 'cpu-32x-128gb', name: 'CPU-32x-128GB', vcpus: 32, memory: 128, pricePerHour: 97 },
+];
 
 // Mock security groups data
 const mockSecurityGroups = [
@@ -96,10 +105,10 @@ export function AddNodePoolModal({
   const [nodePool, setNodePool] = useState<NewNodePool>({
     name: '',
     flavor: 'cpu-2x-8gb',
-    desiredCount: 3,
+    desiredCount: 2,
     minCount: 1,
-    maxCount: 10,
-    diskSize: 200,
+    maxCount: 5,
+    diskSize: 50,
     subnetId: mockSubnets[0]?.id || '',
     securityGroupId: undefined,
     taints: [{ key: '', value: '', effect: 'NoSchedule' }],
@@ -107,15 +116,21 @@ export function AddNodePoolModal({
     tags: [{ key: '', value: '' }],
   });
 
+  // Get selected flavor details
+  const getSelectedFlavor = (flavorId: string) => {
+    return instanceFlavors.find(f => f.id === flavorId) || instanceFlavors[1];
+  };
+
+
   const handleClose = () => {
     // Reset form
     setNodePool({
       name: '',
       flavor: 'cpu-2x-8gb',
-      desiredCount: 3,
+      desiredCount: 2,
       minCount: 1,
-      maxCount: 10,
-      diskSize: 200,
+      maxCount: 5,
+      diskSize: 50,
       subnetId: mockSubnets[0]?.id || '',
       securityGroupId: undefined,
       taints: [{ key: '', value: '', effect: 'NoSchedule' }],
@@ -259,7 +274,6 @@ export function AddNodePoolModal({
     }
   };
 
-  const selectedFlavor = availableNodeFlavors.find(f => f.id === nodePool.flavor);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -273,129 +287,193 @@ export function AddNodePoolModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className='flex-1 overflow-y-auto space-y-6'>
-          {/* Basic Configuration */}
-          <div className='space-y-4'>
-            <h3 className='text-base font-semibold'>Basic Configuration</h3>
-            
-            <div className='grid grid-cols-3 gap-6'>
-              <div className='space-y-2'>
-                <Label className='text-sm font-medium'>Pool Name *</Label>
-                <Input
-                  value={nodePool.name}
-                  onChange={e => setNodePool(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder='e.g., worker-pool, gpu-pool'
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label className='text-sm font-medium'>Instance Flavor *</Label>
-                <Select
-                  value={nodePool.flavor}
-                  onValueChange={value => setNodePool(prev => ({ ...prev, flavor: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableNodeFlavors.map(flavor => (
-                      <SelectItem key={flavor.id} value={flavor.id}>
-                        <div className='flex flex-col items-start'>
-                          <span>{flavor.id}</span>
-                          <span className='text-xs text-muted-foreground'>
-                            {flavor.vcpus} vCPUs, {flavor.memory}GB RAM
+        <div className='flex-1 overflow-y-auto space-y-6 pl-6 pr-8 py-2'>
+          {/* 1. Node Pool Name */}
+          <div className='space-y-3'>
+            <Label className='text-sm font-medium'>
+              Node Pool Name <span className='text-destructive'>*</span>
+            </Label>
+            <Input
+              value={nodePool.name}
+              onChange={e => setNodePool(prev => ({ ...prev, name: e.target.value }))}
+              placeholder='Enter node pool name (e.g., workers, database, gpu-nodes)'
+              className={!nodePool.name.trim() ? 'border-destructive focus:border-destructive' : ''}
+            />
+            {!nodePool.name.trim() && (
+              <p className='text-xs text-destructive'>Node pool name is required</p>
+            )}
+          </div>
+
+          {/* 2. Instance Flavour */}
+          <div className='space-y-3'>
+            <Label className='text-sm font-medium'>
+              Instance Flavour <span className='text-destructive'>*</span>
+            </Label>
+            <Select
+              value={nodePool.flavor}
+              onValueChange={value => setNodePool(prev => ({ ...prev, flavor: value }))}
+            >
+              <SelectTrigger className='w-full'>
+                <SelectValue>
+                  {(() => {
+                    const selectedFlavor = getSelectedFlavor(nodePool.flavor);
+                    return (
+                      <div className='flex items-center justify-between w-full pr-2'>
+                        <div className='flex items-center gap-4'>
+                          <span className='font-medium'>{selectedFlavor.name}</span>
+                          <span className='text-muted-foreground text-sm'>
+                            {selectedFlavor.vcpus} vCPU • {selectedFlavor.memory} GB RAM
                           </span>
                         </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                        <span className='text-primary font-semibold text-sm ml-6'>
+                          ₹{selectedFlavor.pricePerHour}/hr
+                        </span>
+                      </div>
+                    );
+                  })()} 
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {instanceFlavors.map(flavor => (
+                  <SelectItem key={flavor.id} value={flavor.id}>
+                    <div className='flex items-center justify-between w-full min-w-[320px] py-1'>
+                      <div className='flex flex-col gap-1'>
+                        <span className='font-medium'>{flavor.name}</span>
+                        <span className='text-muted-foreground text-xs'>
+                          {flavor.vcpus} vCPU • {flavor.memory} GB RAM
+                        </span>
+                      </div>
+                      <span className='text-primary font-semibold text-sm ml-6'>
+                        ₹{flavor.pricePerHour}/hr
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 3. Scaling Settings */}
+          <div className='space-y-3'>
+            <Label className='text-sm font-medium'>
+              Scaling Settings <span className='text-destructive'>*</span>
+            </Label>
+            <div className='grid grid-cols-3 gap-4'>
+              <div>
+                <Label className='text-xs text-muted-foreground mb-2 block'>Min Nodes</Label>
+                <Input
+                  type='number'
+                  value={nodePool.minCount}
+                  onChange={e => setNodePool(prev => ({ ...prev, minCount: Math.max(0, Number(e.target.value) || 0) }))}
+                  min={0}
+                  className='text-center'
+                />
+              </div>
+              <div>
+                <Label className='text-xs text-muted-foreground mb-2 block'>Desired Nodes</Label>
+                <Input
+                  type='number'
+                  value={nodePool.desiredCount}
+                  onChange={e => setNodePool(prev => ({ ...prev, desiredCount: Math.max(1, Number(e.target.value) || 1) }))}
+                  min={1}
+                  className='text-center'
+                />
+              </div>
+              <div>
+                <Label className='text-xs text-muted-foreground mb-2 block'>Max Nodes</Label>
+                <Input
+                  type='number'
+                  value={nodePool.maxCount}
+                  onChange={e => setNodePool(prev => ({ ...prev, maxCount: Math.max(1, Number(e.target.value) || 1) }))}
+                  min={1}
+                  className='text-center'
+                />
               </div>
             </div>
+            
+            {/* Validation */}
+            {nodePool.minCount > nodePool.maxCount && (
+              <p className='text-xs text-destructive'>Min nodes cannot be greater than max nodes</p>
+            )}
+            {nodePool.desiredCount < nodePool.minCount && (
+              <p className='text-xs text-destructive'>Desired nodes must be at least min nodes</p>
+            )}
+            {nodePool.desiredCount > nodePool.maxCount && (
+              <p className='text-xs text-destructive'>Desired nodes must not exceed max nodes</p>
+            )}
+          </div>
 
+          {/* 4. Bootable Volume Size */}
+          <div className='space-y-3'>
+            <Label className='text-sm font-medium'>
+              Bootable Volume <span className='text-destructive'>*</span>
+            </Label>
             <div className='space-y-2'>
-              <Label className='text-sm font-medium'>Disk Size (GB) *</Label>
+              <Label className='text-xs text-muted-foreground'>Storage Size (GB)</Label>
               <Input
                 type='number'
                 min='50'
-                max='2000'
+                max='1024'
                 value={nodePool.diskSize}
-                onChange={e => setNodePool(prev => ({ ...prev, diskSize: parseInt(e.target.value) || 200 }))}
+                onChange={e => setNodePool(prev => ({ ...prev, diskSize: Math.max(50, Math.min(1024, parseInt(e.target.value) || 50)) }))}
               />
             </div>
-
-            <div className='space-y-2'>
-              <Label className='text-sm font-medium'>Subnet *</Label>
-              <Select
-                value={nodePool.subnetId}
-                onValueChange={value => setNodePool(prev => ({ ...prev, subnetId: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockSubnets.map(subnet => (
-                    <SelectItem key={subnet.id} value={subnet.id}>
-                      {subnet.name} ({subnet.cidr})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Node Scaling */}
-          <div className='space-y-4'>
-            <h3 className='text-base font-semibold'>Node Scaling</h3>
-            <div className='grid grid-cols-3 gap-6'>
-              <div className='space-y-2'>
-                <Label className='text-sm font-medium'>Min Nodes</Label>
-                <Input
-                  type='number'
-                  min='0'
-                  max='100'
-                  value={nodePool.minCount}
-                  onChange={e => setNodePool(prev => ({ ...prev, minCount: parseInt(e.target.value) || 0 }))}
-                  className='text-center'
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label className='text-sm font-medium'>Desired Nodes</Label>
-                <Input
-                  type='number'
-                  min='1'
-                  max='100'
-                  value={nodePool.desiredCount}
-                  onChange={e => setNodePool(prev => ({ ...prev, desiredCount: parseInt(e.target.value) || 1 }))}
-                  className='text-center'
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label className='text-sm font-medium'>Max Nodes</Label>
-                <Input
-                  type='number'
-                  min='1'
-                  max='100'
-                  value={nodePool.maxCount}
-                  onChange={e => setNodePool(prev => ({ ...prev, maxCount: parseInt(e.target.value) || 1 }))}
-                  className='text-center'
-                />
+            <div className='bg-amber-50 border border-amber-200 rounded-lg py-2.5 px-3'>
+              <div className='flex gap-2'>
+                <Info className='h-4 w-4 text-amber-600 flex-shrink-0' style={{ marginTop: '1px' }} />
+                <p className='text-xs text-amber-800 leading-relaxed'>
+                  <strong>Note:</strong> Once chosen, storage size cannot be changed later. Please select carefully.
+                </p>
               </div>
             </div>
           </div>
 
-          <Separator />
+          {/* 5. Subnet */}
+          <div className='space-y-3'>
+            <Label className='text-sm font-medium'>
+              Subnet <span className='text-destructive'>*</span>
+            </Label>
+            <Select
+              value={nodePool.subnetId}
+              onValueChange={value => setNodePool(prev => ({ ...prev, subnetId: value }))}
+            >
+              <SelectTrigger className={!nodePool.subnetId ? 'border-red-300 bg-red-50' : ''}>
+                <SelectValue placeholder='Select a subnet' />
+              </SelectTrigger>
+              <SelectContent>
+                {mockSubnets.map(subnet => (
+                  <SelectItem key={subnet.id} value={subnet.id}>
+                    <div className='flex items-center justify-between w-full'>
+                      <span>{subnet.name}</span>
+                      <Badge 
+                        variant='secondary' 
+                        className={`ml-2 text-xs ${
+                          subnet.type === 'Public' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-orange-100 text-orange-800'
+                        }`}
+                      >
+                        {subnet.type}
+                      </Badge>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!nodePool.subnetId && (
+              <p className='text-xs text-destructive'>Please select a subnet</p>
+            )}
+          </div>
 
-          {/* Advanced Settings */}
+          {/* 6. Advanced Settings */}
           <Accordion type='single' collapsible className='w-full'>
-            <AccordionItem value='advanced-settings'>
-              <AccordionTrigger className='text-base font-semibold'>
+            <AccordionItem value='advanced-settings' className='border-none'>
+              <AccordionTrigger className='text-base font-semibold hover:no-underline py-4'>
                 Advanced Settings
               </AccordionTrigger>
-              <AccordionContent className='space-y-6 pt-4'>
+              <AccordionContent className='space-y-8 pt-6 pb-4'>
                 {/* Security Group */}
-                <div className='space-y-2'>
+                <div className='space-y-3'>
                   <Label className='text-sm font-medium'>Security Group</Label>
                   <Select
                     value={nodePool.securityGroupId || 'none'}
@@ -424,11 +502,11 @@ export function AddNodePoolModal({
                 </div>
 
                 {/* Taints */}
-                <div className='space-y-3'>
+                <div className='space-y-4'>
                   <Label className='text-sm font-medium'>Taints</Label>
-                  <div className='space-y-3'>
+                  <div className='space-y-4'>
                     {nodePool.taints.map((taint, index) => (
-                      <div key={index} className='grid grid-cols-3 gap-3'>
+                      <div key={index} className='grid grid-cols-3 gap-4 items-end'>
                         <Input
                           placeholder='Key'
                           value={taint.key}
@@ -483,11 +561,11 @@ export function AddNodePoolModal({
                 </div>
 
                 {/* Labels */}
-                <div className='space-y-3'>
+                <div className='space-y-4'>
                   <Label className='text-sm font-medium'>Labels</Label>
-                  <div className='space-y-3'>
+                  <div className='space-y-4'>
                     {nodePool.labels.map((label, index) => (
-                      <div key={index} className='grid grid-cols-2 gap-3'>
+                      <div key={index} className='grid grid-cols-2 gap-4 items-end'>
                         <Input
                           placeholder='Key'
                           value={label.key}
@@ -529,11 +607,11 @@ export function AddNodePoolModal({
                 </div>
 
                 {/* Tags */}
-                <div className='space-y-3'>
+                <div className='space-y-4'>
                   <Label className='text-sm font-medium'>Tags</Label>
-                  <div className='space-y-3'>
+                  <div className='space-y-4'>
                     {nodePool.tags.map((tag, index) => (
-                      <div key={index} className='grid grid-cols-2 gap-3'>
+                      <div key={index} className='grid grid-cols-2 gap-4 items-end'>
                         <Input
                           placeholder='Key'
                           value={tag.key}
@@ -577,22 +655,7 @@ export function AddNodePoolModal({
             </AccordionItem>
           </Accordion>
 
-          {/* Summary */}
-          {selectedFlavor && (
-            <Alert className='bg-blue-50/50 border-blue-200'>
-              <Info className='h-4 w-4' />
-              <AlertDescription>
-                <div className='space-y-1'>
-                  <div className='font-medium'>Node Pool Summary:</div>
-                  <div className='text-sm'>
-                    <span className='font-medium'>{nodePool.name || 'Unnamed Pool'}</span> • 
-                    {nodePool.desiredCount} nodes ({selectedFlavor.vcpus} vCPUs, {selectedFlavor.memory}GB RAM each) • 
-                    {nodePool.diskSize}GB disk per node
-                  </div>
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
+
         </div>
 
         <DialogFooter className='flex-shrink-0 border-t pt-6'>

@@ -10,6 +10,7 @@ interface StorageVolume {
   id: string;
   name: string;
   size: number;
+  type: string;
 }
 
 interface StorageSectionProps {
@@ -86,7 +87,7 @@ export function StorageSection({
             </Label>
             <Select value={machineImage} onValueChange={onUpdateMachineImage}>
               <SelectTrigger>
-                <SelectValue placeholder="Select machine image" />
+                <SelectValue placeholder="Select Machine Image" />
               </SelectTrigger>
               <SelectContent>
                 {machineImages.map(image => (
@@ -127,38 +128,51 @@ export function StorageSection({
             <div className="space-y-4">
               {storageVolumes.map((volume, index) => (
                 <div key={volume.id} className="p-4 border rounded-lg">
-                  <div className="flex items-start justify-between mb-4">
-                    <h4 className="font-medium">Storage Volume {index + 1}</h4>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => onRemoveStorageVolume(volume.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Volume Name</Label>
-                      <Input
-                        placeholder="Enter volume name"
-                        value={volume.name}
-                        onChange={(e) => onUpdateStorageVolume(volume.id, 'name', e.target.value)}
-                      />
+                  <div className="space-y-4">
+                    <div className="flex justify-end">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onRemoveStorageVolume(volume.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Size (GB)</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={volume.size}
-                        onChange={(e) => onUpdateStorageVolume(volume.id, 'size', parseInt(e.target.value) || 50)}
-                      />
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Volume Name</Label>
+                        <Input
+                          placeholder="Enter volume name"
+                          value={volume.name}
+                          onChange={(e) => onUpdateStorageVolume(volume.id, 'name', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Size (GB)</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={volume.size}
+                          onChange={(e) => onUpdateStorageVolume(volume.id, 'size', parseInt(e.target.value) || 50)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Type</Label>
+                        <Input
+                          value={volume.type || "Standard"}
+                          disabled
+                          className="bg-gray-50 text-gray-500"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               ))}
+              <Button size="sm" onClick={onAddStorageVolume} variant="outline" className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Storage Volume
+              </Button>
             </div>
           )}
         </div>

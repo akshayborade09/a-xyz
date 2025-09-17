@@ -55,19 +55,17 @@ export function ScalingPoliciesSection({
           <div className="space-y-6">
             {scalingPolicies.map((policy, index) => (
               <div key={policy.id} className="p-4 border rounded-lg">
-                <div className="flex items-start justify-between mb-4">
-                  <h4 className="font-medium">Scaling Policy {index + 1}</h4>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onRemoveScalingPolicy(policy.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-
                 <div className="space-y-4">
+                  <div className="flex justify-end">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onRemoveScalingPolicy(policy.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <div className="space-y-2">
                     <Label>Policy Type</Label>
                     <Select
@@ -141,6 +139,10 @@ export function ScalingPoliciesSection({
                 </div>
               </div>
             ))}
+            <Button size="sm" onClick={onAddScalingPolicy} variant="outline" className="w-full">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Policy
+            </Button>
           </div>
         )}
       </div>

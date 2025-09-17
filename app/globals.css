@@ -168,3 +168,13 @@ h6 {
 input[type='radio'] {
   accent-color: #000000;
 }
+
+/* Ensure consistent placeholder text color for Select components */
+[data-placeholder] {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Ensure Select trigger placeholder text matches Input placeholder color */
+.select-placeholder {
+  color: hsl(var(--muted-foreground));
+}

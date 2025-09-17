@@ -18,6 +18,7 @@ interface ScriptsTagsSectionProps {
   onAddTag: () => void;
   onUpdateTag: (index: number, field: 'key' | 'value', value: string) => void;
   onRemoveTag: (index: number) => void;
+  onCreateSSHKey?: () => void;
 }
 
 const sshKeys = [
@@ -35,6 +36,7 @@ export function ScriptsTagsSection({
   onAddTag,
   onUpdateTag,
   onRemoveTag,
+  onCreateSSHKey,
 }: ScriptsTagsSectionProps) {
   return (
     <>
@@ -44,11 +46,22 @@ export function ScriptsTagsSection({
           <Label htmlFor="sshKey">
             SSH Key <span className="text-red-500">*</span>
           </Label>
-          <Select value={sshKey} onValueChange={onUpdateSshKey}>
+          <Select value={sshKey} onValueChange={(value) => {
+            if (value === "__create_new__" && onCreateSSHKey) {
+              onCreateSSHKey();
+            } else {
+              onUpdateSshKey(value);
+            }
+          }}>
             <SelectTrigger>
-              <SelectValue placeholder="Select SSH Key to securely access your VMs" />
+              <SelectValue placeholder="Select SSH Key to Securely Access Your VMs" />
             </SelectTrigger>
             <SelectContent>
+              {onCreateSSHKey && (
+                <SelectItem value="__create_new__">
+                  <span className="text-primary font-medium">Create new SSH Key</span>
+                </SelectItem>
+              )}
               {sshKeys.map(key => (
                 <SelectItem key={key.value} value={key.value}>
                   {key.label}

@@ -78,6 +78,25 @@ export function AutoScalingSettingsModal({
     onClose()
   }
 
+  // Validation logic for button state
+  const isUpscaleValid = () => {
+    const count = parseInt(desiredCount)
+    return count && count > currentVMs && count <= maxCapacity
+  }
+
+  const isDownscaleValid = () => {
+    const count = parseInt(desiredCount)
+    return count && count < currentVMs && count >= minCapacity
+  }
+
+  const isButtonDisabled = () => {
+    if (activeTab === "up") {
+      return !isUpscaleValid()
+    } else {
+      return !isDownscaleValid()
+    }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent 
@@ -120,7 +139,10 @@ export function AutoScalingSettingsModal({
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
-              onClick={() => setActiveTab("up")}
+              onClick={() => {
+                setActiveTab("up")
+                setDesiredCount("")
+              }}
             >
               <TrendingUp className="h-4 w-4" />
               Up Scaling
@@ -131,7 +153,10 @@ export function AutoScalingSettingsModal({
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
-              onClick={() => setActiveTab("down")}
+              onClick={() => {
+                setActiveTab("down")
+                setDesiredCount("")
+              }}
             >
               <TrendingDown className="h-4 w-4" />
               Down Scaling
@@ -186,7 +211,8 @@ export function AutoScalingSettingsModal({
             </Button>
             <Button 
               onClick={activeTab === "up" ? handleUpscale : handleDownscale}
-              className="bg-black text-white hover:bg-black/90"
+              disabled={isButtonDisabled()}
+              className="bg-black text-white hover:bg-black/90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
             >
               {activeTab === "up" ? "Upscale VMs" : "Downscale VMs"}
             </Button>

@@ -108,16 +108,16 @@ const navigationConfig = {
             subItems: [{ href: '/compute/ai-pods/my-pods', label: 'My Pods' }],
           },
           {
+            href: '/compute/auto-scaling',
+            label: 'Auto Scaling Groups',
+          },
+          {
             href: '/compute/machines/images',
             label: 'Machine Images',
           },
           {
             href: '/compute/ssh-keys',
             label: 'SSH Keys',
-          },
-          {
-            href: '/compute/auto-scaling',
-            label: 'Auto Scaling Groups',
           },
         ],
       },

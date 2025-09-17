@@ -379,6 +379,8 @@ export default function CreateTemplatePage() {
                   />
                 </div>
 
+                <Separator />
+
                 {/* Instance Configuration */}
                 <div className="space-y-4">
                   <Label className="text-base font-medium">Instance Configuration</Label>

@@ -294,10 +294,7 @@ function TemplatesSection() {
   }
 
   const handleEdit = (template: AutoScalingTemplate) => {
-    toast({
-      title: "Edit Template",
-      description: `Editing ${template.name}...`,
-    })
+    window.location.href = `/compute/auto-scaling/templates/${template.id}/edit`
   }
 
   const handleViewDetails = (template: AutoScalingTemplate) => {

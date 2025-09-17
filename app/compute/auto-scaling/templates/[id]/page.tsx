@@ -102,10 +102,7 @@ export default function TemplateDetailsPage() {
 
   // Action handlers
   const handleEdit = () => {
-    toast({
-      title: 'Edit Template',
-      description: `Editing ${template.name}...`,
-    });
+    window.location.href = `/compute/auto-scaling/templates/${template.id}/edit`;
   };
 
   const handleDelete = () => {

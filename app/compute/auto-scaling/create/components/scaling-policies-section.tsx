@@ -107,8 +107,8 @@ export function ScalingPoliciesSection({
                   </div>
 
                   <div>
-                    <h5 className="font-medium mb-3">Scaling Configuration</h5>
-                    <div className="p-4 bg-gray-50/30 border border-gray-100 rounded-lg">
+                    <Label className="text-sm font-medium mb-3 block">Scaling Configuration</Label>
+                    <div className="p-4 bg-gray-50/30 rounded-lg">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>
@@ -124,7 +124,7 @@ export function ScalingPoliciesSection({
                             onChange={(e) =>
                               onUpdateScalingPolicy(policy.id, 'upScaleTarget', parseInt(e.target.value) || 80)
                             }
-                            placeholder={policy.type === "Average CPU Utilization" ? "70" : "80"}
+                            placeholder={policy.type === "Average CPU Utilization" || policy.type === "Average Memory Utilization" ? "70" : "80"}
                           />
                         </div>
                         <div className="space-y-2">
@@ -141,7 +141,7 @@ export function ScalingPoliciesSection({
                             onChange={(e) =>
                               onUpdateScalingPolicy(policy.id, 'downScaleTarget', parseInt(e.target.value) || 20)
                             }
-                            placeholder={policy.type === "Average CPU Utilization" ? "40" : "20"}
+                            placeholder={policy.type === "Average CPU Utilization" || policy.type === "Average Memory Utilization" ? "40" : "20"}
                           />
                         </div>
                         <div className="space-y-2">
@@ -153,7 +153,7 @@ export function ScalingPoliciesSection({
                             onChange={(e) =>
                               onUpdateScalingPolicy(policy.id, 'scaleOutCooldown', parseInt(e.target.value) || 300)
                             }
-                            placeholder={policy.type === "Average CPU Utilization" ? "180" : "300"}
+                            placeholder={policy.type === "Average CPU Utilization" || policy.type === "Average Memory Utilization" ? "180" : "300"}
                           />
                         </div>
                         <div className="space-y-2">

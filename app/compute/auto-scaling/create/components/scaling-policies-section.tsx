@@ -108,52 +108,66 @@ export function ScalingPoliciesSection({
 
                   <div>
                     <h5 className="font-medium mb-3">Scaling Configuration</h5>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Up Scale Target Value (%)</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="100"
-                          value={policy.upScaleTarget}
-                          onChange={(e) =>
-                            onUpdateScalingPolicy(policy.id, 'upScaleTarget', parseInt(e.target.value) || 80)
-                          }
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Down Scale Target Value (%)</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="100"
-                          value={policy.downScaleTarget}
-                          onChange={(e) =>
-                            onUpdateScalingPolicy(policy.id, 'downScaleTarget', parseInt(e.target.value) || 20)
-                          }
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Scale Out Cooldown (seconds)</Label>
-                        <Input
-                          type="number"
-                          min="60"
-                          value={policy.scaleOutCooldown}
-                          onChange={(e) =>
-                            onUpdateScalingPolicy(policy.id, 'scaleOutCooldown', parseInt(e.target.value) || 300)
-                          }
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Scale In Cooldown (seconds)</Label>
-                        <Input
-                          type="number"
-                          min="60"
-                          value={policy.scaleInCooldown}
-                          onChange={(e) =>
-                            onUpdateScalingPolicy(policy.id, 'scaleInCooldown', parseInt(e.target.value) || 300)
-                          }
-                        />
+                    <div className="p-4 bg-gray-50/30 border border-gray-100 rounded-lg">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>
+                            {policy.type === "Average CPU Utilization" || policy.type === "Average Memory Utilization" 
+                              ? "Up Scale Target Value (%)" 
+                              : "Up Scale Target Value (%)"}
+                          </Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={policy.upScaleTarget}
+                            onChange={(e) =>
+                              onUpdateScalingPolicy(policy.id, 'upScaleTarget', parseInt(e.target.value) || 80)
+                            }
+                            placeholder={policy.type === "Average CPU Utilization" ? "70" : "80"}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>
+                            {policy.type === "Average CPU Utilization" || policy.type === "Average Memory Utilization" 
+                              ? "Down Scale Target Value (%)" 
+                              : "Down Scale Target Value (%)"}
+                          </Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={policy.downScaleTarget}
+                            onChange={(e) =>
+                              onUpdateScalingPolicy(policy.id, 'downScaleTarget', parseInt(e.target.value) || 20)
+                            }
+                            placeholder={policy.type === "Average CPU Utilization" ? "40" : "20"}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Scale Out Cooldown (seconds)</Label>
+                          <Input
+                            type="number"
+                            min="60"
+                            value={policy.scaleOutCooldown}
+                            onChange={(e) =>
+                              onUpdateScalingPolicy(policy.id, 'scaleOutCooldown', parseInt(e.target.value) || 300)
+                            }
+                            placeholder={policy.type === "Average CPU Utilization" ? "180" : "300"}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Scale In Cooldown (seconds)</Label>
+                          <Input
+                            type="number"
+                            min="60"
+                            value={policy.scaleInCooldown}
+                            onChange={(e) =>
+                              onUpdateScalingPolicy(policy.id, 'scaleInCooldown', parseInt(e.target.value) || 300)
+                            }
+                            placeholder="300"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

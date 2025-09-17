@@ -204,9 +204,9 @@ export default function CreateAutoScalingGroupPage() {
     const newPolicy = {
       id: `policy-${Date.now()}`,
       type: "Average CPU Utilization" as const,
-      upScaleTarget: 80,
-      downScaleTarget: 20,
-      scaleOutCooldown: 300,
+      upScaleTarget: 70,
+      downScaleTarget: 40,
+      scaleOutCooldown: 180,
       scaleInCooldown: 300
     }
     setFormData(prev => ({

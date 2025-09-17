@@ -14,6 +14,14 @@ interface ScalingPolicy {
   downScaleTarget: number;
   scaleOutCooldown: number;
   scaleInCooldown: number;
+  // Scheduled Action specific fields
+  timezone?: string;
+  scaleUpHours?: number;
+  scaleUpMinutes?: number;
+  scaleUpSeconds?: number;
+  scaleDownHours?: number;
+  scaleDownMinutes?: number;
+  scaleDownSeconds?: number;
 }
 
 interface ScalingPoliciesSectionProps {
@@ -109,66 +117,214 @@ export function ScalingPoliciesSection({
                   <div>
                     <Label className="text-sm font-medium mb-3 block">Scaling Configuration</Label>
                     <div className="p-4 bg-gray-50/30 rounded-lg">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>
-                            {policy.type === "Average CPU Utilization" || policy.type === "Average Memory Utilization" 
-                              ? "Up Scale Target Value (%)" 
-                              : "Up Scale Target Value (%)"}
-                          </Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="100"
-                            value={policy.upScaleTarget}
-                            onChange={(e) =>
-                              onUpdateScalingPolicy(policy.id, 'upScaleTarget', parseInt(e.target.value) || 80)
-                            }
-                            placeholder={policy.type === "Average CPU Utilization" || policy.type === "Average Memory Utilization" ? "70" : "80"}
-                          />
+                      {policy.type === "Scheduled Action" ? (
+                        <div className="space-y-4">
+                          {/* Timezone */}
+                          <div className="space-y-2">
+                            <Label>Timezone <span className="text-red-500">*</span></Label>
+                            <Select
+                              value={policy.timezone || ""}
+                              onValueChange={(value) => onUpdateScalingPolicy(policy.id, 'timezone', value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="IST (Indian Standard Time)" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="IST">IST (Indian Standard Time)</SelectItem>
+                                <SelectItem value="UTC">UTC (Coordinated Universal Time)</SelectItem>
+                                <SelectItem value="EST">EST (Eastern Standard Time)</SelectItem>
+                                <SelectItem value="PST">PST (Pacific Standard Time)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <p className="text-sm text-muted-foreground">Select the timezone for your scheduled actions</p>
+                          </div>
+
+                          {/* Scale Up Time */}
+                          <div className="space-y-2">
+                            <Label>Scale Up Time <span className="text-red-500">*</span></Label>
+                            <div className="grid grid-cols-3 gap-4">
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Hours</Label>
+                                <Select
+                                  value={policy.scaleUpHours?.toString() || ""}
+                                  onValueChange={(value) => onUpdateScalingPolicy(policy.id, 'scaleUpHours', parseInt(value))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="00" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Array.from({ length: 24 }, (_, i) => (
+                                      <SelectItem key={i} value={i.toString()}>
+                                        {i.toString().padStart(2, '0')}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Minutes</Label>
+                                <Select
+                                  value={policy.scaleUpMinutes?.toString() || ""}
+                                  onValueChange={(value) => onUpdateScalingPolicy(policy.id, 'scaleUpMinutes', parseInt(value))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="00" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Array.from({ length: 60 }, (_, i) => (
+                                      <SelectItem key={i} value={i.toString()}>
+                                        {i.toString().padStart(2, '0')}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Seconds</Label>
+                                <Select
+                                  value={policy.scaleUpSeconds?.toString() || ""}
+                                  onValueChange={(value) => onUpdateScalingPolicy(policy.id, 'scaleUpSeconds', parseInt(value))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="00" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Array.from({ length: 60 }, (_, i) => (
+                                      <SelectItem key={i} value={i.toString()}>
+                                        {i.toString().padStart(2, '0')}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Scale Down Time */}
+                          <div className="space-y-2">
+                            <Label>Scale Down Time <span className="text-red-500">*</span></Label>
+                            <div className="grid grid-cols-3 gap-4">
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Hours</Label>
+                                <Select
+                                  value={policy.scaleDownHours?.toString() || ""}
+                                  onValueChange={(value) => onUpdateScalingPolicy(policy.id, 'scaleDownHours', parseInt(value))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="00" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Array.from({ length: 24 }, (_, i) => (
+                                      <SelectItem key={i} value={i.toString()}>
+                                        {i.toString().padStart(2, '0')}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Minutes</Label>
+                                <Select
+                                  value={policy.scaleDownMinutes?.toString() || ""}
+                                  onValueChange={(value) => onUpdateScalingPolicy(policy.id, 'scaleDownMinutes', parseInt(value))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="00" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Array.from({ length: 60 }, (_, i) => (
+                                      <SelectItem key={i} value={i.toString()}>
+                                        {i.toString().padStart(2, '0')}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Seconds</Label>
+                                <Select
+                                  value={policy.scaleDownSeconds?.toString() || ""}
+                                  onValueChange={(value) => onUpdateScalingPolicy(policy.id, 'scaleDownSeconds', parseInt(value))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="00" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Array.from({ length: 60 }, (_, i) => (
+                                      <SelectItem key={i} value={i.toString()}>
+                                        {i.toString().padStart(2, '0')}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Warning message */}
+                          <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <div className="w-4 h-4 bg-yellow-500 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">!</span>
+                            </div>
+                            <p className="text-sm text-yellow-800">
+                              Scale up and scale down times are identical. This may cause no scaling action to occur.
+                            </p>
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label>
-                            {policy.type === "Average CPU Utilization" || policy.type === "Average Memory Utilization" 
-                              ? "Down Scale Target Value (%)" 
-                              : "Down Scale Target Value (%)"}
-                          </Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="100"
-                            value={policy.downScaleTarget}
-                            onChange={(e) =>
-                              onUpdateScalingPolicy(policy.id, 'downScaleTarget', parseInt(e.target.value) || 20)
-                            }
-                            placeholder={policy.type === "Average CPU Utilization" || policy.type === "Average Memory Utilization" ? "40" : "20"}
-                          />
+                      ) : (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Up Scale Target Value (%)</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="100"
+                              value={policy.upScaleTarget}
+                              onChange={(e) =>
+                                onUpdateScalingPolicy(policy.id, 'upScaleTarget', parseInt(e.target.value) || 80)
+                              }
+                              placeholder={policy.type === "Average CPU Utilization" || policy.type === "Average Memory Utilization" ? "70" : "80"}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Down Scale Target Value (%)</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="100"
+                              value={policy.downScaleTarget}
+                              onChange={(e) =>
+                                onUpdateScalingPolicy(policy.id, 'downScaleTarget', parseInt(e.target.value) || 20)
+                              }
+                              placeholder={policy.type === "Average CPU Utilization" || policy.type === "Average Memory Utilization" ? "40" : "20"}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Scale Out Cooldown (seconds)</Label>
+                            <Input
+                              type="number"
+                              min="60"
+                              value={policy.scaleOutCooldown}
+                              onChange={(e) =>
+                                onUpdateScalingPolicy(policy.id, 'scaleOutCooldown', parseInt(e.target.value) || 300)
+                              }
+                              placeholder={policy.type === "Average CPU Utilization" || policy.type === "Average Memory Utilization" ? "180" : "300"}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Scale In Cooldown (seconds)</Label>
+                            <Input
+                              type="number"
+                              min="60"
+                              value={policy.scaleInCooldown}
+                              onChange={(e) =>
+                                onUpdateScalingPolicy(policy.id, 'scaleInCooldown', parseInt(e.target.value) || 300)
+                              }
+                              placeholder="300"
+                            />
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label>Scale Out Cooldown (seconds)</Label>
-                          <Input
-                            type="number"
-                            min="60"
-                            value={policy.scaleOutCooldown}
-                            onChange={(e) =>
-                              onUpdateScalingPolicy(policy.id, 'scaleOutCooldown', parseInt(e.target.value) || 300)
-                            }
-                            placeholder={policy.type === "Average CPU Utilization" || policy.type === "Average Memory Utilization" ? "180" : "300"}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Scale In Cooldown (seconds)</Label>
-                          <Input
-                            type="number"
-                            min="60"
-                            value={policy.scaleInCooldown}
-                            onChange={(e) =>
-                              onUpdateScalingPolicy(policy.id, 'scaleInCooldown', parseInt(e.target.value) || 300)
-                            }
-                            placeholder="300"
-                          />
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>

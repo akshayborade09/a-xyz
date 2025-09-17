@@ -64,6 +64,14 @@ interface TemplateFormData {
     downScaleTarget: number
     scaleOutCooldown: number
     scaleInCooldown: number
+    // Scheduled Action specific fields
+    timezone?: string
+    scaleUpHours?: number
+    scaleUpMinutes?: number
+    scaleUpSeconds?: number
+    scaleDownHours?: number
+    scaleDownMinutes?: number
+    scaleDownSeconds?: number
   }>
 
   // Tags
@@ -722,21 +730,13 @@ export default function CreateTemplatePage() {
                 />
 
                 {/* Action Buttons */}
-                <div className="flex items-center justify-between pt-6 border-t">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="saveAsTemplate" defaultChecked />
-                    <Label htmlFor="saveAsTemplate" className="text-sm font-normal">
-                      Save as reusable template
-                    </Label>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Button type="button" variant="outline" onClick={handleCancel}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? "Creating Template..." : "Create Template"}
-                    </Button>
-                  </div>
+                <div className="flex items-center justify-end gap-3 pt-6 border-t">
+                  <Button type="button" variant="outline" onClick={handleCancel}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Creating Template..." : "Create Template"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>

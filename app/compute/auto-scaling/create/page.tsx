@@ -72,6 +72,14 @@ interface ASGFormData {
     downScaleTarget: number
     scaleOutCooldown: number
     scaleInCooldown: number
+    // Scheduled Action specific fields
+    timezone?: string
+    scaleUpHours?: number
+    scaleUpMinutes?: number
+    scaleUpSeconds?: number
+    scaleDownHours?: number
+    scaleDownMinutes?: number
+    scaleDownSeconds?: number
   }>
 
   // Template Option

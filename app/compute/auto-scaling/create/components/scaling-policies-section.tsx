@@ -262,11 +262,11 @@ export function ScalingPoliciesSection({
                           </div>
 
                           {/* Warning message */}
-                          <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <div className="w-4 h-4 bg-yellow-500 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center">
+                          <div className="flex items-start gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                            <div className="w-4 h-4 bg-gray-500 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center">
                               <span className="text-white text-xs font-bold">!</span>
                             </div>
-                            <p className="text-sm text-yellow-800">
+                            <p className="text-sm text-gray-700">
                               Scale up and scale down times are identical. This may cause no scaling action to occur.
                             </p>
                           </div>

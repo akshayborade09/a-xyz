@@ -80,22 +80,22 @@ export default function TemplateDetailsPage() {
     { href: '/dashboard', title: 'Home' },
     { href: '/compute', title: 'Compute' },
     { href: '/compute/auto-scaling', title: 'Auto Scaling' },
-    { href: `/compute/auto-scaling/templates/${template.id}`, title: template.name },
+    { href: `/compute/auto-scaling/templates/${template.id}`, title: 'cache-server-template' },
   ];
 
   // Mock template data to match Create Template structure
   const templateData = {
     // Template Name
-    templateName: template.name,
+    templateName: "cache-server-template",
     
     // Instance Configuration
-    instanceName: template.name + "-instance",
-    instanceType: template.flavour || "cpu-4x-16gb",
+    instanceName: "cache-server-template-instance",
+    instanceType: "cpu-4x-16gb",
     
     // Storage Configuration
-    bootVolumeName: template.name + "-boot",
+    bootVolumeName: "cache-server-template-boot",
     bootVolumeSize: 20,
-    machineImage: template.imageId || "ami-ubuntu-22.04",
+    machineImage: "ami-ubuntu-22.04",
     storageVolumes: [
       {
         id: "vol-1",
@@ -106,12 +106,12 @@ export default function TemplateDetailsPage() {
     ],
     
     // Scripts & Tags
-    sshKey: template.keyName || "ssh-key-2",
-    startupScript: template.userData || "#!/bin/bash\necho 'Template startup script'",
+    sshKey: "ssh-key-2",
+    startupScript: "#!/bin/bash\necho 'Template startup script'",
     tags: [
       { key: "Environment", value: "Production" },
-      { key: "Template", value: template.name },
-      { key: "Version", value: template.version.toString() }
+      { key: "Template", value: "cache-server-template" },
+      { key: "Version", value: "6" }
     ],
     
     // Network Configuration
@@ -161,7 +161,7 @@ export default function TemplateDetailsPage() {
 
   // Action handlers
   const handleEdit = () => {
-    window.location.href = `/compute/auto-scaling/templates/${template.id}/edit`;
+    window.location.href = `/compute/auto-scaling/templates/template-1/edit`;
   };
 
   const handleDelete = () => {
@@ -171,7 +171,7 @@ export default function TemplateDetailsPage() {
   const handleDeleteConfirm = () => {
     toast({
       title: "Template deleted",
-      description: `${template.name} has been deleted successfully.`,
+      description: "cache-server-template has been deleted successfully.",
     });
     setIsDeleteModalOpen(false);
     // In a real app, you would navigate back to the listing page
@@ -185,7 +185,7 @@ export default function TemplateDetailsPage() {
 
   return (
     <PageLayout
-      title={template.name}
+      title="cache-server-template"
       customBreadcrumbs={customBreadcrumbs}
       hideViewDocs={true}
     >
@@ -524,7 +524,7 @@ export default function TemplateDetailsPage() {
         open={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteConfirm}
-        resourceName={template.name}
+        resourceName="cache-server-template"
         resourceType="Template"
       />
     </PageLayout>

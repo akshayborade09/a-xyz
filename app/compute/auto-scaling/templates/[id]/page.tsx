@@ -313,7 +313,6 @@ export default function TemplateDetailsPage() {
 
                 {/* Storage Configuration */}
                 <div>
-                  <Label className='text-sm font-medium mb-3 block'>Storage Configuration</Label>
                   <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
                     <div className='space-y-1'>
                       <Label className='text-xs text-muted-foreground'>Bootable Volume Name</Label>

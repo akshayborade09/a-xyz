@@ -2,8 +2,8 @@
 
 import { Button } from '@/components/ui/button';
 import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
+import { BorderBeam } from '@/components/ui/border-beam';
 import { useToast } from '@/hooks/use-toast';
-import { GlowingShadow } from '@/components/ui/glowing-shadow';
 
 export default function ModelsOverviewPage() {
   const { toast } = useToast();
@@ -122,31 +122,39 @@ print(response.json())`;
         
         {/* Right Side - Code Example */}
         <div className='hidden lg:block relative z-10'>
-          <GlowingShadow>
-            <div className='bg-gray-900 rounded-xl border border-gray-700 overflow-hidden w-full h-full'>
-              {/* Header */}
-              <div className='flex items-center justify-between px-4 py-3 bg-gray-800 border-b border-gray-700'>
-                <h3 className='text-sm font-medium text-gray-200'>Try it now</h3>
-                <TooltipWrapper content="Copy code">
-                  <button 
-                    onClick={handleCopyCode}
-                    className='p-1 hover:bg-gray-700 rounded transition-colors'
-                  >
-                    <svg className='w-4 h-4 text-gray-400 hover:text-gray-200' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z' />
-                    </svg>
-                  </button>
-                </TooltipWrapper>
-              </div>
-              
-              {/* Code Content */}
-              <div className='p-4 bg-gray-900'>
-                <pre className='text-sm text-gray-300 leading-relaxed overflow-x-auto'>
-                  <code>{codeSnippet}</code>
-                </pre>
-              </div>
+          <div className='relative bg-gray-900 rounded-xl border border-gray-700 overflow-hidden'>
+            {/* Header */}
+            <div className='flex items-center justify-between px-4 py-3 bg-gray-800 border-b border-gray-700'>
+              <h3 className='text-sm font-medium text-gray-200'>Try it now</h3>
+              <TooltipWrapper content="Copy code">
+                <button 
+                  onClick={handleCopyCode}
+                  className='p-1 hover:bg-gray-700 rounded transition-colors'
+                >
+                  <svg className='w-4 h-4 text-gray-400 hover:text-gray-200' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z' />
+                  </svg>
+                </button>
+              </TooltipWrapper>
             </div>
-          </GlowingShadow>
+            
+            {/* Code Content */}
+            <div className='p-4 bg-gray-900'>
+              <pre className='text-sm text-gray-300 leading-relaxed overflow-x-auto'>
+                <code>{codeSnippet}</code>
+              </pre>
+            </div>
+            
+            {/* Border Beam Animation */}
+            <BorderBeam 
+              size={250} 
+              duration={12} 
+              delay={2}
+              colorFrom="#4CAF50"
+              colorTo="#2196F3"
+              borderWidth={1.5}
+            />
+          </div>
         </div>
       </div>
 

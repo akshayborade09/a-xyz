@@ -78,10 +78,16 @@ const config = {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
+        'border-beam': {
+          '100%': {
+            'offset-distance': '100%',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         'accordion-up': 'accordion-up 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        'border-beam': 'border-beam calc(var(--duration)*1s) infinite linear',
       },
       boxShadow: {
         minimal: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',

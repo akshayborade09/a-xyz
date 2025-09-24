@@ -1,12 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
 import { BorderBeam } from '@/components/ui/border-beam';
 import { useToast } from '@/hooks/use-toast';
+import { RequestNewModelModal } from '@/components/modals/request-new-model-modal';
 
 export default function ModelsOverviewPage() {
   const { toast } = useToast();
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
   const codeSnippet = `import requests
 url = "https://api.krutrim.ai/v1/chat/completions"
@@ -113,6 +116,7 @@ print(response.json())`;
             <Button 
               variant='outline' 
               size='lg'
+              onClick={() => setIsRequestModalOpen(true)}
               className='font-medium px-8 py-3 border-border hover:bg-accent hover:text-accent-foreground'
             >
               Request a model
@@ -388,6 +392,12 @@ print(response.json())`;
           </div>
         </div>
       </div>
+
+      {/* Request New Model Modal */}
+      <RequestNewModelModal
+        open={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+      />
     </div>
   );
 }

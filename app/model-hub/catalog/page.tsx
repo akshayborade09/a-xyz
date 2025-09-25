@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Key } from 'lucide-react';
+import { SetupCodeModal } from '@/components/modals/setup-code-modal';
 
 // Tab definitions for VercelTabs
 const tabs = [
@@ -22,6 +23,8 @@ export default function ModelCatalogPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
+  const [isSetupCodeModalOpen, setIsSetupCodeModalOpen] = useState(false);
+  const [selectedModelId, setSelectedModelId] = useState('');
 
   const handleCopyModelId = async (modelId: string) => {
     try {
@@ -139,7 +142,14 @@ export default function ModelCatalogPage() {
                     Playground
                   </Button>
                   <TooltipWrapper content="View starter code">
-                    <Button variant='outline' className='px-3 border-gray-500 text-gray-500 hover:bg-gray-900 hover:text-white hover:border-gray-900'>
+                    <Button 
+                      variant='outline' 
+                      className='px-3 border-gray-500 text-gray-500 hover:bg-gray-900 hover:text-white hover:border-gray-900'
+                      onClick={() => {
+                        setSelectedModelId('gpt-oss-20b');
+                        setIsSetupCodeModalOpen(true);
+                      }}
+                    >
                       <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' />
                       </svg>
@@ -210,7 +220,14 @@ export default function ModelCatalogPage() {
                   Playground
                 </Button>
                 <TooltipWrapper content="View starter code">
-                  <Button variant='outline' className='px-3 border-gray-500 text-gray-500 hover:bg-gray-900 hover:text-white hover:border-gray-900'>
+                  <Button 
+                    variant='outline' 
+                    className='px-3 border-gray-500 text-gray-500 hover:bg-gray-900 hover:text-white hover:border-gray-900'
+                    onClick={() => {
+                      setSelectedModelId('gpt-oss-20b');
+                      setIsSetupCodeModalOpen(true);
+                    }}
+                  >
                     <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' />
                     </svg>
@@ -286,7 +303,14 @@ export default function ModelCatalogPage() {
                   Playground
                 </Button>
                 <TooltipWrapper content="View starter code">
-                  <Button variant='outline' className='px-3 border-gray-500 text-gray-500 hover:bg-gray-900 hover:text-white hover:border-gray-900'>
+                  <Button 
+                    variant='outline' 
+                    className='px-3 border-gray-500 text-gray-500 hover:bg-gray-900 hover:text-white hover:border-gray-900'
+                    onClick={() => {
+                      setSelectedModelId('gpt-oss-20b');
+                      setIsSetupCodeModalOpen(true);
+                    }}
+                  >
                     <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' />
                     </svg>
@@ -298,6 +322,13 @@ export default function ModelCatalogPage() {
           </div>
         </div>
       </div>
+
+      {/* Setup Code Modal */}
+      <SetupCodeModal
+        open={isSetupCodeModalOpen}
+        onClose={() => setIsSetupCodeModalOpen(false)}
+        modelId={selectedModelId}
+      />
     </PageShell>
   );
 }

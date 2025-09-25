@@ -24,7 +24,8 @@ import {
   Globe,
   FileText,
   Sparkles,
-  BookOpen
+  BookOpen,
+  Trash2
 } from 'lucide-react';
 
 // Mock model data - in real app, this would come from API
@@ -125,6 +126,14 @@ export default function PlaygroundPage() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleClearChat = () => {
+    setChatHistory([]);
+    toast({
+      title: "Chat cleared",
+      description: "All conversation history has been cleared.",
+    });
   };
 
   const handleSendMessage = () => {
@@ -471,14 +480,29 @@ export default function PlaygroundPage() {
                     <h3 className='text-sm font-medium text-foreground'>
                       System Prompt
                     </h3>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={handleCopySystemPrompt}
-                      className='h-6 w-6 p-0'
-                    >
-                      <Copy className='h-3 w-3' />
-                    </Button>
+                    <div className='flex items-center gap-1'>
+                      <TooltipWrapper content="Clear chat history">
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          onClick={handleClearChat}
+                          className='h-6 w-6 p-0'
+                          disabled={chatHistory.length === 0}
+                        >
+                          <Trash2 className='h-3 w-3' />
+                        </Button>
+                      </TooltipWrapper>
+                      <TooltipWrapper content="Copy system prompt">
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          onClick={handleCopySystemPrompt}
+                          className='h-6 w-6 p-0'
+                        >
+                          <Copy className='h-3 w-3' />
+                        </Button>
+                      </TooltipWrapper>
+                    </div>
                   </div>
                   
                   <Textarea

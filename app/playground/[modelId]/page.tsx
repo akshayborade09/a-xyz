@@ -1,0 +1,557 @@
+'use client';
+
+import { useState } from 'react';
+import { useParams } from 'next/navigation';
+import { PageShell } from '@/components/page-shell';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  Copy, 
+  Send, 
+  ChevronDown, 
+  ChevronRight,
+  ExternalLink,
+  Settings,
+  Globe,
+  FileText,
+  Sparkles,
+  BookOpen,
+  Code,
+  Key
+} from 'lucide-react';
+
+// Mock model data - in real app, this would come from API
+const modelData = {
+  'qwen3-coder-480b': {
+    name: 'Qwen/Qwen3-Coder-480B-A35B-Instruct',
+    provider: 'Qwen',
+    license: 'Apache 2.0 License',
+    costPerToken: 0.01,
+    inputPrice: '12.5',
+    outputPrice: '125.3',
+    description: 'Next-generation 80B model with enhanced reasoning',
+    tags: ['80B', '32K', 'Instruct'],
+    cardGradient: 'bg-gradient-to-bl from-emerald-100/50 via-emerald-50/30 to-white border-emerald-200/60',
+    logo: (
+      <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" aria-hidden="true">
+        <path d="M8.43952 0.247391C8.72534 0.749204 9.0097 1.25247 9.29333 1.75647C9.30479 1.77662 9.32141 1.79337 9.34147 1.805C9.36153 1.81663 9.38432 1.82272 9.40751 1.82265H13.4453C13.5718 1.82265 13.6795 1.90265 13.7696 2.06046L14.8271 3.92954C14.9653 4.17463 15.0016 4.27717 14.8445 4.53826C14.6554 4.85098 14.4714 5.16662 14.2918 5.48371L14.0249 5.96225C13.9478 6.10479 13.8627 6.16588 13.9958 6.33461L15.9245 9.70694C16.0496 9.92585 16.0052 10.0662 15.8932 10.2669C15.5754 10.8378 15.2518 11.4044 14.9223 11.9687C14.8067 12.1666 14.6663 12.2415 14.4278 12.2378C13.8627 12.2262 13.2991 12.2306 12.7355 12.2495C12.7234 12.2501 12.7116 12.2537 12.7014 12.2601C12.6911 12.2665 12.6825 12.2753 12.6766 12.2858C12.0263 13.438 11.3705 14.5871 10.7093 15.7331C10.5864 15.9462 10.4329 15.9971 10.182 15.9978C9.45696 16 8.72606 16.0007 7.98789 15.9992C7.91916 15.9991 7.85171 15.9807 7.79233 15.9461C7.73295 15.9115 7.68375 15.8619 7.64971 15.8022L6.67881 14.1127C6.67317 14.1017 6.66449 14.0924 6.65381 14.0861C6.64312 14.0798 6.63086 14.0767 6.61845 14.0771H2.89632C2.68905 14.0989 2.49414 14.0764 2.31087 14.0102L1.14507 11.9956C1.11059 11.936 1.09232 11.8684 1.09206 11.7995C1.09181 11.7306 1.10958 11.6628 1.14361 11.6029L2.02142 10.0611C2.03392 10.0393 2.0405 10.0146 2.0405 9.98948C2.0405 9.96435 2.03392 9.93965 2.02142 9.91784C1.56417 9.1262 1.10962 8.33299 0.657801 7.53823L0.0832629 6.5237C-0.0330993 6.29824 -0.0425537 6.16297 0.152353 5.82188C0.49053 5.23062 0.826526 4.64008 1.16107 4.05026C1.25707 3.88008 1.38216 3.80736 1.58579 3.80663C2.21341 3.80399 2.84105 3.80374 3.46867 3.8059C3.48453 3.80578 3.50007 3.80148 3.51373 3.79344C3.52739 3.78539 3.53869 3.77389 3.54649 3.76009L5.58719 0.200118C5.61812 0.145961 5.66277 0.10091 5.71665 0.0695016C5.77053 0.0380933 5.83173 0.0214373 5.8941 0.021211C6.27518 0.0204837 6.65991 0.0212109 7.04536 0.0168473L7.78498 0.00012023C8.03298 -0.00206157 8.31152 0.0233928 8.43952 0.247391ZM5.94355 0.540479C5.93589 0.540474 5.92836 0.542488 5.92172 0.546318C5.91508 0.550148 5.90957 0.555659 5.90573 0.562297L3.8214 4.20954C3.81139 4.22672 3.79707 4.241 3.77985 4.25095C3.76263 4.2609 3.7431 4.26618 3.72322 4.26626H1.63888C1.59815 4.26626 1.58797 4.28444 1.60906 4.32008L5.83446 11.7062C5.85264 11.7367 5.84392 11.7513 5.80974 11.752L3.77703 11.7629C3.74732 11.7619 3.71792 11.7693 3.6922 11.7842C3.66648 11.7991 3.64548 11.821 3.63158 11.8473L2.67159 13.5273C2.63959 13.584 2.65632 13.6131 2.72105 13.6131L6.87809 13.6189C6.91154 13.6189 6.93627 13.6334 6.95372 13.6633L7.97407 15.448C8.00753 15.5069 8.04098 15.5076 8.07516 15.448L11.7158 9.07713L12.2853 8.07204C12.2888 8.06584 12.2938 8.06067 12.3 8.05707C12.3061 8.05347 12.3131 8.05157 12.3202 8.05157C12.3273 8.05157 12.3343 8.05347 12.3404 8.05707C12.3466 8.06067 12.3516 8.06584 12.3551 8.07204L13.3907 9.91203C13.3985 9.92579 13.4098 9.93723 13.4235 9.94516C13.4372 9.95309 13.4527 9.95722 13.4685 9.95712L15.478 9.94257C15.4831 9.94262 15.4882 9.9413 15.4927 9.93874C15.4971 9.93618 15.5009 9.93249 15.5034 9.92803C15.5059 9.92358 15.5072 9.91857 15.5072 9.91348C15.5072 9.90839 15.5059 9.90338 15.5034 9.89894L13.3944 6.20006C13.3868 6.1877 13.3828 6.17348 13.3828 6.15897C13.3828 6.14447 13.3868 6.13024 13.3944 6.11788L13.6075 5.74916L14.422 4.31135C14.4394 4.28153 14.4307 4.26626 14.3965 4.26626H5.96392C5.92101 4.26626 5.91082 4.24735 5.93264 4.21026L6.97554 2.38846C6.98335 2.37605 6.9875 2.36168 6.9875 2.34701C6.9875 2.33234 6.98335 2.31797 6.97554 2.30555L5.9821 0.563024C5.9783 0.556143 5.97271 0.550416 5.96593 0.546447C5.95914 0.542479 5.95141 0.540417 5.94355 0.540479ZM10.518 6.37315C10.5515 6.37315 10.5602 6.3877 10.5428 6.41679L9.93768 7.48223L8.03734 10.8167C8.03377 10.8232 8.0285 10.8286 8.02209 10.8323C8.01569 10.8361 8.00839 10.838 8.00098 10.8378C7.9936 10.8378 7.98636 10.8358 7.97998 10.8321C7.9736 10.8284 7.96831 10.8231 7.96462 10.8167L5.45338 6.42988C5.43883 6.40515 5.4461 6.39206 5.47374 6.3906L5.63083 6.38188L10.5195 6.37315H10.518Z" fill="url(#prefix__paint0_linear_16251_34570)"></path>
+        <defs>
+          <linearGradient id="prefix__paint0_linear_16251_34570" x1="0" y1="0" x2="1600" y2="0" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#00055F" stopOpacity="0.84"></stop>
+            <stop offset="1" stopColor="#6F69F7" stopOpacity="0.84"></stop>
+          </linearGradient>
+        </defs>
+      </svg>
+    )
+  },
+  'gpt-oss-20b': {
+    name: 'OpenAI/GPT-OSS-20B',
+    provider: 'OpenAI',
+    license: 'MIT License', 
+    costPerToken: 0.015,
+    inputPrice: '4.2',
+    outputPrice: '16.7',
+    description: 'Large-scale GPT model with 20B parameters',
+    tags: ['120B', '128K', 'Reasoning'],
+    cardGradient: 'bg-gradient-to-bl from-blue-100/50 via-blue-50/30 to-white border-blue-200/60',
+    logo: (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="20" height="20" className="w-5 h-5 text-gray-700" aria-hidden="true">
+        <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08-4.778 2.758a.795.795 0 0 0-.393.681zm1.097-2.365 2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5Z"></path>
+      </svg>
+    )
+  },
+  'kimi-k2-instruct': {
+    name: 'moonshotai/Kimi-K2-Instruct-0905',
+    provider: 'MoonshotAI',
+    license: 'Apache 2.0 License',
+    costPerToken: 0.083,
+    inputPrice: '83.5',
+    outputPrice: '250.5',
+    description: 'Advanced instruction-following model for conversations',
+    tags: ['32K', 'Chat', 'Instruct'],
+    cardGradient: 'bg-gradient-to-bl from-purple-100/50 via-purple-50/30 to-white border-purple-200/60',
+    logo: (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" fillRule="evenodd" height="20" viewBox="0 0 24 24" width="20" className="w-5 h-5 text-gray-700" aria-hidden="true">
+        <title>MoonshotAI</title>
+        <path d="M1.052 16.916l9.539 2.552a21.007 21.007 0 00.06 2.033l5.956 1.593a11.997 11.997 0 01-5.586.865l-.18-.016-.044-.004-.084-.009-.094-.01a11.605 11.605 0 01-.157-.02l-.107-.014-.11-.016a11.962 11.962 0 01-.32-.051l-.042-.008-.075-.013-.107-.02-.07-.015-.093-.019-.075-.016-.095-.02-.097-.023-.094-.022-.068-.017-.088-.022-.09-.024-.095-.025-.082-.023-.109-.03-.062-.02-.084-.025-.093-.028-.105-.034-.058-.019-.08-.026-.09-.031-.066-.024a6.293 6.293 0 01-.044-.015l-.068-.025-.101-.037-.057-.022-.08-.03-.087-.035-.088-.035-.079-.032-.095-.04-.063-.028-.063-.027a5.655 5.655 0 01-.041-.018l-.066-.03-.103-.047-.052-.024-.096-.046-.062-.03-.084-.04-.086-.044-.093-.047-.052-.027-.103-.055-.057-.03-.058-.032a6.49 6.49 0 01-.046-.026l-.094-.053-.06-.034-.051-.03-.072-.041-.082-.05-.093-.056-.052-.032-.084-.053-.061-.039-.079-.05-.07-.047-.053-.035a7.785 7.785 0 01-.054-.036l-.044-.03-.044-.03a6.066 6.066 0 01-.04-.028l-.057-.04-.076-.054-.069-.05-.074-.054-.056-.042-.076-.057-.076-.059-.086-.067-.045-.035-.064-.052-.074-.06-.089-.073-.046-.039-.046-.039a7.516 7.516 0 01-.043-.037l-.045-.04-.061-.053-.07-.062-.068-.06-.062-.058-.067-.062-.053-.05-.088-.084a13.28 13.28 0 01-.099-.097l-.029-.028-.041-.042-.069-.07-.05-.051-.05-.053a6.457 6.457 0 01-.168-.179l-.08-.088-.062-.07-.071-.08-.042-.049-.053-.062-.058-.068-.046-.056a7.175 7.175 0 01-.027-.033l-.045-.055-.066-.082-.041-.052-.05-.064-.02-.025a11.99 11.99 0 01-1.44-2.402zm-1.02-5.794l11.353 3.037a20.468 20.468 0 00-.469 2.011l10.817 2.894a12.076 12.076 0 01-1.845 2.005L.657 15.923l-.016-.046-.035-.104a11.965 11.965 0 01-.05-.153l-.007-.023a11.896 11.896 0 01-.207-.741l-.03-.126-.018-.08-.021-.097-.018-.081-.018-.09-.017-.084-.018-.094c-.026-.141-.05-.283-.071-.426l-.017-.118-.011-.083-.013-.102a12.01 12.01 0 01-.019-.161l-.005-.047a12.12 12.12 0 01-.034-2.145zm1.593-5.15l11.948 3.196c-.368.605-.705 1.231-1.01 1.875l11.295 3.022c-.142.82-.368 1.612-.668 2.365l-11.55-3.09L.124 10.26l.015-.1.008-.049.01-.067.015-.087.018-.098c.026-.148.056-.295.088-.442l.028-.124.02-.085.024-.097c.022-.09.045-.18.07-.268l.028-.102.023-.083.03-.1.025-.082.03-.096.026-.082.031-.095a11.896 11.896 0 011.01-2.232zm4.442-4.4L17.352 4.59a20.77 20.77 0 00-1.688 1.721l7.823 2.093c.267.852.442 1.744.513 2.665L2.106 5.213l.045-.065.027-.04.04-.055.046-.065.055-.076.054-.072.064-.086.05-.065.057-.073.055-.070.060-.074.055-.069.065-.077.054-.066.066-.077.053-.060.072-.082.053-.060.067-.074.054-.058.073-.078.058-.060.063-.067.168-.17.1-.098.059-.056.076-.071a12.084 12.084 0 012.272-1.677zM12.017 0h.097l.082.001.069.001.054.002.068.002.046.001.076.003.047.002.060.003.054.002.087.005.105.007.144.011.088.007.044.004.077.008.082.008.047.005.102.012.05.006.108.014.081.01.042.006.065.01.207.032.07.012.065.011.14.026.092.018.11.022.046.01.075.016.041.01L14.7.3l.042.01.065.015.049.012.071.017.096.024.112.03.113.03.113.032.05.015.070.02.078.024.073.023.05.016.050.016.076.025.099.033.102.036.048.017.064.023.093.034.11.041.116.045.1.04.047.02.060.024.041.018.063.026.040.018.057.025.11.048.1.046.074.035.075.036.060.028.092.046.091.045.102.052.053.028.049.026.046.024.060.033.041.022.052.029.088.05.106.06.087.051.057.034.053.032.096.059.088.055.098.062.036.024.064.041.084.056.040.027.062.042.062.043.023.017c.054.037.108.075.161.114l.083.060.065.048.056.043.086.065.082.064.040.030.050.041.086.069.079.065.085.071c.712.6 1.353 1.283 1.909 2.031L7.222.994l.062-.027.065-.028.081-.034.086-.035c.113-.045.227-.090.341-.131l.096-.035.093-.033.084-.030.096-.031c.087-.030.176-.058.264-.085l.091-.027.086-.025.102-.030.085-.023.100-.026L9.04.37l.090-.023.091-.022.095-.022.090-.020.098-.021.091-.020.095-.018.092-.018.100-.018.091-.016.098-.017.092-.014.097-.015.092-.013.102-.013.091-.012.105-.012.090-.010.105-.010c.093-.010.186-.018.280-.024l.106-.008.090-.005.110-.006.093-.004.100-.004.097-.002.099-.002.197-.002z"></path>
+      </svg>
+    )
+  }
+};
+
+const quickActions = [
+  { icon: Settings, label: 'Improve my sentence' },
+  { icon: Globe, label: 'Quick translation' },
+  { icon: FileText, label: 'Summarize quickly' },
+  { icon: Sparkles, label: 'Polish my email' },
+  { icon: BookOpen, label: 'Tell me a story' }
+];
+
+export default function PlaygroundPage() {
+  const params = useParams();
+  const modelId = params.modelId as string;
+  const { toast } = useToast();
+  
+  // Get model info
+  const model = modelData[modelId as keyof typeof modelData] || modelData['qwen3-coder-480b'];
+  
+  // State management
+  const [selectedModel, setSelectedModel] = useState(modelId);
+  const [temperature, setTemperature] = useState([1]);
+  const [systemPrompt, setSystemPrompt] = useState('');
+  const [message, setMessage] = useState('');
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
+
+  const handleCopySystemPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(systemPrompt);
+      toast({
+        title: "System prompt copied",
+        description: "The system prompt has been copied to your clipboard.",
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to copy",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (!message.trim()) return;
+    
+    // Add user message to chat
+    const newMessage = { role: 'user' as const, content: message };
+    setChatHistory(prev => [...prev, newMessage]);
+    
+    // Clear input
+    setMessage('');
+    
+    // Simulate AI response (in real app, this would call the API)
+    setTimeout(() => {
+      const aiResponse = { role: 'assistant' as const, content: 'This is a mock response from the AI model.' };
+      setChatHistory(prev => [...prev, aiResponse]);
+    }, 1000);
+  };
+
+  const handleQuickAction = (action: string) => {
+    setMessage(action);
+  };
+
+  return (
+    <div className='h-full'>
+      <div className='p-4'>
+        <PageShell
+          title="Playground"
+          description={`Interactive playground for ${model.name}`}
+          headerActions={
+            <div className='flex items-center gap-2'>
+              <Button variant='outline' size='sm'>
+                <Code className='h-4 w-4 mr-2' />
+                View code
+              </Button>
+              <Button variant='default' size='sm'>
+                <Key className='h-4 w-4 mr-2' />
+                Get API key
+              </Button>
+            </div>
+          }
+        >
+          <div className='flex gap-6 h-[calc(100vh-280px)]'>
+            {/* Left Sidebar */}
+            <div className='w-80 flex-shrink-0 flex flex-col h-full relative'>
+              {/* Scrollable Content */}
+              <div className='flex-1 space-y-3 p-4 pr-2 overflow-y-auto min-h-0 pb-16'>
+                {/* Model Section */}
+                <div className='space-y-3'>
+                  <div className='relative z-50'>
+                    <Select value={selectedModel} onValueChange={setSelectedModel}>
+                      <SelectTrigger className='w-full'>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent 
+                        className='z-[100] max-h-60'
+                        position="popper"
+                        side="bottom"
+                        align="start"
+                        sideOffset={4}
+                      >
+                        <SelectItem value="qwen3-coder-480b">
+                          <div className='flex items-center gap-2'>
+                            {modelData['qwen3-coder-480b'].logo}
+                            Qwen/Qwen3-Coder-480B-A35B-Instruct
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="gpt-oss-20b">
+                          <div className='flex items-center gap-2'>
+                            {modelData['gpt-oss-20b'].logo}
+                            OpenAI/GPT-OSS-20B
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="kimi-k2-instruct">
+                          <div className='flex items-center gap-2'>
+                            {modelData['kimi-k2-instruct'].logo}
+                            moonshotai/Kimi-K2-Instruct-0905
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Model Info Card */}
+                  <div className={`rounded-lg border p-4 space-y-4 ${model.cardGradient}`}>
+                    <div className='text-sm text-muted-foreground'>
+                      <div>{model.description}</div>
+                    </div>
+
+                    {/* Pricing */}
+                    <div className='space-y-1'>
+                      <div className='flex items-center justify-between'>
+                        <span className='text-lg font-semibold text-gray-900'>₹{model.inputPrice}</span>
+                        <span className='text-lg font-semibold text-gray-900'>₹{model.outputPrice}</span>
+                      </div>
+                      <div className='flex items-center justify-between text-xs text-gray-500'>
+                        <span>Per 1M Input Tokens</span>
+                        <span>Per 1M Output Tokens</span>
+                      </div>
+                    </div>
+
+                    {/* Tags */}
+                    <div className='flex flex-wrap gap-2'>
+                      {model.tags.map((tag, index) => (
+                        <span key={index} className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className='flex items-center gap-4 text-xs text-muted-foreground'>
+                      <button className='hover:text-foreground flex items-center gap-1'>
+                        Learn more
+                        <ExternalLink className='h-3 w-3' />
+                      </button>
+                      <span>|</span>
+                      <span>License: {model.license}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Parameters Section */}
+                <div className='space-y-3'>
+                <h3 className='text-sm font-medium text-foreground'>Parameters</h3>
+                
+                {/* Temperature */}
+                <div className='space-y-3'>
+                  <div className='flex items-center gap-2'>
+                    <label className='text-sm text-muted-foreground'>Temperature</label>
+                    <TooltipWrapper content="Controls randomness in the output. Higher values make output more random.">
+                      <div className='w-4 h-4 rounded-full border border-muted-foreground/30 flex items-center justify-center text-xs'>
+                        ?
+                      </div>
+                    </TooltipWrapper>
+                  </div>
+                  
+                  <div className='space-y-2'>
+                    <Input 
+                      value={temperature[0] === 1 ? 'Unset' : temperature[0]} 
+                      readOnly 
+                      className='text-center'
+                    />
+                    <div className='px-2'>
+                      <Slider
+                        value={temperature}
+                        onValueChange={setTemperature}
+                        max={2}
+                        min={0}
+                        step={0.1}
+                        className='w-full'
+                      />
+                      <div className='flex justify-between text-xs text-muted-foreground mt-1'>
+                        <span>0</span>
+                        <span>2</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Advanced Parameters */}
+                <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
+                  <CollapsibleTrigger className='flex items-center justify-between w-full text-sm text-muted-foreground hover:text-foreground'>
+                    <span>Advanced parameters</span>
+                    {isAdvancedOpen ? <ChevronDown className='h-4 w-4' /> : <ChevronRight className='h-4 w-4' />}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className='mt-4'>
+                    <Card>
+                      <CardContent className='p-4 space-y-4'>
+                    {/* Maximum tokens */}
+                    <div className='space-y-3'>
+                      <div className='flex items-center gap-2'>
+                        <label className='text-sm text-muted-foreground'>Maximum tokens</label>
+                        <TooltipWrapper content="The maximum number of tokens that can be generated in the chat completion.">
+                          <div className='w-4 h-4 rounded-full border border-muted-foreground/30 flex items-center justify-center text-xs'>
+                            ?
+                          </div>
+                        </TooltipWrapper>
+                      </div>
+                      
+                      <div className='space-y-2'>
+                        <div className='flex items-center gap-2'>
+                          <input type="checkbox" id="unlimited" className='h-4 w-4' />
+                          <label htmlFor="unlimited" className='text-sm text-muted-foreground'>Unlimited</label>
+                        </div>
+                        <Input 
+                          value="1,024"
+                          readOnly 
+                          className='text-center'
+                        />
+                        <div className='px-2'>
+                          <Slider
+                            defaultValue={[1024]}
+                            max={128000}
+                            min={0}
+                            step={1}
+                            className='w-full'
+                          />
+                          <div className='flex justify-between text-xs text-muted-foreground mt-1'>
+                            <span>0</span>
+                            <span>1,024</span>
+                            <span>128000</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Presence penalty */}
+                    <div className='space-y-3'>
+                      <div className='flex items-center gap-2'>
+                        <label className='text-sm text-muted-foreground'>Presence penalty</label>
+                        <TooltipWrapper content="Positive values penalize new tokens based on whether they appear in the text so far.">
+                          <div className='w-4 h-4 rounded-full border border-muted-foreground/30 flex items-center justify-center text-xs'>
+                            ?
+                          </div>
+                        </TooltipWrapper>
+                      </div>
+                      
+                      <div className='space-y-2'>
+                        <Input 
+                          value="0"
+                          readOnly 
+                          className='text-center'
+                        />
+                        <div className='px-2'>
+                          <Slider
+                            defaultValue={[0]}
+                            max={2}
+                            min={-2}
+                            step={0.1}
+                            className='w-full'
+                          />
+                          <div className='flex justify-between text-xs text-muted-foreground mt-1'>
+                            <span>-2</span>
+                            <span>0</span>
+                            <span>2</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Top-p threshold */}
+                    <div className='space-y-3'>
+                      <div className='flex items-center gap-2'>
+                        <label className='text-sm text-muted-foreground'>Top-p threshold</label>
+                        <TooltipWrapper content="An alternative to sampling with temperature, called nucleus sampling.">
+                          <div className='w-4 h-4 rounded-full border border-muted-foreground/30 flex items-center justify-center text-xs'>
+                            ?
+                          </div>
+                        </TooltipWrapper>
+                      </div>
+                      
+                      <div className='space-y-2'>
+                        <Input 
+                          value="0.9"
+                          readOnly 
+                          className='text-center'
+                        />
+                        <div className='px-2'>
+                          <Slider
+                            defaultValue={[0.9]}
+                            max={1}
+                            min={0}
+                            step={0.1}
+                            className='w-full'
+                          />
+                          <div className='flex justify-between text-xs text-muted-foreground mt-1'>
+                            <span>0</span>
+                            <span>0.9</span>
+                            <span>1</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Top-k threshold */}
+                    <div className='space-y-3'>
+                      <div className='flex items-center gap-2'>
+                        <label className='text-sm text-muted-foreground'>Top-k threshold</label>
+                        <TooltipWrapper content="Limit the next token selection to the K most probable tokens.">
+                          <div className='w-4 h-4 rounded-full border border-muted-foreground/30 flex items-center justify-center text-xs'>
+                            ?
+                          </div>
+                        </TooltipWrapper>
+                      </div>
+                      
+                      <div className='space-y-2'>
+                        <Input 
+                          value="50"
+                          readOnly 
+                          className='text-center'
+                        />
+                        <div className='px-2'>
+                          <Slider
+                            defaultValue={[50]}
+                            max={200}
+                            min={-1}
+                            step={1}
+                            className='w-full'
+                          />
+                          <div className='flex justify-between text-xs text-muted-foreground mt-1'>
+                            <span>-1</span>
+                            <span>50</span>
+                            <span>200</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                      </CardContent>
+                    </Card>
+                  </CollapsibleContent>
+                </Collapsible>
+                </div>
+              </div>
+
+              {/* Fixed Cost Information */}
+              <div className='absolute bottom-0 left-0 right-0 border-t pt-2 pb-2 bg-background/95 backdrop-blur-sm'>
+                <div className='bg-muted/50 rounded-lg p-2 mx-3'>
+                  <div className='text-xs text-muted-foreground'>
+                    Text generation will cost ${model.costPerToken.toFixed(3)} per 1000 tokens
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Panel - Entire section wrapped in Card */}
+            <Card className='flex-1 flex flex-col h-full'>
+              <CardContent className='flex-1 flex flex-col h-full p-6'>
+                {/* System Prompt Section */}
+                <div className='flex-shrink-0 space-y-3'>
+                  <div className='flex items-center justify-between'>
+                    <h3 className='text-sm font-medium text-foreground'>
+                      System Prompt
+                    </h3>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={handleCopySystemPrompt}
+                      className='h-6 w-6 p-0'
+                    >
+                      <Copy className='h-3 w-3' />
+                    </Button>
+                  </div>
+                  
+                  <Textarea
+                    placeholder="Enter system instructions"
+                    value={systemPrompt}
+                    onChange={(e) => setSystemPrompt(e.target.value)}
+                    className='min-h-[80px] resize-none'
+                  />
+                  
+                  <Button variant='ghost' size='sm' className='text-muted-foreground hover:text-foreground'>
+                    + Add few-shot example
+                  </Button>
+                </div>
+
+                {/* Chat History */}
+                <div className='flex-1 flex flex-col mt-6'>
+                  {chatHistory.length === 0 ? (
+                    <div className='flex-1 flex items-center justify-center'>
+                      <div className='text-center space-y-4 text-muted-foreground'>
+                        <div>
+                          <div className='text-base font-medium mb-1'>Start a conversation</div>
+                          <div className='text-sm'>Enter a message below or use one of the quick actions</div>
+                        </div>
+                        
+                        {/* Quick Actions moved here */}
+                        <div className='flex flex-wrap gap-2 justify-center'>
+                          {quickActions.map((action, index) => {
+                            const Icon = action.icon;
+                            return (
+                              <Button
+                                key={index}
+                                variant='outline'
+                                size='sm'
+                                onClick={() => handleQuickAction(action.label)}
+                                className='text-xs'
+                              >
+                                <Icon className='h-3 w-3 mr-1' />
+                                {action.label}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className='flex-1 overflow-y-auto space-y-3'>
+                      {chatHistory.map((msg, index) => (
+                        <div key={index} className={`p-4 rounded-lg border ${msg.role === 'user' ? 'ml-12 bg-muted/30' : 'mr-12 bg-background'}`}>
+                          <div className='text-sm font-medium mb-2 capitalize'>{msg.role}</div>
+                          <div className='text-sm'>{msg.content}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Message Input */}
+                <div className='pt-4 flex-shrink-0 border-t'>
+                  <div className='flex gap-2'>
+                    <Textarea
+                      placeholder="Enter message"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      className='flex-1 min-h-[45px] resize-none'
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                    />
+                    <Button 
+                      onClick={handleSendMessage}
+                      disabled={!message.trim()}
+                      size='sm'
+                      className='self-end mb-2'
+                    >
+                      <Send className='h-4 w-4' />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </PageShell>
+      </div>
+    </div>
+  );
+}

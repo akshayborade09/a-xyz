@@ -235,8 +235,10 @@ print(response.json())`;
 
               {/* Action Buttons */}
               <div className='flex space-x-3'>
-                <Button className='flex-1'>
-                  Playground
+                <Button className='flex-1' asChild>
+                  <a href='/playground/gpt-oss-20b'>
+                    Playground
+                  </a>
                 </Button>
                 <TooltipWrapper content="View starter code">
                   <Button 
@@ -312,8 +314,10 @@ print(response.json())`;
 
               {/* Action Buttons */}
               <div className='flex space-x-3'>
-                <Button className='flex-1'>
-                  Playground
+                <Button className='flex-1' asChild>
+                  <a href='/playground/kimi-k2-instruct'>
+                    Playground
+                  </a>
                 </Button>
                 <TooltipWrapper content="View starter code">
                   <Button 
@@ -394,8 +398,10 @@ print(response.json())`;
 
               {/* Action Buttons */}
               <div className='flex space-x-3'>
-                <Button className='flex-1'>
-                  Playground
+                <Button className='flex-1' asChild>
+                  <a href='/playground/qwen3-coder-480b'>
+                    Playground
+                  </a>
                 </Button>
                 <TooltipWrapper content="View starter code">
                   <Button 

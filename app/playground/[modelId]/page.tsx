@@ -444,7 +444,7 @@ export default function PlaygroundPage() {
               </div>
 
               {/* Fixed Cost Information */}
-              <div className='absolute bottom-0 left-0 right-0 pt-2 pb-2'>
+              <div className='absolute bottom-0 left-0 right-0'>
                 <div 
                   className='mx-3'
                   style={{
@@ -455,13 +455,8 @@ export default function PlaygroundPage() {
                     padding: '1.5rem',
                   }}
                 >
-                  <div className='flex items-center justify-between'>
-                    <h3 className='text-base font-semibold'>Cost Summary</h3>
-                  </div>
-                  <div className='mt-2'>
-                    <div className='text-sm text-muted-foreground'>
-                      Text generation will cost ${model.costPerToken.toFixed(3)} per 1000 tokens
-                    </div>
+                  <div className='text-sm text-muted-foreground'>
+                    Text generation will cost ${model.costPerToken.toFixed(3)} per 1000 tokens
                   </div>
                 </div>
               </div>

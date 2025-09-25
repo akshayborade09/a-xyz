@@ -184,37 +184,42 @@ export default function PlaygroundPage() {
             {/* Left Sidebar */}
             <div className='w-80 flex-shrink-0 flex flex-col h-full relative'>
               {/* Scrollable Content */}
-              <div className='flex-1 space-y-3 p-6 pr-2 overflow-y-auto min-h-0 pb-32'>
+              <div className='flex-1 space-y-3 overflow-y-auto min-h-0 pb-32'>
                 {/* Model Section */}
                 <div className='space-y-3'>
                   <div className='relative z-50'>
                     <Select value={selectedModel} onValueChange={setSelectedModel}>
-                      <SelectTrigger className='w-full'>
-                        <SelectValue />
+                      <SelectTrigger className='w-full h-auto min-h-[40px] py-3'>
+                        <SelectValue>
+                          <div className='flex items-center gap-2 w-full'>
+                            {model.logo}
+                            <span className='truncate text-left flex-1'>{model.name}</span>
+                          </div>
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent 
-                        className='z-[100] max-h-60'
+                        className='z-[100] max-h-60 w-[var(--radix-select-trigger-width)]'
                         position="popper"
                         side="bottom"
                         align="start"
                         sideOffset={4}
                       >
-                        <SelectItem value="qwen3-coder-480b">
-                          <div className='flex items-center gap-2'>
+                        <SelectItem value="qwen3-coder-480b" className='py-3'>
+                          <div className='flex items-center gap-2 w-full'>
                             {modelData['qwen3-coder-480b'].logo}
-                            Qwen/Qwen3-Coder-480B-A35B-Instruct
+                            <span className='text-sm'>Qwen/Qwen3-Coder-480B-A35B-Instruct</span>
                           </div>
                         </SelectItem>
-                        <SelectItem value="gpt-oss-20b">
-                          <div className='flex items-center gap-2'>
+                        <SelectItem value="gpt-oss-20b" className='py-3'>
+                          <div className='flex items-center gap-2 w-full'>
                             {modelData['gpt-oss-20b'].logo}
-                            OpenAI/GPT-OSS-20B
+                            <span className='text-sm'>OpenAI/GPT-OSS-20B</span>
                           </div>
                         </SelectItem>
-                        <SelectItem value="kimi-k2-instruct">
-                          <div className='flex items-center gap-2'>
+                        <SelectItem value="kimi-k2-instruct" className='py-3'>
+                          <div className='flex items-center gap-2 w-full'>
                             {modelData['kimi-k2-instruct'].logo}
-                            moonshotai/Kimi-K2-Instruct-0905
+                            <span className='text-sm'>moonshotai/Kimi-K2-Instruct-0905</span>
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -453,7 +458,7 @@ export default function PlaygroundPage() {
               {/* Fixed Cost Information */}
               <div className='absolute bottom-0 left-0 right-0'>
                 <div 
-                  className='mx-6 mr-3'
+                  className='mx-3'
                   style={{
                     borderRadius: '16px',
                     border: '4px solid #FFF',
@@ -471,9 +476,9 @@ export default function PlaygroundPage() {
 
             {/* Right Panel - Entire section wrapped in Card */}
             <Card className='flex-1 flex flex-col min-h-0'>
-              <CardContent className='flex-1 flex flex-col min-h-0 p-6 overflow-hidden'>
+              <CardContent className='flex-1 flex flex-col min-h-0 p-0 overflow-hidden'>
                 {/* System Prompt Section */}
-                <div className='flex-shrink-0 space-y-3'>
+                <div className='flex-shrink-0 space-y-3 p-6 pb-0'>
                   <div className='flex items-center justify-between'>
                     <h3 className='text-sm font-medium text-foreground'>
                       System Prompt
@@ -516,7 +521,7 @@ export default function PlaygroundPage() {
                 </div>
 
                 {/* Chat History */}
-                <div className='flex-1 flex flex-col mt-6 min-h-0'>
+                <div className='flex-1 flex flex-col mt-6 min-h-0 px-6'>
                   {chatHistory.length === 0 ? (
                     <div className='flex-1 flex items-center justify-center'>
                       <div className='text-center space-y-4 text-muted-foreground'>
@@ -565,7 +570,7 @@ export default function PlaygroundPage() {
                 </div>
 
                 {/* Message Input */}
-                <div className='pt-4 flex-shrink-0'>
+                <div className='pt-4 flex-shrink-0 px-6 pb-6'>
                   <div className='relative'>
                     <Textarea
                       placeholder="Find hiking boots for wide feet"

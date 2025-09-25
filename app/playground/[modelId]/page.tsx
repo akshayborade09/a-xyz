@@ -173,7 +173,7 @@ export default function PlaygroundPage() {
             {/* Left Sidebar */}
             <div className='w-80 flex-shrink-0 flex flex-col h-full relative'>
               {/* Scrollable Content */}
-              <div className='flex-1 space-y-3 p-4 pr-2 overflow-y-auto min-h-0 pb-16'>
+              <div className='flex-1 space-y-3 p-4 pr-2 overflow-y-auto min-h-0 pb-32'>
                 {/* Model Section */}
                 <div className='space-y-3'>
                   <div className='relative z-50'>
@@ -450,13 +450,13 @@ export default function PlaygroundPage() {
                   style={{
                     borderRadius: '16px',
                     border: '4px solid #FFF',
-                    background: 'linear-gradient(265deg, #FFF -13.17%, #F7F8FD 133.78%)',
+                    background: 'linear-gradient(265deg, #EBF4FF -13.17%, #E1F0FF 133.78%)',
                     boxShadow: '0px 8px 39.1px -9px rgba(0, 27, 135, 0.08)',
                     padding: '1.5rem',
                   }}
                 >
-                  <div className='text-sm text-muted-foreground'>
-                    Text generation will cost ${model.costPerToken.toFixed(3)} per 1000 tokens
+                  <div className='text-sm text-foreground'>
+                    Text generation will cost <span className='font-semibold text-gray-900'>₹{model.costPerToken.toFixed(3)}</span> per 1000 tokens
                   </div>
                 </div>
               </div>

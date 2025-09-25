@@ -219,8 +219,8 @@ export default function PlaygroundPage() {
                     {/* Pricing */}
                     <div className='space-y-1'>
                       <div className='flex items-center justify-between'>
-                        <span className='text-lg font-semibold text-gray-900'>₹{model.inputPrice}</span>
-                        <span className='text-lg font-semibold text-gray-900'>₹{model.outputPrice}</span>
+                        <span className='text-base font-semibold text-gray-900'>₹{model.inputPrice}</span>
+                        <span className='text-base font-semibold text-gray-900'>₹{model.outputPrice}</span>
                       </div>
                       <div className='flex items-center justify-between text-xs text-gray-500'>
                         <span>Per 1M Input Tokens</span>
@@ -243,7 +243,7 @@ export default function PlaygroundPage() {
                         <ExternalLink className='h-3 w-3' />
                       </button>
                       <span>|</span>
-                      <span>License: {model.license}</span>
+                      <span>{model.license}</span>
                     </div>
                   </div>
                 </div>
@@ -287,6 +287,7 @@ export default function PlaygroundPage() {
                 </div>
 
                 {/* Advanced Parameters */}
+                <div className='mt-6'>
                 <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
                   <CollapsibleTrigger className='flex items-center justify-between w-full text-sm text-muted-foreground hover:text-foreground'>
                     <span>Advanced parameters</span>
@@ -438,6 +439,7 @@ export default function PlaygroundPage() {
                     </Card>
                   </CollapsibleContent>
                 </Collapsible>
+                </div>
                 </div>
               </div>
 

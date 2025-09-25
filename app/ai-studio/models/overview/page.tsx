@@ -159,7 +159,7 @@ print(response.json())`;
               delay={2}
               colorFrom="#4CAF50"
               colorTo="#2196F3"
-              borderWidth={1.5}
+              borderWidth={2}
             />
           </div>
         </div>
@@ -181,7 +181,7 @@ print(response.json())`;
         {/* Model Cards Grid */}
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
           {/* Card 1 - OpenAI GPT-OSS 20B */}
-          <div className='bg-gradient-to-bl from-blue-100/50 via-white/80 to-white rounded-xl border border-blue-200 p-6 flex flex-col h-full'>
+          <div className='bg-gradient-to-bl from-slate-100/50 via-white/80 to-white rounded-xl border border-slate-200 p-6 flex flex-col h-full'>
             {/* Top Content - Flexible */}
             <div className='flex-1 flex flex-col'>
               {/* Provider Logo */}
@@ -259,7 +259,7 @@ print(response.json())`;
           </div>
 
           {/* Card 2 - Kimi K2-Instruct */}
-          <div className='bg-gradient-to-bl from-purple-100/50 via-white/80 to-white rounded-xl border border-purple-200 p-6 flex flex-col h-full'>
+          <div className='bg-gradient-to-bl from-slate-100/50 via-white/80 to-white rounded-xl border border-slate-200 p-6 flex flex-col h-full'>
             {/* Top Content - Flexible */}
             <div className='flex-1 flex flex-col'>
               {/* Provider Logo */}
@@ -338,7 +338,7 @@ print(response.json())`;
           </div>
 
           {/* Card 3 - Qwen3 Next */}
-          <div className='bg-gradient-to-bl from-emerald-100/50 via-white/80 to-white rounded-xl border border-emerald-200 p-6 flex flex-col h-full'>
+          <div className='bg-gradient-to-bl from-indigo-100/50 via-purple-50/30 to-white rounded-xl border border-indigo-200/60 p-6 flex flex-col h-full'>
             {/* Top Content - Flexible */}
             <div className='flex-1 flex flex-col'>
               {/* Provider Logo */}

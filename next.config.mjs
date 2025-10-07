@@ -45,6 +45,14 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/playground/:path*',
+        destination: '/playground/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -7,11 +7,13 @@ import { BorderBeam } from '@/components/ui/border-beam';
 import { useToast } from '@/hooks/use-toast';
 import { SetupCodeModal } from '@/components/modals/setup-code-modal';
 import { RequestNewModelModal } from '@/components/modals/request-new-model-modal';
+import { CreateApiKeyModal } from '@/components/modals/create-api-key-modal';
 
 export default function ModelsOverviewPage() {
   const { toast } = useToast();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isSetupCodeModalOpen, setIsSetupCodeModalOpen] = useState(false);
+  const [isCreateApiKeyModalOpen, setIsCreateApiKeyModalOpen] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState('');
 
   const codeSnippet = `import requests
@@ -113,6 +115,7 @@ print(response.json())`;
             <Button 
               size='lg' 
               className='bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-8 py-3'
+              onClick={() => setIsCreateApiKeyModalOpen(true)}
             >
               Get API key
             </Button>
@@ -514,6 +517,12 @@ print(response.json())`;
         open={isSetupCodeModalOpen}
         onClose={() => setIsSetupCodeModalOpen(false)}
         modelId={selectedModelId}
+      />
+
+      {/* Create API Key Modal */}
+      <CreateApiKeyModal
+        open={isCreateApiKeyModalOpen}
+        onClose={() => setIsCreateApiKeyModalOpen(false)}
       />
     </div>
   );

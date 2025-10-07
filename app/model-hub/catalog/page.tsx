@@ -9,6 +9,7 @@ import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Key } from 'lucide-react';
 import { SetupCodeModal } from '@/components/modals/setup-code-modal';
+import { CreateApiKeyModal } from '@/components/modals/create-api-key-modal';
 
 // Tab definitions for VercelTabs
 const tabs = [
@@ -24,6 +25,7 @@ export default function ModelCatalogPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const [isSetupCodeModalOpen, setIsSetupCodeModalOpen] = useState(false);
+  const [isCreateApiKeyModalOpen, setIsCreateApiKeyModalOpen] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState('');
 
   const handleCopyModelId = async (modelId: string) => {
@@ -51,7 +53,11 @@ export default function ModelCatalogPage() {
       title='Models'
       description='Explore our comprehensive library of AI models including text generation, embedding, audio processing, and computer vision models.'
       headerActions={
-        <Button variant='default' size='sm'>
+        <Button 
+          variant='default' 
+          size='sm'
+          onClick={() => setIsCreateApiKeyModalOpen(true)}
+        >
           Get API key
         </Button>
       }
@@ -414,6 +420,12 @@ export default function ModelCatalogPage() {
         open={isSetupCodeModalOpen}
         onClose={() => setIsSetupCodeModalOpen(false)}
         modelId={selectedModelId}
+      />
+
+      {/* Create API Key Modal */}
+      <CreateApiKeyModal
+        open={isCreateApiKeyModalOpen}
+        onClose={() => setIsCreateApiKeyModalOpen(false)}
       />
     </PageShell>
   );

@@ -5,8 +5,9 @@ import type { NextRequest } from 'next/server';
 function getAccessLevelFromRequest(
   request: NextRequest
 ): 'none' | 'limited' | 'full' {
-  // DEVELOPMENT: Temporarily allow access to Kubernetes routes without authentication
-  if (request.nextUrl.pathname.startsWith('/kubernetes')) {
+  // DEVELOPMENT: Temporarily allow access to Kubernetes and Playground routes without authentication
+  if (request.nextUrl.pathname.startsWith('/kubernetes') || 
+      request.nextUrl.pathname.startsWith('/playground')) {
     return 'full';
   }
 

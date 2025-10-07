@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,7 +13,7 @@ import { TextShimmer } from '@/components/ui/text-shimmer';
 import { GlowEffect } from '@/components/ui/glow-effect';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
-import { Mic, Upload, Copy, Loader2, ExternalLink, ChevronRight, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Mic, Upload, Copy, Loader2, ExternalLink, ChevronRight, ChevronDown, ChevronUp, X, Square } from 'lucide-react';
 
 interface SpeechToTextPlaygroundProps {
   model: {
@@ -74,6 +74,7 @@ export function SpeechToTextPlayground({
   const [isCostPopoverOpen, setIsCostPopoverOpen] = useState(false);
   const [showCostShimmer, setShowCostShimmer] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
 
   // Calculate cost based on audio duration
   const calculateCost = (durationInSeconds: number) => {
@@ -86,6 +87,37 @@ export function SpeechToTextPlayground({
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}m ${secs}s`;
+  };
+
+  // Format time for recording timer (MM:SS)
+  const formatRecordingTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Animated Waveform Component
+  const RecordingWaveform = () => {
+    const bars = 20;
+    return (
+      <div className='flex items-center gap-[2px] h-8'>
+        {Array.from({ length: bars }).map((_, i) => (
+          <motion.div
+            key={i}
+            className='w-[2px] bg-muted-foreground/40 rounded-full'
+            animate={{
+              height: ['8px', `${Math.random() * 24 + 8}px`, '8px'],
+            }}
+            transition={{
+              duration: 0.5 + Math.random() * 0.5,
+              repeat: Infinity,
+              ease: 'easeInOut',
+              delay: i * 0.05,
+            }}
+          />
+        ))}
+      </div>
+    );
   };
 
   // Handle file upload
@@ -153,26 +185,35 @@ export function SpeechToTextPlayground({
   const handleRecording = () => {
     if (!isRecording) {
       setIsRecording(true);
+      setRecordingTime(0);
       toast({
         title: 'Recording started',
         description: 'Speak into your microphone',
       });
-
-      // Mock: Stop recording after 3 seconds
-      setTimeout(() => {
-        setIsRecording(false);
-        const mockDuration = Math.floor(Math.random() * 60) + 10; // 10-70 seconds
-        setAudioDuration(mockDuration);
-        setAudioFile(new File([], 'recording.wav', { type: 'audio/wav' }));
-        toast({
-          title: 'Recording stopped',
-          description: `Duration: ${formatDuration(mockDuration)}`,
-        });
-      }, 3000);
     } else {
       setIsRecording(false);
+      setAudioDuration(recordingTime);
+      setAudioFile(new File([], 'recording.wav', { type: 'audio/wav' }));
+      toast({
+        title: 'Recording stopped',
+        description: `Duration: ${formatDuration(recordingTime)}`,
+      });
+      setRecordingTime(0);
     }
   };
+
+  // Timer effect for recording
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isRecording) {
+      interval = setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRecording]);
 
   // Handle transcription
   const handleTranscribe = async () => {
@@ -610,43 +651,58 @@ export function SpeechToTextPlayground({
                   {/* Single Row Layout - All elements horizontally aligned */}
                   {!audioFile ? (
                     <div className='flex items-center justify-between gap-6'>
-                      {/* Left: Recording Button */}
-                      <div className='flex flex-col items-center gap-2 flex-1'>
-                        <TooltipWrapper content={isRecording ? 'Stop recording' : 'Click to start speaking'}>
-                          <button
-                            onClick={handleRecording}
-                            onFocus={() => setIsInputFocused(true)}
-                            className={`flex items-center justify-center w-12 h-12 rounded-full transition-all flex-shrink-0 ${
-                              isRecording
-                                ? 'bg-red-500 hover:bg-red-600 animate-pulse'
-                                : 'bg-white border-2 border-border hover:border-[#10A554]'
-                            }`}
-                          >
-                            <Mic className={`h-5 w-5 ${isRecording ? 'text-white' : 'text-foreground'}`} />
-                          </button>
-                        </TooltipWrapper>
-                        <span className='text-xs text-muted-foreground text-center'>
-                          {isRecording ? 'Recording...' : 'Click to start speaking'}
-                        </span>
-                      </div>
+                      {/* Left: Recording Button or Recording Waveform */}
+                      {!isRecording ? (
+                        <div className='flex flex-col items-center gap-2 flex-1'>
+                          <TooltipWrapper content='Click to start speaking'>
+                            <button
+                              onClick={handleRecording}
+                              onFocus={() => setIsInputFocused(true)}
+                              className='flex items-center justify-center w-12 h-12 rounded-full transition-all flex-shrink-0 bg-white border-2 border-border hover:border-[#10A554]'
+                            >
+                              <Mic className='h-5 w-5 text-foreground' />
+                            </button>
+                          </TooltipWrapper>
+                          <span className='text-xs text-muted-foreground text-center'>
+                            Click to start speaking
+                          </span>
+                        </div>
+                      ) : (
+                        <div className='flex items-center gap-3 flex-1 bg-white rounded-full px-4 py-2 border-2 border-border'>
+                          <span className='text-sm font-mono font-medium text-foreground'>
+                            {formatRecordingTime(recordingTime)}
+                          </span>
+                          <RecordingWaveform />
+                          <TooltipWrapper content='Stop recording'>
+                            <button
+                              onClick={handleRecording}
+                              className='flex items-center justify-center w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 transition-all flex-shrink-0'
+                            >
+                              <Square className='h-4 w-4 text-white fill-white' />
+                            </button>
+                          </TooltipWrapper>
+                        </div>
+                      )}
 
                       {/* OR Divider */}
-                      <span className='text-sm text-muted-foreground/60 font-medium'>OR</span>
+                      {!isRecording && <span className='text-sm text-muted-foreground/60 font-medium'>OR</span>}
 
                       {/* Center: Upload Section */}
-                      <div className='flex flex-col items-center gap-2 flex-1'>
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          onFocus={() => setIsInputFocused(true)}
-                          className='flex items-center justify-center w-12 h-12 rounded-full border-2 border-border hover:border-[#10A554] transition-all bg-white'
-                        >
-                          <Upload className='h-5 w-5 text-foreground' />
-                        </button>
-                        <div className='text-center'>
-                          <p className='text-xs text-muted-foreground font-medium'>Upload File</p>
-                          <p className='text-xs text-muted-foreground/70'>WAV format • Max file size 5MB and below 16khz</p>
+                      {!isRecording && (
+                        <div className='flex flex-col items-center gap-2 flex-1'>
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            onFocus={() => setIsInputFocused(true)}
+                            className='flex items-center justify-center w-12 h-12 rounded-full border-2 border-border hover:border-[#10A554] transition-all bg-white'
+                          >
+                            <Upload className='h-5 w-5 text-foreground' />
+                          </button>
+                          <div className='text-center'>
+                            <p className='text-xs text-muted-foreground font-medium'>Upload File</p>
+                            <p className='text-xs text-muted-foreground/70'>WAV format • Max file size 5MB and below 16khz</p>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
                       {/* Right: Language Selector and Transcribe Button */}
                       <div className='flex flex-col gap-2 min-w-[280px]'>
@@ -752,3 +808,4 @@ export function SpeechToTextPlayground({
     </div>
   );
 }
+

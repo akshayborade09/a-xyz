@@ -610,42 +610,45 @@ export function SpeechToTextPlayground({
                   <div className='space-y-3'>
                     {/* Top Row: Recording and Upload buttons side by side */}
                     {!audioFile ? (
-                      <div className='flex items-center gap-4'>
-                        {/* Recording Button */}
-                        <TooltipWrapper content={isRecording ? 'Stop recording' : 'Tap to start speaking'}>
+                      <div className='flex items-center justify-between gap-4'>
+                        {/* Left Side: Recording Button */}
+                        <div className='flex items-center gap-3'>
+                          <TooltipWrapper content={isRecording ? 'Stop recording' : 'Click to start speaking'}>
+                            <button
+                              onClick={handleRecording}
+                              onFocus={() => setIsInputFocused(true)}
+                              className={`flex items-center justify-center w-10 h-10 rounded-full transition-all flex-shrink-0 ${
+                                isRecording
+                                  ? 'bg-red-500 hover:bg-red-600 animate-pulse'
+                                  : 'bg-[#10A554] hover:bg-[#0d8a45]'
+                              }`}
+                            >
+                              <Mic className='h-4 w-4 text-white' />
+                            </button>
+                          </TooltipWrapper>
+                          
+                          <span className='text-sm text-muted-foreground'>
+                            {isRecording ? 'Recording...' : 'Click to start speaking'}
+                          </span>
+
+                          <span className='text-sm text-muted-foreground/60'>OR</span>
+
+                          {/* Upload Button */}
                           <button
-                            onClick={handleRecording}
+                            onClick={() => fileInputRef.current?.click()}
                             onFocus={() => setIsInputFocused(true)}
-                            className={`flex items-center justify-center w-10 h-10 rounded-full transition-all flex-shrink-0 ${
-                              isRecording
-                                ? 'bg-red-500 hover:bg-red-600 animate-pulse'
-                                : 'bg-[#10A554] hover:bg-[#0d8a45]'
-                            }`}
+                            className='flex items-center gap-2 text-sm text-[#10A554] hover:text-[#0d8a45] font-medium'
                           >
-                            <Mic className='h-4 w-4 text-white' />
+                            <Upload className='h-4 w-4' />
+                            Upload File
                           </button>
-                        </TooltipWrapper>
-                        
-                        <span className='text-sm text-muted-foreground'>
-                          {isRecording ? 'Recording...' : 'Tap to start speaking'}
-                        </span>
+                        </div>
 
-                        {/* Vertical Divider */}
-                        <div className='h-8 w-px bg-border'></div>
-
-                        {/* Upload Button */}
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          onFocus={() => setIsInputFocused(true)}
-                          className='flex items-center gap-2 text-sm text-[#10A554] hover:text-[#0d8a45] font-medium'
-                        >
-                          <Upload className='h-4 w-4' />
-                          Upload File
-                        </button>
-
-                        <span className='text-xs text-muted-foreground ml-auto'>
-                          WAV • Max 5MB • 16khz
-                        </span>
+                        {/* Right Side: File Format Info */}
+                        <div className='text-xs text-muted-foreground text-right flex-shrink-0'>
+                          <div>Supports WAV format</div>
+                          <div>Max file size 5MB and below 16khz</div>
+                        </div>
                       </div>
                     ) : (
                       /* File Info Display - Horizontal */

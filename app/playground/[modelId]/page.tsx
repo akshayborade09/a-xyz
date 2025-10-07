@@ -21,7 +21,6 @@ import { ChatBubbleAvatar } from '@/components/ui/chat-bubble';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { motion } from 'framer-motion';
-import { SpeechToTextPlayground } from './components/speech-to-text-playground';
 import { 
   Copy, 
   ChevronDown, 
@@ -125,37 +124,17 @@ const quickActions = [
 
 export default function PlaygroundPage() {
   const params = useParams();
-  const modelId = params?.modelId as string;
+  const modelId = params.modelId as string;
   const { toast } = useToast();
   
-  // Debug logging
-  console.log('PlaygroundPage - modelId:', modelId);
-  console.log('PlaygroundPage - params:', params);
-  
-  // Get model info with fallback
+  // Get model info
   const initialModel = modelData[modelId as keyof typeof modelData] || modelData['qwen3-coder-480b'];
   
   // State management
-  const [selectedModel, setSelectedModel] = useState(modelId || 'qwen3-coder-480b');
-  const [isLoading, setIsLoading] = useState(!modelId);
+  const [selectedModel, setSelectedModel] = useState(modelId);
   
   // Get currently selected model data
   const model = modelData[selectedModel as keyof typeof modelData] || initialModel;
-  
-  // Handle case where modelId is not available
-  useEffect(() => {
-    if (modelId) {
-      setSelectedModel(modelId);
-      setIsLoading(false);
-    } else {
-      // If no modelId, redirect to default
-      window.location.href = '/playground/qwen3-coder-480b';
-    }
-  }, [modelId]);
-  
-  // Check if this is a speech-to-text model
-  const isSpeechToText = model.tags?.includes('Speech-to-Text');
-  
   const [temperature, setTemperature] = useState([1]);
   const [systemPrompt, setSystemPrompt] = useState('');
   const [message, setMessage] = useState('');
@@ -420,74 +399,10 @@ export default function PlaygroundPage() {
     }, 2000);
   };
 
-  // Show loading state if modelId is not available
-  if (isLoading) {
-    return (
-      <div className='flex items-center justify-center h-64'>
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4'></div>
-          <p className='text-muted-foreground'>Loading playground...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If it's a speech-to-text model, render the specialized playground
-  if (isSpeechToText) {
-    return (
-      <>
-        <PageShell
-          title={model.name}
-          description={model.description}
-          headerActions={
-            <div className='flex items-center gap-2'>
-              <Button 
-                variant='outline' 
-                size='sm'
-                onClick={() => setIsSetupCodeModalOpen(true)}
-              >
-                View code
-              </Button>
-              <Button 
-                variant='default' 
-                size='sm'
-                onClick={() => setIsCreateApiKeyModalOpen(true)}
-              >
-                Get API key
-              </Button>
-            </div>
-          }
-        >
-          <SpeechToTextPlayground
-            model={model}
-            selectedModel={selectedModel}
-            modelData={modelData}
-            onModelChange={setSelectedModel}
-            onOpenSetupCode={() => setIsSetupCodeModalOpen(true)}
-            onOpenCreateApiKey={() => setIsCreateApiKeyModalOpen(true)}
-          />
-        </PageShell>
-
-        {/* Shared Modals */}
-        <SetupCodeModal
-          open={isSetupCodeModalOpen}
-          onClose={() => setIsSetupCodeModalOpen(false)}
-          modelId={selectedModel}
-          onOpenCreateApiKey={() => setIsCreateApiKeyModalOpen(true)}
-        />
-
-        <CreateApiKeyModal
-          open={isCreateApiKeyModalOpen}
-          onClose={() => setIsCreateApiKeyModalOpen(false)}
-        />
-      </>
-    );
-  }
-
-  // Default text generation playground
   return (
-    <>
-      <PageShell
+    <div className='h-full'>
+      <div className='p-4'>
+        <PageShell
           title={model.name}
           description={model.description}
           headerActions={
@@ -1119,9 +1034,10 @@ export default function PlaygroundPage() {
                   </div>
                 </div>
               </CardContent>
-          </Card>
-        </div>
-      </PageShell>
+            </Card>
+          </div>
+        </PageShell>
+      </div>
 
       {/* Setup Code Modal */}
       <SetupCodeModal
@@ -1149,6 +1065,6 @@ export default function PlaygroundPage() {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

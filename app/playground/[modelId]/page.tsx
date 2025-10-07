@@ -21,7 +21,7 @@ import { ChatBubbleAvatar } from '@/components/ui/chat-bubble';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { motion } from 'framer-motion';
-import { SpeechToTextPlayground } from './components/speech-to-text-playground';
+import { SpeechToTextPlayground } from './playground-components/speech-to-text-playground';
 import { 
   Copy, 
   ChevronDown, 

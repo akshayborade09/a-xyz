@@ -610,7 +610,7 @@ export function SpeechToTextPlayground({
                   <div className='space-y-3'>
                     {/* Top Row: Recording and Upload buttons side by side */}
                     {!audioFile ? (
-                      <div className='flex items-center justify-between gap-4'>
+                      <div className='flex items-center justify-between gap-6'>
                         {/* Left Side: Recording Button */}
                         <div className='flex items-center gap-3'>
                           <TooltipWrapper content={isRecording ? 'Stop recording' : 'Click to start speaking'}>
@@ -630,10 +630,13 @@ export function SpeechToTextPlayground({
                           <span className='text-sm text-muted-foreground'>
                             {isRecording ? 'Recording...' : 'Click to start speaking'}
                           </span>
+                        </div>
 
-                          <span className='text-sm text-muted-foreground/60'>OR</span>
+                        {/* Center: OR */}
+                        <span className='text-sm text-muted-foreground/60 font-medium'>OR</span>
 
-                          {/* Upload Button */}
+                        {/* Right Side: Upload Button + File Format Info */}
+                        <div className='flex items-center gap-3'>
                           <button
                             onClick={() => fileInputRef.current?.click()}
                             onFocus={() => setIsInputFocused(true)}
@@ -642,12 +645,11 @@ export function SpeechToTextPlayground({
                             <Upload className='h-4 w-4' />
                             Upload File
                           </button>
-                        </div>
-
-                        {/* Right Side: File Format Info */}
-                        <div className='text-xs text-muted-foreground text-right flex-shrink-0'>
-                          <div>Supports WAV format</div>
-                          <div>Max file size 5MB and below 16khz</div>
+                          
+                          <div className='text-xs text-muted-foreground text-right flex-shrink-0'>
+                            <div>Supports WAV format</div>
+                            <div>Max file size 5MB and below 16khz</div>
+                          </div>
                         </div>
                       </div>
                     ) : (
@@ -680,7 +682,7 @@ export function SpeechToTextPlayground({
                     )}
 
                     {/* Bottom Row: Language Selector and Transcribe Button */}
-                    <div className='flex items-center gap-3 pt-2 border-t'>
+                    <div className='flex items-center gap-3'>
                       <div className='flex-1'>
                         <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
                           <SelectTrigger className='h-9' onFocus={() => setIsInputFocused(true)}>

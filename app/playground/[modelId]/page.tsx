@@ -2,6 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
+
+// Enable dynamic params and force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
 import { PageShell } from '@/components/page-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -423,14 +427,10 @@ export default function PlaygroundPage() {
   // Show loading state if modelId is not available
   if (isLoading) {
     return (
-      <div className='h-full'>
-        <div className='p-4'>
-          <div className='flex items-center justify-center h-64'>
-            <div className='text-center'>
-              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4'></div>
-              <p className='text-muted-foreground'>Loading playground...</p>
-            </div>
-          </div>
+      <div className='flex items-center justify-center h-64'>
+        <div className='text-center'>
+          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4'></div>
+          <p className='text-muted-foreground'>Loading playground...</p>
         </div>
       </div>
     );
@@ -439,9 +439,7 @@ export default function PlaygroundPage() {
   // If it's a speech-to-text model, render the specialized playground
   if (isSpeechToText) {
     return (
-      <div className='h-full'>
-        <div className='p-4'>
-          <PageShell
+      <PageShell
             title={model.name}
             description={model.description}
             headerActions={
@@ -472,7 +470,6 @@ export default function PlaygroundPage() {
               onOpenCreateApiKey={() => setIsCreateApiKeyModalOpen(true)}
             />
           </PageShell>
-        </div>
 
         {/* Shared Modals */}
         <SetupCodeModal
@@ -486,15 +483,14 @@ export default function PlaygroundPage() {
           open={isCreateApiKeyModalOpen}
           onClose={() => setIsCreateApiKeyModalOpen(false)}
         />
-      </div>
+      </>
     );
   }
 
   // Default text generation playground
   return (
-    <div className='h-full'>
-      <div className='p-4'>
-        <PageShell
+    <>
+      <PageShell
           title={model.name}
           description={model.description}
           headerActions={
@@ -1126,10 +1122,9 @@ export default function PlaygroundPage() {
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          </div>
-        </PageShell>
-      </div>
+          </Card>
+        </div>
+      </PageShell>
 
       {/* Setup Code Modal */}
       <SetupCodeModal
@@ -1157,6 +1152,6 @@ export default function PlaygroundPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

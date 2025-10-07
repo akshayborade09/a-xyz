@@ -609,9 +609,9 @@ export function SpeechToTextPlayground({
                   
                   {/* Single Row Layout - All elements horizontally aligned */}
                   {!audioFile ? (
-                    <div className='flex items-center gap-6'>
+                    <div className='flex items-center justify-between gap-6'>
                       {/* Left: Recording Button */}
-                      <div className='flex flex-col items-center gap-2'>
+                      <div className='flex flex-col items-center gap-2 flex-1'>
                         <TooltipWrapper content={isRecording ? 'Stop recording' : 'Click to start speaking'}>
                           <button
                             onClick={handleRecording}
@@ -644,8 +644,7 @@ export function SpeechToTextPlayground({
                         </button>
                         <div className='text-center'>
                           <p className='text-xs text-muted-foreground font-medium'>Upload File</p>
-                          <p className='text-xs text-muted-foreground/70'>Supports WAV format</p>
-                          <p className='text-xs text-muted-foreground/70'>Max file size 5MB and below 16khz</p>
+                          <p className='text-xs text-muted-foreground/70'>WAV format • Max file size 5MB and below 16khz</p>
                         </div>
                       </div>
 

@@ -318,153 +318,154 @@ export function SpeechToTextPlayground({
         )}
       </div>
 
-      {/* MAIN CONTENT */}
-      <div className='space-y-6'>
-        {/* Output Card - TOP */}
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between'>
-            <CardTitle>Output</CardTitle>
-            {transcribedText && (
-              <TooltipWrapper content='Copy transcription'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={handleCopyTranscription}
-                >
-                  <Copy className='h-4 w-4' />
-                </Button>
-              </TooltipWrapper>
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className='min-h-[300px] p-4 bg-muted/30 rounded-lg text-sm'>
-              {isTranscribing ? (
-                <div className='flex items-center justify-center h-full'>
-                  <Loader2 className='h-6 w-6 animate-spin text-muted-foreground' />
-                  <span className='ml-2 text-muted-foreground'>Transcribing...</span>
-                </div>
-              ) : transcribedText ? (
-                <p className='whitespace-pre-wrap'>{transcribedText}</p>
-              ) : (
-                <p className='text-muted-foreground'>
-                  Your output text will be generated here
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Input Card - BOTTOM */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Input</CardTitle>
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            {/* Recording Button */}
-            <div className='flex items-center gap-4'>
-              <TooltipWrapper content={isRecording ? 'Stop recording' : 'Tap to start speaking'}>
-                <button
-                  onClick={handleRecording}
-                  className={`flex items-center justify-center w-12 h-12 rounded-full transition-all ${
-                    isRecording
-                      ? 'bg-red-500 hover:bg-red-600 animate-pulse'
-                      : 'bg-[#10A554] hover:bg-[#0d8a45]'
-                  }`}
-                >
-                  <Mic className='h-5 w-5 text-white' />
-                </button>
-              </TooltipWrapper>
-              <span className='text-sm text-muted-foreground'>
-                {isRecording ? 'Recording...' : 'Tap to start speaking'}
-              </span>
-            </div>
-
-            {/* OR Divider */}
-            <div className='relative'>
-              <div className='absolute inset-0 flex items-center'>
-                <div className='w-full border-t border-border'></div>
+      {/* MAIN CONTENT - Same design as text generation playground */}
+      <Card className='flex-1 flex flex-col min-h-0 relative overflow-hidden' style={{ background: 'linear-gradient(180deg, #8e92981a 0%, #ffffff 100%)' }}>
+        <CardContent className='flex-1 flex flex-col min-h-0 p-0 overflow-hidden relative'>
+          {/* Output Section - Scrollable */}
+          <div className='flex-1 overflow-y-auto p-6'>
+            <div className='space-y-4'>
+              <div className='flex items-center justify-between'>
+                <h3 className='text-sm font-medium text-foreground'>Output</h3>
+                {transcribedText && (
+                  <TooltipWrapper content='Copy transcription'>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={handleCopyTranscription}
+                      className='h-6 w-6 p-0'
+                    >
+                      <Copy className='h-3 w-3' />
+                    </Button>
+                  </TooltipWrapper>
+                )}
               </div>
-              <div className='relative flex justify-center text-xs uppercase'>
-                <span className='bg-background px-2 text-muted-foreground'>OR</span>
-              </div>
-            </div>
-
-            {/* File Upload Area */}
-            <div
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
-                isDragging
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <input
-                ref={fileInputRef}
-                type='file'
-                accept='.wav'
-                onChange={handleFileChange}
-                className='hidden'
-              />
-              <Upload className='h-8 w-8 mx-auto mb-3 text-muted-foreground' />
-              <button className='text-[#10A554] hover:text-[#0d8a45] font-medium underline mb-2'>
-                Upload File
-              </button>
-              <p className='text-sm text-muted-foreground'>
-                Supports WAV format
-              </p>
-              <p className='text-sm text-muted-foreground'>
-                Max file size 5MB and below 16khz
-              </p>
-              {audioFile && (
-                <div className='mt-4 p-3 bg-muted rounded-lg'>
-                  <p className='text-sm font-medium'>{audioFile.name}</p>
-                  <p className='text-xs text-muted-foreground mt-1'>
-                    Duration: {formatDuration(audioDuration)}
+              
+              <div className='min-h-[400px] p-4 bg-white rounded-lg border text-sm'>
+                {isTranscribing ? (
+                  <div className='flex items-center justify-center h-full'>
+                    <Loader2 className='h-6 w-6 animate-spin text-muted-foreground' />
+                    <span className='ml-2 text-muted-foreground'>Transcribing...</span>
+                  </div>
+                ) : transcribedText ? (
+                  <p className='whitespace-pre-wrap'>{transcribedText}</p>
+                ) : (
+                  <p className='text-muted-foreground'>
+                    Your output text will be generated here
                   </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Input Section - Sticky at bottom with highlight */}
+          <div className='flex-shrink-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
+            <div className='p-6 space-y-4'>
+              <h3 className='text-sm font-medium text-foreground'>Input</h3>
+              
+              {/* Recording Button */}
+              <div className='flex items-center gap-4'>
+                <TooltipWrapper content={isRecording ? 'Stop recording' : 'Tap to start speaking'}>
+                  <button
+                    onClick={handleRecording}
+                    className={`flex items-center justify-center w-12 h-12 rounded-full transition-all ${
+                      isRecording
+                        ? 'bg-red-500 hover:bg-red-600 animate-pulse'
+                        : 'bg-[#10A554] hover:bg-[#0d8a45]'
+                    }`}
+                  >
+                    <Mic className='h-5 w-5 text-white' />
+                  </button>
+                </TooltipWrapper>
+                <span className='text-sm text-muted-foreground'>
+                  {isRecording ? 'Recording...' : 'Tap to start speaking'}
+                </span>
+              </div>
+
+              {/* OR Divider */}
+              <div className='relative'>
+                <div className='absolute inset-0 flex items-center'>
+                  <div className='w-full border-t border-border'></div>
                 </div>
-              )}
-            </div>
+                <div className='relative flex justify-center text-xs uppercase'>
+                  <span className='bg-background px-2 text-muted-foreground'>OR</span>
+                </div>
+              </div>
 
-            {/* Language Selector */}
-            <div className='space-y-2'>
-              <label className='text-sm font-medium'>
-                Please select the target language
-              </label>
-              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                <SelectTrigger>
-                  <SelectValue placeholder='Select a language' />
-                </SelectTrigger>
-                <SelectContent>
-                  {languages.map((lang) => (
-                    <SelectItem key={lang.value} value={lang.value}>
-                      {lang.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {/* File Upload Area */}
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+                  isDragging
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/50'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  ref={fileInputRef}
+                  type='file'
+                  accept='.wav'
+                  onChange={handleFileChange}
+                  className='hidden'
+                />
+                <Upload className='h-6 w-6 mx-auto mb-2 text-muted-foreground' />
+                <button className='text-[#10A554] hover:text-[#0d8a45] font-medium underline mb-1 text-sm'>
+                  Upload File
+                </button>
+                <p className='text-xs text-muted-foreground'>
+                  Supports WAV format • Max 5MB • Below 16khz
+                </p>
+                {audioFile && (
+                  <div className='mt-3 p-2 bg-muted rounded-lg'>
+                    <p className='text-sm font-medium'>{audioFile.name}</p>
+                    <p className='text-xs text-muted-foreground mt-1'>
+                      Duration: {formatDuration(audioDuration)}
+                    </p>
+                  </div>
+                )}
+              </div>
 
-            {/* Transcribe Button */}
-            <Button
-              onClick={handleTranscribe}
-              disabled={!audioFile || !selectedLanguage || isTranscribing}
-              className='w-full'
-            >
-              {isTranscribing ? (
-                <>
-                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                  Transcribing...
-                </>
-              ) : (
-                'Transcribe'
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+              {/* Language Selector and Transcribe Button - Side by side */}
+              <div className='flex items-end gap-3'>
+                <div className='flex-1 space-y-2'>
+                  <label className='text-sm font-medium'>
+                    Target language
+                  </label>
+                  <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select a language' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {languages.map((lang) => (
+                        <SelectItem key={lang.value} value={lang.value}>
+                          {lang.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button
+                  onClick={handleTranscribe}
+                  disabled={!audioFile || !selectedLanguage || isTranscribing}
+                  className='px-8'
+                >
+                  {isTranscribing ? (
+                    <>
+                      <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                      Transcribing...
+                    </>
+                  ) : (
+                    'Transcribe'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

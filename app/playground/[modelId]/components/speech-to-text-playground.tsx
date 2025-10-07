@@ -13,7 +13,7 @@ import { TextShimmer } from '@/components/ui/text-shimmer';
 import { GlowEffect } from '@/components/ui/glow-effect';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
-import { Mic, Upload, Copy, Loader2, ExternalLink, ChevronRight, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Mic, Upload, Copy, Loader2, ExternalLink, ChevronRight, ChevronDown, ChevronUp, X, FileText } from 'lucide-react';
 
 interface SpeechToTextPlaygroundProps {
   model: {
@@ -543,7 +543,8 @@ export function SpeechToTextPlayground({
                   <p className='whitespace-pre-wrap'>{transcribedText}</p>
                 </div>
               ) : (
-                <div className='flex items-center justify-center min-h-[400px]'>
+                <div className='flex flex-col items-center justify-center min-h-[400px] gap-3'>
+                  <FileText className='h-12 w-12 text-muted-foreground/40' />
                   <p className='text-muted-foreground'>
                     Your output text will be generated here
                   </p>

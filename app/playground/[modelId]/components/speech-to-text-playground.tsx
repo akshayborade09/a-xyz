@@ -336,6 +336,7 @@ export function SpeechToTextPlayground({
 
           {/* Parameters Section - Hidden for speech-to-text model */}
           {/* NOTE: Parameters are not applicable for Krutrim-Dhwani speech-to-text model */}
+        </div>
 
         {/* Fixed Cost Information - Only show when there's a cost */}
         {totalCost > 0 && (

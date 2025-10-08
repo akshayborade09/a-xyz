@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { GlowEffect } from '@/components/ui/glow-effect';
+import { TextShimmer } from '@/components/ui/text-shimmer';
 import { 
   Volume2, 
   Download, 
@@ -57,6 +58,7 @@ export function TextToSpeechPlayground({
   const [selectedVoice, setSelectedVoice] = useState('female');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [totalCost, setTotalCost] = useState(0);
+  const [showCostShimmer, setShowCostShimmer] = useState(false);
   const [audioMetrics, setAudioMetrics] = useState<{
     ttft: number;
     latency: number;
@@ -127,6 +129,8 @@ export function TextToSpeechPlayground({
       
       setAudioMetrics(metrics);
       setTotalCost(prev => prev + metrics.cost);
+      setShowCostShimmer(true);
+      setTimeout(() => setShowCostShimmer(false), 2000);
       
       // For demo, we'll use a placeholder audio URL
       // In production, this would be the generated audio from the API
@@ -274,21 +278,26 @@ export function TextToSpeechPlayground({
 
         {/* Total Cost Card - Fixed at bottom, only show after audio is generated */}
         {generatedAudio && totalCost > 0 && (
-          <div className='absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4'>
-            <Card className='border-gray-200'>
-              <CardContent className='p-4'>
-                <div className='space-y-2'>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-sm font-medium text-gray-600'>Total cost</span>
-                    <Sparkles className='w-4 h-4 text-yellow-500' />
-                  </div>
-                  <div className='text-2xl font-semibold'>₹{totalCost.toFixed(6)}</div>
-                  <div className='text-xs text-muted-foreground'>
-                    Estimated cost for this session
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div
+            className='absolute bottom-0 left-0 right-0'
+            style={{
+              background: 'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.8) 20%, rgba(255,255,255,0.95) 100%)',
+              backdropFilter: 'blur(8px)',
+              borderTop: '1px solid rgba(0,0,0,0.06)',
+              padding: '1.5rem',
+            }}
+          >
+            <div className='flex items-center justify-between w-full'>
+              <div className='text-sm text-foreground flex items-center gap-1'>
+                <span>Total cost:</span>
+                {showCostShimmer ? (
+                  <TextShimmer duration={1.5} className='font-semibold text-sm inline-block'>{`₹${totalCost.toFixed(6)}`}</TextShimmer>
+                ) : (
+                  <span className='font-semibold text-gray-900'>₹{totalCost.toFixed(6)}</span>
+                )}
+              </div>
+              <Sparkles className='w-4 h-4 text-yellow-500' />
+            </div>
           </div>
         )}
       </div>
@@ -381,14 +390,11 @@ export function TextToSpeechPlayground({
 
                   {/* Metrics - Below audio player */}
                   {audioMetrics && (
-                    <div className='text-xs text-gray-600 flex items-center gap-3 flex-wrap'>
-                      <span>TTFT: {audioMetrics.ttft} ms</span>
-                      <span>|</span>
-                      <span>Latency: {audioMetrics.latency} ms</span>
-                      <span>|</span>
-                      <span>TPS: {audioMetrics.tps}</span>
-                      <span>|</span>
-                      <span>Estimated Cost: ₹{audioMetrics.cost.toFixed(6)}</span>
+                    <div className='bg-muted/50 rounded-md px-3 py-1.5 text-xs text-muted-foreground'>
+                      <span className='font-medium'>TTFT:</span> {audioMetrics.ttft} ms <span className='mx-1'>|</span>
+                      <span className='font-medium'>Latency:</span> {audioMetrics.latency} ms <span className='mx-1'>|</span>
+                      <span className='font-medium'>TPS:</span> {audioMetrics.tps} <span className='mx-1'>|</span>
+                      <span className='font-medium'>Estimated Cost:</span> ₹{audioMetrics.cost.toFixed(6)}
                     </div>
                   )}
                 </div>

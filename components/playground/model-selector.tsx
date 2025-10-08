@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, cloneElement, isValidElement } from 'react';
 import { Search, Check, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
@@ -13,6 +13,16 @@ interface ModelSelectorProps {
     logo: React.ReactNode;
     [key: string]: any;
   }>;
+}
+
+// Helper function to make SVG IDs unique to avoid conflicts
+function makeLogoUnique(logo: React.ReactNode, uniqueSuffix: string): React.ReactNode {
+  if (!isValidElement(logo)) return logo;
+  
+  // Clone the SVG element with a unique key
+  return cloneElement(logo as React.ReactElement, {
+    key: uniqueSuffix,
+  });
 }
 
 export function ModelSelector({ value, onChange, modelData }: ModelSelectorProps) {
@@ -57,7 +67,7 @@ export function ModelSelector({ value, onChange, modelData }: ModelSelectorProps
         className='w-full h-auto min-h-[40px] py-3 px-3 flex items-center justify-between border border-input bg-background rounded-md hover:bg-accent hover:text-accent-foreground transition-colors'
       >
         <div className='flex items-center gap-2 w-full'>
-          {selectedModel?.logo}
+          {makeLogoUnique(selectedModel?.logo, `selected-${value}`)}
           <span className='truncate text-left flex-1 text-sm'>{selectedModel?.name}</span>
         </div>
         <ChevronDown className='h-4 w-4 opacity-50 flex-shrink-0 ml-2' />
@@ -94,7 +104,7 @@ export function ModelSelector({ value, onChange, modelData }: ModelSelectorProps
                   className='w-full flex items-center justify-between px-2 py-3 text-sm hover:bg-accent hover:text-accent-foreground rounded-sm transition-colors'
                 >
                   <div className='flex items-center gap-2 w-full'>
-                    {model.logo}
+                    {makeLogoUnique(model.logo, `dropdown-${modelId}`)}
                     <div className='flex flex-col items-start flex-1'>
                       <span className='font-medium truncate'>{model.name}</span>
                       <span className='text-xs text-muted-foreground'>{model.provider}</span>

@@ -77,40 +77,38 @@ export default function KrutrimDhwaniPage() {
   const model = modelData['krutrim-dhwani'];
 
   return (
-    <div className='h-full'>
-      <div className='p-4'>
-        <PageShell
-          title={model.name}
-          description={model.description}
-          headerActions={
-            <div className='flex items-center gap-2'>
-              <Button 
-                variant='outline' 
-                size='sm'
-                onClick={() => setIsSetupCodeModalOpen(true)}
-              >
-                View code
-              </Button>
-              <Button 
-                variant='default' 
-                size='sm'
-                onClick={() => setIsCreateApiKeyModalOpen(true)}
-              >
-                Get API key
-              </Button>
-            </div>
-          }
-        >
-          <SpeechToTextPlayground
-            model={model}
-            selectedModel={selectedModel}
-            modelData={allModelData}
-            onModelChange={setSelectedModel}
-            onOpenSetupCode={() => setIsSetupCodeModalOpen(true)}
-            onOpenCreateApiKey={() => setIsCreateApiKeyModalOpen(true)}
-          />
-        </PageShell>
-      </div>
+    <>
+      <PageShell
+        title={model.name}
+        description={model.description}
+        headerActions={
+          <div className='flex items-center gap-2'>
+            <Button 
+              variant='outline' 
+              size='sm'
+              onClick={() => setIsSetupCodeModalOpen(true)}
+            >
+              View code
+            </Button>
+            <Button 
+              variant='default' 
+              size='sm'
+              onClick={() => setIsCreateApiKeyModalOpen(true)}
+            >
+              Get API key
+            </Button>
+          </div>
+        }
+      >
+        <SpeechToTextPlayground
+          model={model}
+          selectedModel={selectedModel}
+          modelData={allModelData}
+          onModelChange={setSelectedModel}
+          onOpenSetupCode={() => setIsSetupCodeModalOpen(true)}
+          onOpenCreateApiKey={() => setIsCreateApiKeyModalOpen(true)}
+        />
+      </PageShell>
 
       {/* Modals */}
       <SetupCodeModal
@@ -124,7 +122,7 @@ export default function KrutrimDhwaniPage() {
         open={isCreateApiKeyModalOpen}
         onClose={() => setIsCreateApiKeyModalOpen(false)}
       />
-    </div>
+    </>
   );
 }
 

@@ -400,30 +400,29 @@ export default function PlaygroundPage() {
   };
 
   return (
-    <div className='h-full'>
-      <div className='p-4'>
-        <PageShell
-          title={model.name}
-          description={model.description}
-          headerActions={
-            <div className='flex items-center gap-2'>
-              <Button 
-                variant='outline' 
-                size='sm'
-                onClick={() => setIsSetupCodeModalOpen(true)}
-              >
-                View code
-              </Button>
-              <Button 
-                variant='default' 
-                size='sm'
-                onClick={() => setIsCreateApiKeyModalOpen(true)}
-              >
-                Get API key
-              </Button>
-            </div>
-          }
-        >
+    <>
+      <PageShell
+        title={model.name}
+        description={model.description}
+        headerActions={
+          <div className='flex items-center gap-2'>
+            <Button 
+              variant='outline' 
+              size='sm'
+              onClick={() => setIsSetupCodeModalOpen(true)}
+            >
+              View code
+            </Button>
+            <Button 
+              variant='default' 
+              size='sm'
+              onClick={() => setIsCreateApiKeyModalOpen(true)}
+            >
+              Get API key
+            </Button>
+          </div>
+        }
+      >
           <div className='flex gap-6 h-[calc(100vh-280px)]'>
             {/* Left Sidebar */}
             <div className='w-80 flex-shrink-0 flex flex-col h-full relative'>
@@ -1037,7 +1036,6 @@ export default function PlaygroundPage() {
             </Card>
           </div>
         </PageShell>
-      </div>
 
       {/* Setup Code Modal */}
       <SetupCodeModal
@@ -1065,6 +1063,6 @@ export default function PlaygroundPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

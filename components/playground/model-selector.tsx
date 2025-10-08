@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, cloneElement, isValidElement } from 'react';
+import React, { useState, useRef, useEffect, cloneElement, isValidElement } from 'react';
 import { Search, Check, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
@@ -15,14 +15,47 @@ interface ModelSelectorProps {
   }>;
 }
 
-// Helper function to make SVG IDs unique to avoid conflicts
+// Helper function to make SVG gradient IDs unique to avoid conflicts
 function makeLogoUnique(logo: React.ReactNode, uniqueSuffix: string): React.ReactNode {
   if (!isValidElement(logo)) return logo;
   
-  // Clone the SVG element with a unique key
-  return cloneElement(logo as React.ReactElement, {
-    key: uniqueSuffix,
+  const logoElement = logo as React.ReactElement;
+  
+  // Deep clone the SVG and modify gradient IDs
+  const clonedChildren = React.Children.map(logoElement.props.children, (child: any) => {
+    if (!isValidElement(child)) return child;
+    
+    // If it's a defs element containing gradients, update gradient IDs
+    if (child.type === 'defs') {
+      const defsChildren = React.Children.map(child.props.children, (defsChild: any) => {
+        if (!isValidElement(defsChild)) return defsChild;
+        
+        // Update linearGradient or radialGradient IDs
+        if (defsChild.type === 'linearGradient' || defsChild.type === 'radialGradient') {
+          const oldId = defsChild.props.id;
+          const newId = `${oldId}-${uniqueSuffix}`;
+          return cloneElement(defsChild, { id: newId });
+        }
+        return defsChild;
+      });
+      
+      return cloneElement(child, {}, defsChildren);
+    }
+    
+    // If it's a path or other element using gradient fill, update the reference
+    if (child.props?.fill?.startsWith('url(#')) {
+      const match = child.props.fill.match(/url\(#([^)]+)\)/);
+      if (match) {
+        const oldId = match[1];
+        const newFill = `url(#${oldId}-${uniqueSuffix})`;
+        return cloneElement(child, { fill: newFill });
+      }
+    }
+    
+    return child;
   });
+  
+  return cloneElement(logoElement, { key: uniqueSuffix }, clonedChildren);
 }
 
 export function ModelSelector({ value, onChange, modelData }: ModelSelectorProps) {

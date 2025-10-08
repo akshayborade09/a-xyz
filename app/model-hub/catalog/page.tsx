@@ -10,6 +10,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Search, Key } from 'lucide-react';
 import { SetupCodeModal } from '@/components/modals/setup-code-modal';
 import { CreateApiKeyModal } from '@/components/modals/create-api-key-modal';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Tab definitions for VercelTabs
 const tabs = [
@@ -27,6 +34,13 @@ export default function ModelCatalogPage() {
   const [isSetupCodeModalOpen, setIsSetupCodeModalOpen] = useState(false);
   const [isCreateApiKeyModalOpen, setIsCreateApiKeyModalOpen] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState('');
+  
+  // Filter states
+  const [modelSizeFilter, setModelSizeFilter] = useState('all');
+  const [providerFilter, setProviderFilter] = useState('all');
+  const [pricingFilter, setPricingFilter] = useState('all');
+  const [contextLengthFilter, setContextLengthFilter] = useState('all');
+  const [recentlyAddedFilter, setRecentlyAddedFilter] = useState('all');
 
   const handleCopyModelId = async (modelId: string) => {
     try {
@@ -75,15 +89,94 @@ export default function ModelCatalogPage() {
         <div className='space-y-6'>
           {/* Search and filters */}
           <div className='space-y-4'>
-            {/* Search bar */}
-            <div className='relative'>
-              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-              <Input
-                placeholder='Name, provider or tag'
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className='pl-10'
-              />
+            {/* Search bar and filter dropdowns in same row */}
+            <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+              {/* Search bar */}
+              <div className='relative w-full lg:w-96'>
+                <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                <Input
+                  placeholder='Name, provider or tag'
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className='pl-10 h-9'
+                />
+              </div>
+
+              {/* Filter dropdowns */}
+              <div className='flex flex-wrap items-center gap-2'>
+                {/* Model Size Filter */}
+                <Select value={modelSizeFilter} onValueChange={setModelSizeFilter}>
+                  <SelectTrigger className='w-[140px] h-9'>
+                    <SelectValue placeholder='Model Size' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Sizes</SelectItem>
+                    <SelectItem value='small'>Small (&lt;10B)</SelectItem>
+                    <SelectItem value='medium'>Medium (10B-50B)</SelectItem>
+                    <SelectItem value='large'>Large (50B-100B)</SelectItem>
+                    <SelectItem value='xlarge'>X-Large (100B+)</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Provider Filter */}
+                <Select value={providerFilter} onValueChange={setProviderFilter}>
+                  <SelectTrigger className='w-[140px] h-9'>
+                    <SelectValue placeholder='Provider' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Providers</SelectItem>
+                    <SelectItem value='openai'>OpenAI</SelectItem>
+                    <SelectItem value='krutrim'>Krutrim</SelectItem>
+                    <SelectItem value='moonshot'>MoonshotAI</SelectItem>
+                    <SelectItem value='qwen'>Qwen</SelectItem>
+                    <SelectItem value='anthropic'>Anthropic</SelectItem>
+                    <SelectItem value='meta'>Meta</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Pricing Filter */}
+                <Select value={pricingFilter} onValueChange={setPricingFilter}>
+                  <SelectTrigger className='w-[140px] h-9'>
+                    <SelectValue placeholder='Pricing' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Pricing</SelectItem>
+                    <SelectItem value='free'>Free</SelectItem>
+                    <SelectItem value='low'>Low (₹0-10/1M)</SelectItem>
+                    <SelectItem value='medium'>Medium (₹10-50/1M)</SelectItem>
+                    <SelectItem value='high'>High (₹50-100/1M)</SelectItem>
+                    <SelectItem value='premium'>Premium (₹100+/1M)</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Context Length Filter */}
+                <Select value={contextLengthFilter} onValueChange={setContextLengthFilter}>
+                  <SelectTrigger className='w-[150px] h-9'>
+                    <SelectValue placeholder='Context Length' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Context</SelectItem>
+                    <SelectItem value='4k'>4K tokens</SelectItem>
+                    <SelectItem value='8k'>8K tokens</SelectItem>
+                    <SelectItem value='16k'>16K tokens</SelectItem>
+                    <SelectItem value='32k'>32K tokens</SelectItem>
+                    <SelectItem value='128k'>128K+ tokens</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Recently Added Filter */}
+                <Select value={recentlyAddedFilter} onValueChange={setRecentlyAddedFilter}>
+                  <SelectTrigger className='w-[150px] h-9'>
+                    <SelectValue placeholder='Recently Added' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Time</SelectItem>
+                    <SelectItem value='7days'>Last 7 days</SelectItem>
+                    <SelectItem value='30days'>Last 30 days</SelectItem>
+                    <SelectItem value='90days'>Last 90 days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

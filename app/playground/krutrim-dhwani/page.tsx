@@ -214,6 +214,7 @@ export default function KrutrimDhwaniPage() {
           onOpenCreateApiKey={() => setIsCreateApiKeyModalOpen(true)}
           showCreditWarning={!hasCredits}
           onAddCredits={() => setIsAddCreditsModalOpen(true)}
+          disabled={!hasCredits}
         />
       </PageShell>
 

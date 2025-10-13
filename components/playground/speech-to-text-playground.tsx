@@ -36,6 +36,7 @@ interface SpeechToTextPlaygroundProps {
   onOpenCreateApiKey: () => void;
   showCreditWarning?: boolean;
   onAddCredits?: () => void;
+  disabled?: boolean;
 }
 
 const languages = [
@@ -62,6 +63,7 @@ export function SpeechToTextPlayground({
   onOpenCreateApiKey,
   showCreditWarning = false,
   onAddCredits,
+  disabled = false,
 }: SpeechToTextPlaygroundProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -477,7 +479,7 @@ export function SpeechToTextPlayground({
                 <motion.div
                   className="absolute inset-0"
                   animate={{
-                    opacity: isInputFocused || audioFile ? 0.35 : 0.2,
+                    opacity: disabled ? 0.1 : (isInputFocused || audioFile ? 0.35 : 0.2),
                     scale: isInputFocused || audioFile ? 1.03 : 1.02,
                   }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -493,18 +495,18 @@ export function SpeechToTextPlayground({
 
                 {/* Input Container */}
                 <motion.div
-                  className='relative w-full bg-white rounded-[24px] p-4 shadow-[0_2px_8px_0_rgba(0,0,0,0.08)]'
+                  className={`relative w-full bg-white rounded-[24px] p-4 shadow-[0_2px_8px_0_rgba(0,0,0,0.08)] ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                   animate={{
-                    boxShadow: isInputFocused || audioFile 
+                    boxShadow: disabled ? "0 2px 8px 0 rgba(0,0,0,0.08)" : (isInputFocused || audioFile 
                       ? "0 8px 32px 0 rgba(0,0,0,0.16)" 
-                      : "0 2px 8px 0 rgba(0,0,0,0.08)"
+                      : "0 2px 8px 0 rgba(0,0,0,0.08)")
                   }}
                   transition={{ type: "spring", stiffness: 120, damping: 18 }}
-                  onFocus={() => setIsInputFocused(true)}
+                  onFocus={() => !disabled && setIsInputFocused(true)}
                   onBlur={() => setIsInputFocused(false)}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
+                  onDragOver={!disabled ? handleDragOver : undefined}
+                  onDragLeave={!disabled ? handleDragLeave : undefined}
+                  onDrop={!disabled ? handleDrop : undefined}
                 >
                   <input
                     ref={fileInputRef}
@@ -521,11 +523,12 @@ export function SpeechToTextPlayground({
                       <div className='flex items-center gap-3'>
                         {!isRecording ? (
                           <>
-                            <TooltipWrapper content='Click to start recording'>
+                            <TooltipWrapper content={disabled ? 'Add credits to use playground' : 'Click to start recording'}>
                               <button
-                                onClick={handleRecording}
-                                onFocus={() => setIsInputFocused(true)}
-                                className='flex items-center justify-center w-12 h-12 rounded-full transition-all flex-shrink-0 bg-white border-2 border-border hover:border-[#10A554]'
+                                onClick={disabled ? undefined : handleRecording}
+                                onFocus={() => !disabled && setIsInputFocused(true)}
+                                disabled={disabled}
+                                className={`flex items-center justify-center w-12 h-12 rounded-full transition-all flex-shrink-0 bg-white border-2 border-border ${disabled ? 'cursor-not-allowed opacity-50' : 'hover:border-[#10A554]'}`}
                               >
                                 <Mic className='h-5 w-5 text-foreground' />
                               </button>
@@ -558,11 +561,12 @@ export function SpeechToTextPlayground({
                       {/* Center: Upload Section */}
                       {!isRecording && (
                         <div className='flex items-center gap-3'>
-                          <TooltipWrapper content='Upload audio file'>
+                          <TooltipWrapper content={disabled ? 'Add credits to use playground' : 'Upload audio file'}>
                             <button
-                              onClick={() => fileInputRef.current?.click()}
-                              onFocus={() => setIsInputFocused(true)}
-                              className='flex items-center justify-center w-12 h-12 rounded-full border-2 border-border hover:border-[#10A554] transition-all bg-white flex-shrink-0'
+                              onClick={disabled ? undefined : () => fileInputRef.current?.click()}
+                              onFocus={() => !disabled && setIsInputFocused(true)}
+                              disabled={disabled}
+                              className={`flex items-center justify-center w-12 h-12 rounded-full border-2 border-border transition-all bg-white flex-shrink-0 ${disabled ? 'cursor-not-allowed opacity-50' : 'hover:border-[#10A554]'}`}
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 18 18" className='text-foreground'>
                                 <g fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" stroke="currentColor">
@@ -582,8 +586,8 @@ export function SpeechToTextPlayground({
 
                       {/* Right: Language Selector and Transcribe Button */}
                       <div className='flex flex-col gap-2 min-w-[280px]'>
-                        <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                          <SelectTrigger className='h-10' onFocus={() => setIsInputFocused(true)}>
+                        <Select value={selectedLanguage} onValueChange={setSelectedLanguage} disabled={disabled}>
+                          <SelectTrigger className='h-10' onFocus={() => !disabled && setIsInputFocused(true)} disabled={disabled}>
                             <SelectValue placeholder='Select Target Language' />
                           </SelectTrigger>
                           <SelectContent>
@@ -597,7 +601,7 @@ export function SpeechToTextPlayground({
 
                         <Button
                           onClick={handleTranscribe}
-                          disabled={!audioFile || !selectedLanguage || isTranscribing}
+                          disabled={disabled || !audioFile || !selectedLanguage || isTranscribing}
                           size='lg'
                           className='w-full h-10'
                         >
@@ -644,8 +648,8 @@ export function SpeechToTextPlayground({
 
                       {/* Right: Language Selector and Transcribe Button */}
                       <div className='flex flex-col gap-2 min-w-[280px]'>
-                        <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                          <SelectTrigger className='h-10' onFocus={() => setIsInputFocused(true)}>
+                        <Select value={selectedLanguage} onValueChange={setSelectedLanguage} disabled={disabled}>
+                          <SelectTrigger className='h-10' onFocus={() => !disabled && setIsInputFocused(true)} disabled={disabled}>
                             <SelectValue placeholder='Select Target Language' />
                           </SelectTrigger>
                           <SelectContent>
@@ -659,7 +663,7 @@ export function SpeechToTextPlayground({
 
                         <Button
                           onClick={handleTranscribe}
-                          disabled={!audioFile || !selectedLanguage || isTranscribing}
+                          disabled={disabled || !audioFile || !selectedLanguage || isTranscribing}
                           size='lg'
                           className='w-full h-10'
                         >

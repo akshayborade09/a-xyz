@@ -223,15 +223,17 @@ const AIChatInput = ({
           
           {/* Input Row */}
           <div className="flex items-center gap-2 p-3 rounded-full bg-white w-full">
-            <button
-              className="p-3 rounded-full hover:bg-gray-100 transition"
-              title="Attach file"
-              type="button"
-              tabIndex={-1}
-              onClick={onAttach}
-            >
-              <Paperclip size={20} />
-            </button>
+            {onAttach && (
+              <button
+                className="p-3 rounded-full hover:bg-gray-100 transition"
+                title="Attach file"
+                type="button"
+                tabIndex={-1}
+                onClick={onAttach}
+              >
+                <Paperclip size={20} />
+              </button>
+            )}
 
             {/* Text Input & Placeholder */}
             <div className="relative flex-1">

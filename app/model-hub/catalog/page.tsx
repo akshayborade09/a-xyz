@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageShell } from '@/components/page-shell';
 import { VercelTabs } from '@/components/ui/vercel-tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Key } from 'lucide-react';
+import { Search, Key, Info } from 'lucide-react';
 import { SetupCodeModal } from '@/components/modals/setup-code-modal';
 import { CreateApiKeyModal } from '@/components/modals/create-api-key-modal';
 import { RequestNewModelModal } from '@/components/modals/request-new-model-modal';
@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { MultiSelectFilter } from '@/components/ui/multi-select-filter';
 
 // Tab definitions for VercelTabs
 const tabs = [
@@ -37,10 +38,15 @@ interface ModelData {
   description: string;
   inputPrice: string;
   outputPrice: string;
+  inputPriceNumeric: number; // Numeric price for sorting (in rupees per 1M tokens)
+  outputPriceNumeric: number; // Numeric price for sorting (in rupees per 1M tokens)
   tags: string[];
   category: string;
+  modelType: string; // text-gen, text-to-speech, text-to-image, embedding, audio, vision
   modelSize: string;
+  modelSizeCategory: string; // For text models: small (<10B), medium (10B-70B), large (>70B)
   contextLength: string;
+  contextLengthCategory: string; // For text models: small (<=8k), medium (8k<X<=32k), large (32k<X<=128k), extended (>128k)
   pricingTier: string;
   addedDate: string;
   logo: React.ReactNode;
@@ -57,10 +63,15 @@ const modelsData: ModelData[] = [
     description: 'Large-scale GPT model with 20B parameters',
     inputPrice: '₹4.2',
     outputPrice: '₹16.7',
+    inputPriceNumeric: 4.2,
+    outputPriceNumeric: 16.7,
     tags: ['120B', '128K', 'Reasoning'],
     category: 'text',
+    modelType: 'text-gen',
     modelSize: 'xlarge',
+    modelSizeCategory: 'large',
     contextLength: '128k',
+    contextLengthCategory: 'extended',
     pricingTier: 'low',
     addedDate: '2024-10-01',
     gradient: 'from-slate-100/50 via-white/80 to-white',
@@ -78,10 +89,15 @@ const modelsData: ModelData[] = [
     description: 'Advanced instruction-following model for conversations',
     inputPrice: '₹83.5',
     outputPrice: '₹250.5',
+    inputPriceNumeric: 83.5,
+    outputPriceNumeric: 250.5,
     tags: ['32K', 'Chat', 'Instruct'],
     category: 'text',
+    modelType: 'text-gen',
     modelSize: 'medium',
+    modelSizeCategory: 'medium',
     contextLength: '32k',
+    contextLengthCategory: 'medium',
     pricingTier: 'high',
     addedDate: '2024-09-15',
     gradient: 'from-slate-100/50 via-white/80 to-white',
@@ -100,10 +116,15 @@ const modelsData: ModelData[] = [
     description: 'Next-generation 80B model with enhanced reasoning',
     inputPrice: '₹12.5',
     outputPrice: '₹125.3',
+    inputPriceNumeric: 12.5,
+    outputPriceNumeric: 125.3,
     tags: ['80B', '32K', 'Instruct'],
     category: 'text',
+    modelType: 'text-gen',
     modelSize: 'large',
+    modelSizeCategory: 'large',
     contextLength: '32k',
+    contextLengthCategory: 'medium',
     pricingTier: 'medium',
     addedDate: '2024-09-20',
     gradient: 'from-indigo-100/50 via-purple-50/30 to-white',
@@ -127,10 +148,15 @@ const modelsData: ModelData[] = [
     description: 'Speech-to-text model for audio transcription',
     inputPrice: '₹24',
     outputPrice: '—',
+    inputPriceNumeric: 24,
+    outputPriceNumeric: 0,
     tags: ['Speech-to-Text', 'Audio', 'Transcription'],
     category: 'audio',
+    modelType: 'audio',
     modelSize: 'small',
+    modelSizeCategory: 'small',
     contextLength: '4k',
+    contextLengthCategory: 'small',
     pricingTier: 'medium',
     addedDate: '2024-10-05',
     gradient: 'from-green-100/50 via-emerald-50/30 to-white',
@@ -150,10 +176,15 @@ const modelsData: ModelData[] = [
     description: 'Efficient embedding model for semantic search and similarity',
     inputPrice: '₹0.17',
     outputPrice: '—',
+    inputPriceNumeric: 0.17,
+    outputPriceNumeric: 0,
     tags: ['Embedding', 'Semantic Search', '8K'],
     category: 'embedding',
+    modelType: 'embedding',
     modelSize: 'small',
+    modelSizeCategory: 'small',
     contextLength: '8k',
+    contextLengthCategory: 'small',
     pricingTier: 'free',
     addedDate: '2024-09-25',
     gradient: 'from-slate-100/50 via-white/80 to-white',
@@ -171,10 +202,15 @@ const modelsData: ModelData[] = [
     description: 'Most capable Claude model for complex tasks and analysis',
     inputPrice: '₹125',
     outputPrice: '₹625',
+    inputPriceNumeric: 125,
+    outputPriceNumeric: 625,
     tags: ['200K', 'Reasoning', 'Analysis'],
     category: 'text',
+    modelType: 'text-gen',
     modelSize: 'xlarge',
+    modelSizeCategory: 'large',
     contextLength: '128k',
+    contextLengthCategory: 'extended',
     pricingTier: 'premium',
     addedDate: '2024-08-15',
     gradient: 'from-orange-100/50 via-amber-50/30 to-white',
@@ -192,10 +228,15 @@ const modelsData: ModelData[] = [
     description: 'Open-source model with strong performance across tasks',
     inputPrice: '₹5.5',
     outputPrice: '₹16.5',
+    inputPriceNumeric: 5.5,
+    outputPriceNumeric: 16.5,
     tags: ['70B', '8K', 'Open Source'],
     category: 'text',
+    modelType: 'text-gen',
     modelSize: 'large',
+    modelSizeCategory: 'medium',
     contextLength: '8k',
+    contextLengthCategory: 'small',
     pricingTier: 'low',
     addedDate: '2024-09-10',
     gradient: 'from-blue-100/50 via-cyan-50/30 to-white',
@@ -213,10 +254,15 @@ const modelsData: ModelData[] = [
     description: 'Advanced vision model for image understanding and analysis',
     inputPrice: '₹83.5',
     outputPrice: '₹167',
+    inputPriceNumeric: 83.5,
+    outputPriceNumeric: 167,
     tags: ['Vision', 'Multimodal', '128K'],
     category: 'vision',
+    modelType: 'vision',
     modelSize: 'xlarge',
+    modelSizeCategory: 'large',
     contextLength: '128k',
+    contextLengthCategory: 'extended',
     pricingTier: 'high',
     addedDate: '2024-09-28',
     gradient: 'from-purple-100/50 via-pink-50/30 to-white',
@@ -234,10 +280,15 @@ const modelsData: ModelData[] = [
     description: 'Advanced text-to-image generation model creating high-quality images from text prompts',
     inputPrice: '₹8',
     outputPrice: '—',
+    inputPriceNumeric: 8,
+    outputPriceNumeric: 0,
     tags: ['Text-to-Image', 'Image Generation', 'AI Art'],
     category: 'vision',
+    modelType: 'text-to-image',
     modelSize: 'large',
+    modelSizeCategory: 'medium',
     contextLength: '4k',
+    contextLengthCategory: 'small',
     pricingTier: 'low',
     addedDate: '2024-10-08',
     gradient: 'from-indigo-100/50 via-purple-50/30 to-white',
@@ -294,12 +345,28 @@ export default function ModelCatalogPage() {
   const [isRequestModelModalOpen, setIsRequestModelModalOpen] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState('');
   
-  // Filter states
-  const [modelSizeFilter, setModelSizeFilter] = useState('all');
-  const [providerFilter, setProviderFilter] = useState('all');
-  const [pricingFilter, setPricingFilter] = useState('all');
-  const [contextLengthFilter, setContextLengthFilter] = useState('all');
-  const [recentlyAddedFilter, setRecentlyAddedFilter] = useState('all');
+  // Filter states - reset when tab changes
+  const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [modelSizeCategory, setModelSizeCategory] = useState('all');
+  const [contextLengthCategory, setContextLengthCategory] = useState('all');
+  const [sortBy, setSortBy] = useState('newest'); // newest, oldest, price-asc, price-desc
+
+  // Reset filters when tab changes
+  useEffect(() => {
+    setSelectedProviders([]);
+    setSelectedTypes([]);
+    setModelSizeCategory('all');
+    setContextLengthCategory('all');
+    setSortBy('newest');
+    setSearchQuery('');
+  }, [activeTab]);
+
+  // Calculate blended price (3:1 I/O ratio)
+  const calculateBlendedPrice = (model: ModelData): number => {
+    // Blended = (3 * inputPrice + 1 * outputPrice) / 4
+    return (3 * model.inputPriceNumeric + model.outputPriceNumeric) / 4;
+  };
 
   // Filter and search logic
   const filteredModels = useMemo(() => {
@@ -321,40 +388,43 @@ export default function ModelCatalogPage() {
       );
     }
 
-    // Filter by model size
-    if (modelSizeFilter !== 'all') {
-      filtered = filtered.filter(model => model.modelSize === modelSizeFilter);
+    // Filter by providers (multiselect)
+    if (selectedProviders.length > 0) {
+      filtered = filtered.filter(model => selectedProviders.includes(model.provider));
     }
 
-    // Filter by provider
-    if (providerFilter !== 'all') {
-      filtered = filtered.filter(model => model.provider === providerFilter);
+    // Filter by types (multiselect) - only for "All Models" tab
+    if (activeTab === 'all' && selectedTypes.length > 0) {
+      filtered = filtered.filter(model => selectedTypes.includes(model.modelType));
     }
 
-    // Filter by pricing tier
-    if (pricingFilter !== 'all') {
-      filtered = filtered.filter(model => model.pricingTier === pricingFilter);
+    // Filter by model size category - only for "Text" tab
+    if (activeTab === 'text' && modelSizeCategory !== 'all') {
+      filtered = filtered.filter(model => model.modelSizeCategory === modelSizeCategory);
     }
 
-    // Filter by context length
-    if (contextLengthFilter !== 'all') {
-      filtered = filtered.filter(model => model.contextLength === contextLengthFilter);
+    // Filter by context length category - only for "Text" tab
+    if (activeTab === 'text' && contextLengthCategory !== 'all') {
+      filtered = filtered.filter(model => model.contextLengthCategory === contextLengthCategory);
     }
 
-    // Filter by recently added
-    if (recentlyAddedFilter !== 'all') {
-      const now = new Date();
-      const days = parseInt(recentlyAddedFilter.replace('days', ''));
-      const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-      
-      filtered = filtered.filter(model => {
-        const modelDate = new Date(model.addedDate);
-        return modelDate >= cutoffDate;
-      });
+    // Sort results
+    if (sortBy === 'newest') {
+      // Sort by most recent first (newest)
+      filtered = filtered.sort((a, b) => new Date(b.addedDate).getTime() - new Date(a.addedDate).getTime());
+    } else if (sortBy === 'oldest') {
+      // Sort by oldest first
+      filtered = filtered.sort((a, b) => new Date(a.addedDate).getTime() - new Date(b.addedDate).getTime());
+    } else if (sortBy === 'price-asc') {
+      // Sort by blended price ascending
+      filtered = filtered.sort((a, b) => calculateBlendedPrice(a) - calculateBlendedPrice(b));
+    } else if (sortBy === 'price-desc') {
+      // Sort by blended price descending
+      filtered = filtered.sort((a, b) => calculateBlendedPrice(b) - calculateBlendedPrice(a));
     }
 
     return filtered;
-  }, [activeTab, searchQuery, modelSizeFilter, providerFilter, pricingFilter, contextLengthFilter, recentlyAddedFilter]);
+  }, [activeTab, searchQuery, selectedProviders, selectedTypes, modelSizeCategory, contextLengthCategory, sortBy]);
 
   const handleCopyModelId = async (modelId: string) => {
     try {
@@ -507,80 +577,134 @@ export default function ModelCatalogPage() {
                 />
               </div>
 
-              {/* Filter dropdowns */}
-              <div className='flex flex-wrap items-center gap-2'>
-                {/* Model Size Filter */}
-                <Select value={modelSizeFilter} onValueChange={setModelSizeFilter}>
-                  <SelectTrigger className='w-[140px] h-9'>
-                    <SelectValue placeholder='Model Size' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='all'>All Sizes</SelectItem>
-                    <SelectItem value='small'>Small (&lt;10B)</SelectItem>
-                    <SelectItem value='medium'>Medium (10B-50B)</SelectItem>
-                    <SelectItem value='large'>Large (50B-100B)</SelectItem>
-                    <SelectItem value='xlarge'>X-Large (100B+)</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Filter dropdowns - conditional based on active tab */}
+              <div className='flex flex-wrap items-center gap-3'>
+                {/* All Models Tab Filters */}
+                {activeTab === 'all' && (
+                  <>
+                    {/* Provider Filter (Multiselect) */}
+                    <MultiSelectFilter
+                      options={[
+                        { label: 'OpenAI', value: 'openai' },
+                        { label: 'Krutrim', value: 'krutrim' },
+                        { label: 'MoonshotAI', value: 'moonshot' },
+                        { label: 'Qwen', value: 'qwen' },
+                        { label: 'Anthropic', value: 'anthropic' },
+                        { label: 'Meta', value: 'meta' },
+                      ]}
+                      selected={selectedProviders}
+                      onChange={setSelectedProviders}
+                      placeholder='Provider'
+                      className='w-[140px]'
+                    />
 
-                {/* Provider Filter */}
-                <Select value={providerFilter} onValueChange={setProviderFilter}>
-                  <SelectTrigger className='w-[140px] h-9'>
-                    <SelectValue placeholder='Provider' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='all'>All Providers</SelectItem>
-                    <SelectItem value='openai'>OpenAI</SelectItem>
-                    <SelectItem value='krutrim'>Krutrim</SelectItem>
-                    <SelectItem value='moonshot'>MoonshotAI</SelectItem>
-                    <SelectItem value='qwen'>Qwen</SelectItem>
-                    <SelectItem value='anthropic'>Anthropic</SelectItem>
-                    <SelectItem value='meta'>Meta</SelectItem>
-                  </SelectContent>
-                </Select>
+                    {/* Type Filter (Multiselect) */}
+                    <MultiSelectFilter
+                      options={[
+                        { label: 'Text Generation', value: 'text-gen' },
+                        { label: 'Text-to-Speech', value: 'text-to-speech' },
+                        { label: 'Text-to-Image', value: 'text-to-image' },
+                        { label: 'Embedding', value: 'embedding' },
+                        { label: 'Audio', value: 'audio' },
+                        { label: 'Vision', value: 'vision' },
+                      ]}
+                      selected={selectedTypes}
+                      onChange={setSelectedTypes}
+                      placeholder='Type'
+                      className='w-[140px]'
+                    />
+                  </>
+                )}
 
-                {/* Pricing Filter */}
-                <Select value={pricingFilter} onValueChange={setPricingFilter}>
-                  <SelectTrigger className='w-[140px] h-9'>
-                    <SelectValue placeholder='Pricing' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='all'>All Pricing</SelectItem>
-                    <SelectItem value='free'>Free</SelectItem>
-                    <SelectItem value='low'>Low (₹0-10/1M)</SelectItem>
-                    <SelectItem value='medium'>Medium (₹10-50/1M)</SelectItem>
-                    <SelectItem value='high'>High (₹50-100/1M)</SelectItem>
-                    <SelectItem value='premium'>Premium (₹100+/1M)</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Text Tab Filters */}
+                {activeTab === 'text' && (
+                  <>
+                    {/* Provider Filter (Multiselect) */}
+                    <MultiSelectFilter
+                      options={[
+                        { label: 'OpenAI', value: 'openai' },
+                        { label: 'Krutrim', value: 'krutrim' },
+                        { label: 'MoonshotAI', value: 'moonshot' },
+                        { label: 'Qwen', value: 'qwen' },
+                        { label: 'Anthropic', value: 'anthropic' },
+                        { label: 'Meta', value: 'meta' },
+                      ]}
+                      selected={selectedProviders}
+                      onChange={setSelectedProviders}
+                      placeholder='Provider'
+                      className='w-[140px]'
+                    />
 
-                {/* Context Length Filter */}
-                <Select value={contextLengthFilter} onValueChange={setContextLengthFilter}>
-                  <SelectTrigger className='w-[150px] h-9'>
-                    <SelectValue placeholder='Context Length' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='all'>All Context</SelectItem>
-                    <SelectItem value='4k'>4K tokens</SelectItem>
-                    <SelectItem value='8k'>8K tokens</SelectItem>
-                    <SelectItem value='16k'>16K tokens</SelectItem>
-                    <SelectItem value='32k'>32K tokens</SelectItem>
-                    <SelectItem value='128k'>128K+ tokens</SelectItem>
-                  </SelectContent>
-                </Select>
+                    {/* Size Filter (Dropdown) */}
+                    <Select value={modelSizeCategory} onValueChange={setModelSizeCategory}>
+                      <SelectTrigger className='w-[140px] h-9 rounded-md'>
+                        <SelectValue placeholder='Size' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='all'>All Sizes</SelectItem>
+                        <SelectItem value='small'>Small (&lt;10B)</SelectItem>
+                        <SelectItem value='medium'>Medium (10B-70B)</SelectItem>
+                        <SelectItem value='large'>Large (&gt;70B)</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-                {/* Recently Added Filter */}
-                <Select value={recentlyAddedFilter} onValueChange={setRecentlyAddedFilter}>
-                  <SelectTrigger className='w-[150px] h-9'>
-                    <SelectValue placeholder='Recently Added' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='all'>All Time</SelectItem>
-                    <SelectItem value='7days'>Last 7 days</SelectItem>
-                    <SelectItem value='30days'>Last 30 days</SelectItem>
-                    <SelectItem value='90days'>Last 90 days</SelectItem>
-                  </SelectContent>
-                </Select>
+                    {/* Context Length Filter (Dropdown) */}
+                    <Select value={contextLengthCategory} onValueChange={setContextLengthCategory}>
+                      <SelectTrigger className='w-[150px] h-9 rounded-md'>
+                        <SelectValue placeholder='Context Length' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='all'>All Context</SelectItem>
+                        <SelectItem value='small'>Small (≤8k)</SelectItem>
+                        <SelectItem value='medium'>Medium (8k-32k)</SelectItem>
+                        <SelectItem value='large'>Large (32k-128k)</SelectItem>
+                        <SelectItem value='extended'>Extended (&gt;128k)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
+
+                {/* Divider for visual separation between filters and sorting */}
+                {(activeTab === 'all' || activeTab === 'text') && (selectedProviders.length > 0 || selectedTypes.length > 0 || modelSizeCategory !== 'all' || contextLengthCategory !== 'all') && (
+                  <div className='h-6 w-px bg-border' />
+                )}
+
+                {/* Sort Section - Available on all tabs with distinct styling */}
+                <div className='flex items-center gap-2'>
+                  <span className='text-sm text-muted-foreground'>Sort by:</span>
+                  {activeTab === 'text' ? (
+                    <>
+                      <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger className='w-[180px] h-9 rounded-md bg-muted/50 border-muted-foreground/20'>
+                          <SelectValue placeholder='Sort by' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='newest'>Newest</SelectItem>
+                          <SelectItem value='oldest'>Oldest</SelectItem>
+                          <div className='my-1 h-px bg-border' />
+                          <div className='px-2 py-1.5 text-xs font-semibold text-muted-foreground'>Price</div>
+                          <SelectItem value='price-asc'>Low to High</SelectItem>
+                          <SelectItem value='price-desc'>High to Low</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {(sortBy === 'price-asc' || sortBy === 'price-desc') && (
+                        <TooltipWrapper content='Price is based on a blended 3:1 Input:Output token ratio'>
+                          <Info className='h-4 w-4 text-muted-foreground cursor-help' />
+                        </TooltipWrapper>
+                      )}
+                    </>
+                  ) : (
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className='w-[140px] h-9 rounded-md bg-muted/50 border-muted-foreground/20'>
+                        <SelectValue placeholder='Sort by' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='newest'>Newest</SelectItem>
+                        <SelectItem value='oldest'>Oldest</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -599,21 +723,23 @@ export default function ModelCatalogPage() {
                 onAction={() => setIsRequestModelModalOpen(true)}
                 icon={modelsIcon}
               />
-              <div className='flex justify-center mt-4'>
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setModelSizeFilter('all');
-                    setProviderFilter('all');
-                    setPricingFilter('all');
-                    setContextLengthFilter('all');
-                    setRecentlyAddedFilter('all');
-                  }}
-                  className='text-sm text-gray-600 hover:text-gray-900 underline transition-colors'
-                >
-                  Clear all filters
-                </button>
-              </div>
+              {(searchQuery || selectedProviders.length > 0 || selectedTypes.length > 0 || modelSizeCategory !== 'all' || contextLengthCategory !== 'all' || sortBy !== 'newest') && (
+                <div className='flex justify-center mt-4'>
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedProviders([]);
+                      setSelectedTypes([]);
+                      setModelSizeCategory('all');
+                      setContextLengthCategory('all');
+                      setSortBy('newest');
+                    }}
+                    className='text-sm text-gray-600 hover:text-gray-900 underline transition-colors'
+                  >
+                    Clear all filters
+                  </button>
+                </div>
+              )}
             </div>
           )}
           {/* OLD HARDCODED CARDS - TO BE REMOVED */}

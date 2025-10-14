@@ -537,13 +537,22 @@ export default function ModelCatalogPage() {
       title='Models'
       description='Explore our comprehensive library of AI models including text generation, embedding, audio processing, and computer vision models.'
       headerActions={
-        <Button 
-          variant='default' 
-          size='sm'
-          onClick={() => setIsCreateApiKeyModalOpen(true)}
-        >
-          Get API key
-        </Button>
+        <div className='flex items-center gap-2'>
+          <Button 
+            variant='outline' 
+            size='sm'
+            onClick={() => setIsRequestModelModalOpen(true)}
+          >
+            Request a model
+          </Button>
+          <Button 
+            variant='default' 
+            size='sm'
+            onClick={() => setIsCreateApiKeyModalOpen(true)}
+          >
+            Get API key
+          </Button>
+        </div>
       }
     >
       <div className='space-y-6'>

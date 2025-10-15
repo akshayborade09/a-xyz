@@ -17,6 +17,18 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 // Removed PieChart imports as we're now using horizontal bar chart
 import {
   ArrowDownTrayIcon,
@@ -321,6 +333,37 @@ const allStudio = [
   ...mockEval,
 ];
 
+// Data for Kubernetes
+const mockControlPlane = [
+  { clusterName: 'abc', region: 'Hyd', version: '1.33', rate: '₹7 /hr', totalTimeUsed: '10 hrs', credits: 70 },
+  { clusterName: 'abc2', region: 'Blr', version: '1.33', rate: '₹7 /hr', totalTimeUsed: '10 hrs', credits: 70 },
+];
+const controlPlaneTotal = 140;
+
+const mockNodePools = [
+  { nodePoolName: 'xyz', clusterName: 'abc', instanceFlavour: 'AMD123', desiredVMCount: 5, rate: '₹3 /hr', totalTimeUsed: '10 hrs', credits: 30 },
+  { nodePoolName: 'xyz2', clusterName: 'abc2', instanceFlavour: 'AMD1234', desiredVMCount: 3, rate: '₹10 /hr', totalTimeUsed: '10 hrs', credits: 100 },
+];
+const nodePoolsTotal = 130;
+
+const mockK8sVolumes = [
+  { volumeName: 'vol1', clusterName: 'abc', storageType: 'default', averageSize: '70 GB', rate: '₹5 /hour/gb', totalTimeUsed: '10 hrs', credits: 3500 },
+  { volumeName: 'vol2', clusterName: 'abc2', storageType: 'default', averageSize: '100 GB', rate: '₹5 /hour/gb', totalTimeUsed: '10 hrs', credits: 5000 },
+];
+const k8sVolumesTotal = 8500;
+
+const mockLoadBalancers = [
+  { lbName: 'lb1', clusterName: 'abc', lbType: 'ALB', baseCharge: '₹8 /hr', totalTimeUsed: '10 hrs', totalDataProcessed: '5GB', dataProcessingCharges: '₹0.4 /GB', credits: 82 },
+  { lbName: 'lb2', clusterName: 'abc2', lbType: 'ALB', baseCharge: '₹8 /hr', totalTimeUsed: '10 hrs', totalDataProcessed: '10GB', dataProcessingCharges: '₹0.4 /GB', credits: 84 },
+];
+const loadBalancersTotal = 166;
+
+const mockK8sIP = [
+  { ipAddress: 'ip1', clusterName: 'abc', rate: '₹0.28 /hr', totalTimeUsed: '10 hrs', credits: 2.8 },
+  { ipAddress: 'ip2', clusterName: 'abc2', rate: '₹0.28 /hr', totalTimeUsed: '10 hrs', credits: 2.8 },
+];
+const k8sIPTotal = 5.6;
+
 // Data for Solutions
 const mockBasic = [
   { id: 1, name: 'Basic-AI-Service-01', status: 'Active', credits: 120 },
@@ -378,6 +421,7 @@ function renderCustomizedLabel({
 const tabs = [
   { id: 'summary', label: 'Summary' },
   { id: 'core', label: 'Core Infrastructure' },
+  { id: 'kubernetes', label: 'Kubernetes' },
   { id: 'studio', label: 'AI Studio' },
   { id: 'solutions', label: 'AI Solutions' },
 ];
@@ -399,6 +443,9 @@ export default function UsageMetricsPage() {
     if (pathname.includes('/core')) {
       return 'core';
     }
+    if (pathname.includes('/kubernetes')) {
+      return 'kubernetes';
+    }
     if (pathname.includes('/studio')) {
       return 'studio';
     }
@@ -415,8 +462,13 @@ export default function UsageMetricsPage() {
 
   // State for nested tabs
   const [coreTab, setCoreTab] = useState('compute');
+  const [kubernetesTab, setKubernetesTab] = useState('controlPlane');
   const [studioTab, setStudioTab] = useState('model');
   const [solutionsTab, setSolutionsTab] = useState('bhashik');
+
+  // State for cluster details drawer
+  const [clusterDrawerOpen, setClusterDrawerOpen] = useState(false);
+  const [selectedCluster, setSelectedCluster] = useState<any>(null);
 
   // Apply demo user filtering to all billing data
   const filteredPieData = filterBillingDataForUser(pieData);
@@ -430,6 +482,11 @@ export default function UsageMetricsPage() {
   const filteredMockDeploy = filterBillingDataForUser(mockDeploy);
   const filteredMockEval = filterBillingDataForUser(mockEval);
   const filteredAllStudio = filterBillingDataForUser(allStudio);
+  const filteredMockControlPlane = filterBillingDataForUser(mockControlPlane);
+  const filteredMockNodePools = filterBillingDataForUser(mockNodePools);
+  const filteredMockK8sVolumes = filterBillingDataForUser(mockK8sVolumes);
+  const filteredMockLoadBalancers = filterBillingDataForUser(mockLoadBalancers);
+  const filteredMockK8sIP = filterBillingDataForUser(mockK8sIP);
   const filteredMockBasic = filterBillingDataForUser(mockBasic);
   const filteredMockDocInt = filterBillingDataForUser(mockDocInt);
   const filteredMockIndustrial = filterBillingDataForUser(mockIndustrial);
@@ -439,6 +496,11 @@ export default function UsageMetricsPage() {
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
+  };
+
+  const handleViewClusterDetails = (cluster: any) => {
+    setSelectedCluster(cluster);
+    setClusterDrawerOpen(true);
   };
 
   useEffect(() => {
@@ -1435,6 +1497,451 @@ export default function UsageMetricsPage() {
     );
   };
 
+  // Kubernetes Section Component
+  const KubernetesSection = () => {
+    const kubernetesTabs = [
+      { id: 'controlPlane', label: 'Control Plane' },
+      { id: 'nodePools', label: 'Node Pools' },
+      { id: 'volumes', label: 'Volumes' },
+      { id: 'loadBalancers', label: 'Load Balancers' },
+      { id: 'ip', label: 'IP' },
+    ];
+
+    // Render table for each tab
+    const renderTable = () => {
+      if (showEmptyState) {
+        if (kubernetesTab === 'controlPlane') {
+          return (
+            <EmptyState
+              title='No Control Plane Usage Yet'
+              description='Your Kubernetes cluster control plane usage and costs will appear here once you start using our Kubernetes services.'
+              className='min-h-[300px]'
+              icon={infrastructureIcon}
+            />
+          );
+        }
+        if (kubernetesTab === 'nodePools') {
+          return (
+            <EmptyState
+              title='No Node Pool Usage Yet'
+              description='Your Kubernetes node pool usage and compute costs will appear here once you create node pools.'
+              className='min-h-[300px]'
+              icon={infrastructureIcon}
+            />
+          );
+        }
+        if (kubernetesTab === 'volumes') {
+          return (
+            <EmptyState
+              title='No Volume Usage Yet'
+              description='Your Kubernetes persistent volume usage and storage costs will appear here once you create volumes.'
+              className='min-h-[300px]'
+              icon={infrastructureIcon}
+            />
+          );
+        }
+        if (kubernetesTab === 'loadBalancers') {
+          return (
+            <EmptyState
+              title='No Load Balancer Usage Yet'
+              description='Your Kubernetes load balancer usage and data transfer costs will appear here once you create load balancers.'
+              className='min-h-[300px]'
+              icon={infrastructureIcon}
+            />
+          );
+        }
+        if (kubernetesTab === 'ip') {
+          return (
+            <EmptyState
+              title='No IP Address Usage Yet'
+              description='Your Kubernetes IP address allocations and costs will appear here once you allocate IP addresses.'
+              className='min-h-[300px]'
+              icon={infrastructureIcon}
+            />
+          );
+        }
+      }
+
+      if (kubernetesTab === 'controlPlane') {
+        return (
+          <div className='rounded-md border mt-4'>
+            <table className='min-w-full text-sm'>
+              <thead>
+                <tr className='bg-muted'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md'>
+                    Cluster Name
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Region
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Version
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Rate
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Total Time Used
+                  </th>
+                  <th className='px-3 py-2 text-right text-muted-foreground font-medium'>
+                    Total Credits Used
+                  </th>
+                  <th className='px-3 py-2 text-right text-muted-foreground font-medium rounded-tr-md'>
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMockControlPlane.map((row: any, idx: number) => (
+                  <tr
+                    key={idx}
+                    className='border-b transition-colors hover:bg-gray-50/40'
+                  >
+                    <td className='px-3 py-2'>
+                      <button
+                        onClick={() => handleViewClusterDetails(row)}
+                        className='text-primary font-medium underline cursor-pointer'
+                      >
+                        {row.clusterName}
+                      </button>
+                    </td>
+                    <td className='px-3 py-2'>{row.region}</td>
+                    <td className='px-3 py-2'>{row.version}</td>
+                    <td className='px-3 py-2'>{row.rate}</td>
+                    <td className='px-3 py-2'>{row.totalTimeUsed}</td>
+                    <td className='px-3 py-2 text-right'>
+                      ₹
+                      {row.credits.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </td>
+                    <td className='px-3 py-2 text-right'>
+                      <Button
+                        variant='link'
+                        size='sm'
+                        className='text-primary hover:underline p-0 h-auto'
+                        onClick={() => handleViewClusterDetails(row)}
+                      >
+                        Details
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+                <tr className='font-bold'>
+                  <td className='rounded-bl-md'></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td className='px-3 py-2 text-right align-middle font-bold'>
+                    Total&nbsp;&nbsp;&nbsp;₹
+                    {controlPlaneTotal.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </td>
+                  <td className='rounded-br-md'></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+      if (kubernetesTab === 'nodePools') {
+        return (
+          <div className='rounded-md border mt-4'>
+            <table className='min-w-full text-sm'>
+              <thead>
+                <tr className='bg-muted'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md'>
+                    Node Pool Name
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Cluster Name
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Instance Flavour
+                  </th>
+                  <th className='px-3 py-2 text-center text-muted-foreground font-medium'>
+                    Desired VM Count
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Rate
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Total Time Used
+                  </th>
+                  <th className='px-3 py-2 text-right text-muted-foreground font-medium rounded-tr-md'>
+                    Total Credits Used
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMockNodePools.map((row: any, idx: number) => (
+                  <tr
+                    key={idx}
+                    className='border-b transition-colors hover:bg-gray-50/40'
+                  >
+                    <td className='px-3 py-2'>{row.nodePoolName}</td>
+                    <td className='px-3 py-2'>{row.clusterName}</td>
+                    <td className='px-3 py-2'>{row.instanceFlavour}</td>
+                    <td className='px-3 py-2 text-center'>{row.desiredVMCount}</td>
+                    <td className='px-3 py-2'>{row.rate}</td>
+                    <td className='px-3 py-2'>{row.totalTimeUsed}</td>
+                    <td className='px-3 py-2 text-right'>
+                      ₹
+                      {row.credits.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </td>
+                  </tr>
+                ))}
+                <tr className='font-bold'>
+                  <td className='rounded-bl-md'></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td className='px-3 py-2 text-right align-middle font-bold rounded-br-md'>
+                    Total&nbsp;&nbsp;&nbsp;₹
+                    {nodePoolsTotal.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+      if (kubernetesTab === 'volumes') {
+        return (
+          <div className='rounded-md border mt-4'>
+            <table className='min-w-full text-sm'>
+              <thead>
+                <tr className='bg-muted'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md'>
+                    Volume Name
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Cluster Name
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Storage Type
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Average Size
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Rate
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Total Time Used
+                  </th>
+                  <th className='px-3 py-2 text-right text-muted-foreground font-medium rounded-tr-md'>
+                    Total Credits Used
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMockK8sVolumes.map((row: any, idx: number) => (
+                  <tr
+                    key={idx}
+                    className='border-b transition-colors hover:bg-gray-50/40'
+                  >
+                    <td className='px-3 py-2'>{row.volumeName}</td>
+                    <td className='px-3 py-2'>{row.clusterName}</td>
+                    <td className='px-3 py-2'>{row.storageType}</td>
+                    <td className='px-3 py-2'>{row.averageSize}</td>
+                    <td className='px-3 py-2'>{row.rate}</td>
+                    <td className='px-3 py-2'>{row.totalTimeUsed}</td>
+                    <td className='px-3 py-2 text-right'>
+                      ₹
+                      {row.credits.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </td>
+                  </tr>
+                ))}
+                <tr className='font-bold'>
+                  <td className='rounded-bl-md'></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td className='px-3 py-2 text-right align-middle font-bold rounded-br-md'>
+                    Total&nbsp;&nbsp;&nbsp;₹
+                    {k8sVolumesTotal.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+      if (kubernetesTab === 'loadBalancers') {
+        return (
+          <div className='rounded-md border mt-4'>
+            <table className='min-w-full text-sm'>
+              <thead>
+                <tr className='bg-muted'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md'>
+                    LB Name
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Cluster Name
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    LB Type
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Base Charge
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Total Time Used
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Total Data Processed
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Data Processing Charges
+                  </th>
+                  <th className='px-3 py-2 text-right text-muted-foreground font-medium rounded-tr-md'>
+                    Total Credits Used
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMockLoadBalancers.map((row: any, idx: number) => (
+                  <tr
+                    key={idx}
+                    className='border-b transition-colors hover:bg-gray-50/40'
+                  >
+                    <td className='px-3 py-2'>{row.lbName}</td>
+                    <td className='px-3 py-2'>{row.clusterName}</td>
+                    <td className='px-3 py-2'>{row.lbType}</td>
+                    <td className='px-3 py-2'>{row.baseCharge}</td>
+                    <td className='px-3 py-2'>{row.totalTimeUsed}</td>
+                    <td className='px-3 py-2'>{row.totalDataProcessed}</td>
+                    <td className='px-3 py-2'>{row.dataProcessingCharges}</td>
+                    <td className='px-3 py-2 text-right'>
+                      ₹
+                      {row.credits.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </td>
+                  </tr>
+                ))}
+                <tr className='font-bold'>
+                  <td className='rounded-bl-md'></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td className='px-3 py-2 text-right align-middle font-bold rounded-br-md'>
+                    Total&nbsp;&nbsp;&nbsp;₹
+                    {loadBalancersTotal.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+      if (kubernetesTab === 'ip') {
+        return (
+          <div className='rounded-md border mt-4'>
+            <table className='min-w-full text-sm'>
+              <thead>
+                <tr className='bg-muted'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md'>
+                    IP Address
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Cluster Name
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Rate
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                    Total Time Used
+                  </th>
+                  <th className='px-3 py-2 text-right text-muted-foreground font-medium rounded-tr-md'>
+                    Total Credits Used
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMockK8sIP.map((row: any, idx: number) => (
+                  <tr
+                    key={idx}
+                    className='border-b transition-colors hover:bg-gray-50/40'
+                  >
+                    <td className='px-3 py-2'>{row.ipAddress}</td>
+                    <td className='px-3 py-2'>{row.clusterName}</td>
+                    <td className='px-3 py-2'>{row.rate}</td>
+                    <td className='px-3 py-2'>{row.totalTimeUsed}</td>
+                    <td className='px-3 py-2 text-right'>
+                      ₹
+                      {row.credits.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </td>
+                  </tr>
+                ))}
+                <tr className='font-bold'>
+                  <td className='rounded-bl-md'></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td className='px-3 py-2 text-right align-middle font-bold rounded-br-md'>
+                    Total&nbsp;&nbsp;&nbsp;₹
+                    {k8sIPTotal.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+      return null;
+    };
+
+    return (
+      <Card>
+        <CardContent className='pt-6'>
+          <VercelTabs
+            tabs={kubernetesTabs}
+            activeTab={kubernetesTab}
+            onTabChange={setKubernetesTab}
+            size='md'
+            className='mb-4'
+          />
+          {renderTable()}
+        </CardContent>
+      </Card>
+    );
+  };
+
   // AI Solutions Section Component
   const SolutionsSection = () => {
     const solutionsTabs = [
@@ -2000,6 +2507,7 @@ export default function UsageMetricsPage() {
 
         {activeTab === 'summary' && <SummarySection />}
         {activeTab === 'core' && <CoreInfrastructureSection />}
+        {activeTab === 'kubernetes' && <KubernetesSection />}
         {activeTab === 'studio' && <StudioSection />}
         {activeTab === 'solutions' && <SolutionsSection />}
 
@@ -2042,6 +2550,341 @@ export default function UsageMetricsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Cluster Details Drawer */}
+        <Sheet open={clusterDrawerOpen} onOpenChange={setClusterDrawerOpen}>
+          <SheetContent className='w-full sm:max-w-2xl overflow-y-auto'>
+            {selectedCluster && (
+              <div className='space-y-6'>
+                {/* Header Section */}
+                <div>
+                  <SheetHeader>
+                    <SheetTitle className='text-2xl font-semibold'>
+                      {selectedCluster.clusterName}
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className='flex items-center gap-2 text-sm text-muted-foreground mt-2'>
+                    <span>{selectedCluster.region}</span>
+                    <span>•</span>
+                    <span>v{selectedCluster.version}</span>
+                    <span>•</span>
+                    <span>{selectedCluster.rate}</span>
+                  </div>
+                </div>
+
+                {/* Summary Card */}
+                <div
+                  style={{
+                    borderRadius: '16px',
+                    border: '4px solid #FFF',
+                    background:
+                      'linear-gradient(265deg, #FFF -13.17%, #F7F8FD 133.78%)',
+                    boxShadow: '0px 8px 39.1px -9px rgba(0, 27, 135, 0.08)',
+                    padding: '1.5rem',
+                  }}
+                >
+                  <div className='grid grid-cols-3 gap-6'>
+                    {/* Cluster Credits */}
+                    <div className='text-center'>
+                      <div className='text-base text-muted-foreground mb-2'>
+                        Cluster Credits
+                      </div>
+                      <div className='text-lg font-bold text-black'>
+                        ₹{selectedCluster.credits.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Resources Credits */}
+                    <div className='text-center'>
+                      <div className='text-base text-muted-foreground mb-2'>
+                        Resources Credits
+                      </div>
+                      <div className='text-lg font-bold text-black'>
+                        ₹{(() => {
+                          const clusterNodePools = filteredMockNodePools.filter(
+                            (np: any) => np.clusterName === selectedCluster.clusterName
+                          );
+                          const clusterVolumes = filteredMockK8sVolumes.filter(
+                            (v: any) => v.clusterName === selectedCluster.clusterName
+                          );
+                          const clusterLBs = filteredMockLoadBalancers.filter(
+                            (lb: any) => lb.clusterName === selectedCluster.clusterName
+                          );
+                          const clusterIPs = filteredMockK8sIP.filter(
+                            (ip: any) => ip.clusterName === selectedCluster.clusterName
+                          );
+                          const resourceTotal =
+                            clusterNodePools.reduce((sum: number, item: any) => sum + item.credits, 0) +
+                            clusterVolumes.reduce((sum: number, item: any) => sum + item.credits, 0) +
+                            clusterLBs.reduce((sum: number, item: any) => sum + item.credits, 0) +
+                            clusterIPs.reduce((sum: number, item: any) => sum + item.credits, 0);
+                          return resourceTotal.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          });
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Total Credits */}
+                    <div className='text-center'>
+                      <div className='text-base text-muted-foreground mb-2'>
+                        Total Credits
+                      </div>
+                      <div className='text-lg font-bold text-black mb-2'>
+                        ₹{(() => {
+                          const clusterNodePools = filteredMockNodePools.filter(
+                            (np: any) => np.clusterName === selectedCluster.clusterName
+                          );
+                          const clusterVolumes = filteredMockK8sVolumes.filter(
+                            (v: any) => v.clusterName === selectedCluster.clusterName
+                          );
+                          const clusterLBs = filteredMockLoadBalancers.filter(
+                            (lb: any) => lb.clusterName === selectedCluster.clusterName
+                          );
+                          const clusterIPs = filteredMockK8sIP.filter(
+                            (ip: any) => ip.clusterName === selectedCluster.clusterName
+                          );
+                          const resourceTotal =
+                            clusterNodePools.reduce((sum: number, item: any) => sum + item.credits, 0) +
+                            clusterVolumes.reduce((sum: number, item: any) => sum + item.credits, 0) +
+                            clusterLBs.reduce((sum: number, item: any) => sum + item.credits, 0) +
+                            clusterIPs.reduce((sum: number, item: any) => sum + item.credits, 0);
+                          return (selectedCluster.credits + resourceTotal).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          });
+                        })()}
+                      </div>
+                      <div className='text-xs text-black bg-green-100 rounded-full px-3 py-1 inline-block'>
+                        Combined Total
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Resource Details Accordion */}
+                <Accordion type='multiple' defaultValue={['nodePools', 'volumes', 'loadBalancers', 'ipAddresses']} className='space-y-2'>
+                  {/* Node Pools Section */}
+                  {filteredMockNodePools.filter(
+                    (np: any) => np.clusterName === selectedCluster.clusterName
+                  ).length > 0 && (
+                    <AccordionItem value='nodePools' className='border rounded-lg'>
+                      <AccordionTrigger className='px-4 hover:no-underline'>
+                        <div className='flex items-center justify-between w-full pr-4'>
+                          <span className='font-semibold'>Node Pools</span>
+                          <span className='text-sm text-muted-foreground'>
+                            {filteredMockNodePools.filter(
+                              (np: any) => np.clusterName === selectedCluster.clusterName
+                            ).length}{' '}
+                            total • ₹
+                            {filteredMockNodePools
+                              .filter((np: any) => np.clusterName === selectedCluster.clusterName)
+                              .reduce((sum: number, item: any) => sum + item.credits, 0)
+                              .toLocaleString()}
+                          </span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className='px-4 pb-4'>
+                        <div className='rounded-md border mt-2'>
+                          <table className='min-w-full text-sm'>
+                            <thead>
+                              <tr className='bg-muted'>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Name</th>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Flavour</th>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>VM Count</th>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Rate</th>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Time Used</th>
+                                <th className='px-3 py-2 text-right text-muted-foreground font-medium'>Credits</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filteredMockNodePools
+                                .filter((np: any) => np.clusterName === selectedCluster.clusterName)
+                                .map((nodePool: any, idx: number) => (
+                                  <tr key={idx} className='border-b transition-colors hover:bg-gray-50/40'>
+                                    <td className='px-3 py-2'>{nodePool.nodePoolName}</td>
+                                    <td className='px-3 py-2'>{nodePool.instanceFlavour}</td>
+                                    <td className='px-3 py-2'>{nodePool.desiredVMCount}</td>
+                                    <td className='px-3 py-2'>{nodePool.rate}</td>
+                                    <td className='px-3 py-2'>{nodePool.totalTimeUsed}</td>
+                                    <td className='px-3 py-2 text-right'>₹{nodePool.credits.toLocaleString()}</td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+
+                  {/* Volumes Section */}
+                  {filteredMockK8sVolumes.filter(
+                    (v: any) => v.clusterName === selectedCluster.clusterName
+                  ).length > 0 && (
+                    <AccordionItem value='volumes' className='border rounded-lg'>
+                      <AccordionTrigger className='px-4 hover:no-underline'>
+                        <div className='flex items-center justify-between w-full pr-4'>
+                          <span className='font-semibold'>Volumes</span>
+                          <span className='text-sm text-muted-foreground'>
+                            {filteredMockK8sVolumes.filter(
+                              (v: any) => v.clusterName === selectedCluster.clusterName
+                            ).length}{' '}
+                            total • ₹
+                            {filteredMockK8sVolumes
+                              .filter((v: any) => v.clusterName === selectedCluster.clusterName)
+                              .reduce((sum: number, item: any) => sum + item.credits, 0)
+                              .toLocaleString()}
+                          </span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className='px-4 pb-4'>
+                        <div className='rounded-md border mt-2'>
+                          <table className='min-w-full text-sm'>
+                            <thead>
+                              <tr className='bg-muted'>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Name</th>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Type</th>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Size</th>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Rate</th>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Time Used</th>
+                                <th className='px-3 py-2 text-right text-muted-foreground font-medium'>Credits</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filteredMockK8sVolumes
+                                .filter((v: any) => v.clusterName === selectedCluster.clusterName)
+                                .map((volume: any, idx: number) => (
+                                  <tr key={idx} className='border-b transition-colors hover:bg-gray-50/40'>
+                                    <td className='px-3 py-2'>{volume.volumeName}</td>
+                                    <td className='px-3 py-2'>{volume.storageType}</td>
+                                    <td className='px-3 py-2'>{volume.averageSize}</td>
+                                    <td className='px-3 py-2'>{volume.rate}</td>
+                                    <td className='px-3 py-2'>{volume.totalTimeUsed}</td>
+                                    <td className='px-3 py-2 text-right'>₹{volume.credits.toLocaleString()}</td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+
+                  {/* Load Balancers Section */}
+                  {filteredMockLoadBalancers.filter(
+                    (lb: any) => lb.clusterName === selectedCluster.clusterName
+                  ).length > 0 && (
+                    <AccordionItem value='loadBalancers' className='border rounded-lg'>
+                      <AccordionTrigger className='px-4 hover:no-underline'>
+                        <div className='flex items-center justify-between w-full pr-4'>
+                          <span className='font-semibold'>Load Balancers</span>
+                          <span className='text-sm text-muted-foreground'>
+                            {filteredMockLoadBalancers.filter(
+                              (lb: any) => lb.clusterName === selectedCluster.clusterName
+                            ).length}{' '}
+                            total • ₹
+                            {filteredMockLoadBalancers
+                              .filter((lb: any) => lb.clusterName === selectedCluster.clusterName)
+                              .reduce((sum: number, item: any) => sum + item.credits, 0)
+                              .toLocaleString()}
+                          </span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className='px-4 pb-4'>
+                        <div className='rounded-md border mt-2'>
+                          <table className='min-w-full text-sm'>
+                            <thead>
+                              <tr className='bg-muted'>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Name</th>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Type</th>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Base Charge</th>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Data Processed</th>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Data Rate</th>
+                                <th className='px-3 py-2 text-right text-muted-foreground font-medium'>Credits</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filteredMockLoadBalancers
+                                .filter((lb: any) => lb.clusterName === selectedCluster.clusterName)
+                                .map((loadBalancer: any, idx: number) => (
+                                  <tr key={idx} className='border-b transition-colors hover:bg-gray-50/40'>
+                                    <td className='px-3 py-2'>{loadBalancer.lbName}</td>
+                                    <td className='px-3 py-2'>{loadBalancer.lbType}</td>
+                                    <td className='px-3 py-2'>{loadBalancer.baseCharge}</td>
+                                    <td className='px-3 py-2'>{loadBalancer.totalDataProcessed}</td>
+                                    <td className='px-3 py-2'>{loadBalancer.dataProcessingCharges}</td>
+                                    <td className='px-3 py-2 text-right'>₹{loadBalancer.credits.toLocaleString()}</td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+
+                  {/* IP Addresses Section */}
+                  {filteredMockK8sIP.filter(
+                    (ip: any) => ip.clusterName === selectedCluster.clusterName
+                  ).length > 0 && (
+                    <AccordionItem value='ipAddresses' className='border rounded-lg'>
+                      <AccordionTrigger className='px-4 hover:no-underline'>
+                        <div className='flex items-center justify-between w-full pr-4'>
+                          <span className='font-semibold'>IP Addresses</span>
+                          <span className='text-sm text-muted-foreground'>
+                            {filteredMockK8sIP.filter(
+                              (ip: any) => ip.clusterName === selectedCluster.clusterName
+                            ).length}{' '}
+                            total • ₹
+                            {filteredMockK8sIP
+                              .filter((ip: any) => ip.clusterName === selectedCluster.clusterName)
+                              .reduce((sum: number, item: any) => sum + item.credits, 0)
+                              .toFixed(2)}
+                          </span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className='px-4 pb-4'>
+                        <div className='rounded-md border mt-2'>
+                          <table className='min-w-full text-sm'>
+                            <thead>
+                              <tr className='bg-muted'>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>IP Address</th>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Rate</th>
+                                <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Time Used</th>
+                                <th className='px-3 py-2 text-right text-muted-foreground font-medium'>Credits</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {filteredMockK8sIP
+                                .filter((ip: any) => ip.clusterName === selectedCluster.clusterName)
+                                .map((ipAddress: any, idx: number) => (
+                                  <tr key={idx} className='border-b transition-colors hover:bg-gray-50/40'>
+                                    <td className='px-3 py-2'>{ipAddress.ipAddress}</td>
+                                    <td className='px-3 py-2'>{ipAddress.rate}</td>
+                                    <td className='px-3 py-2'>{ipAddress.totalTimeUsed}</td>
+                                    <td className='px-3 py-2 text-right'>
+                                      ₹{ipAddress.credits.toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      })}
+                                    </td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+                </Accordion>
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
       </div>
     </PageLayout>
   );

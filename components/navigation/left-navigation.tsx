@@ -236,7 +236,7 @@ const navigationConfig = {
         subItems: [
           { href: '/bhashik', label: 'All Services' },
           {
-            href: '/bhashik/text-services',
+            href: '/bhashik/speech-services?tab=text',
             label: 'Text Services',
             subItems: [
               {
@@ -262,7 +262,7 @@ const navigationConfig = {
             ],
           },
           {
-            href: '/bhashik/speech-services',
+            href: '/bhashik/speech-services?tab=speech',
             label: 'Speech Services',
             subItems: [
               {
@@ -800,9 +800,9 @@ export function LeftNavigation({ onClose }: LeftNavigationProps) {
       } else if (href === '/ai-solutions/document-intelligence') {
         router.push('/doc-intelligence');
       } else if (href === '/bhashik/text-services') {
-        router.push('/bhashik/text-services');
+        router.push('/bhashik/speech-services?tab=text');
       } else if (href === '/bhashik/speech-services') {
-        router.push('/bhashik/speech-services');
+        router.push('/bhashik/speech-services?tab=speech');
       } else if (href === '/administration/kms') {
         router.push('/administration/kms/storage');
       } else if (href === '/developer/sdks') {
@@ -832,6 +832,10 @@ export function LeftNavigation({ onClose }: LeftNavigationProps) {
   };
 
   const isActive = (path: string) => {
+    // Normalize Bhashik services links that include query params
+    if (path.startsWith('/bhashik/speech-services')) {
+      return pathname.startsWith('/bhashik/speech-services');
+    }
     // For Home menu item, consider both root path and dashboard path as active
     if (path === '/') {
       return pathname === '/' || pathname === '/dashboard';

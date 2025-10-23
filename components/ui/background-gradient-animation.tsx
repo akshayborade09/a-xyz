@@ -5,6 +5,8 @@ import { useTheme } from 'next-themes';
 import { useEffect, useRef, useState } from 'react';
 
 export const BackgroundGradientAnimation = ({
+  gradientBackgroundStart,
+  gradientBackgroundEnd,
   firstColor = '242, 0, 137',
   secondColor = '209, 0, 209',
   thirdColor = '161, 0, 242',
@@ -46,19 +48,21 @@ export const BackgroundGradientAnimation = ({
 
   const { theme } = useTheme();
 
-  // Set up gradient background colors based on theme
-  const gradientBackgroundStart = theme === 'dark' ? '#000000' : '#ffffff';
-  const gradientBackgroundEnd = theme === 'dark' ? '#000000' : '#ffffff';
+  // Resolve gradient background colors based on props or theme
+  const themeBgStart = theme === 'dark' ? '#000000' : '#ffffff';
+  const themeBgEnd = theme === 'dark' ? '#000000' : '#ffffff';
+  const resolvedBgStart = gradientBackgroundStart ?? themeBgStart;
+  const resolvedBgEnd = gradientBackgroundEnd ?? themeBgEnd;
 
   // Set up CSS variables
   useEffect(() => {
     document.body.style.setProperty(
       '--gradient-background-start',
-      gradientBackgroundStart,
+      resolvedBgStart,
     );
     document.body.style.setProperty(
       '--gradient-background-end',
-      gradientBackgroundEnd,
+      resolvedBgEnd,
     );
     document.body.style.setProperty('--first-color', firstColor);
     document.body.style.setProperty('--second-color', secondColor);
@@ -69,8 +73,8 @@ export const BackgroundGradientAnimation = ({
     document.body.style.setProperty('--size', size);
     document.body.style.setProperty('--blending-value', blendingValue);
   }, [
-    gradientBackgroundStart,
-    gradientBackgroundEnd,
+    resolvedBgStart,
+    resolvedBgEnd,
     firstColor,
     secondColor,
     thirdColor,
@@ -133,7 +137,7 @@ export const BackgroundGradientAnimation = ({
   return (
     <div
       className={classNames(
-        'h-screen w-screen relative overflow-hidden top-0 left-0 bg-[linear-gradient(40deg,var(--gradient-background-start),var(--gradient-background-end))]',
+        'relative w-full overflow-hidden top-0 left-0 bg-[linear-gradient(40deg,var(--gradient-background-start),var(--gradient-background-end))]',
         containerClassName,
       )}
     >
@@ -158,7 +162,7 @@ export const BackgroundGradientAnimation = ({
       <div className={classNames(className)}>{children}</div>
       <div
         className={classNames(
-          'gradients-container h-full w-full blur-lg',
+          'gradients-container absolute inset-0 blur-lg',
           isSafari ? 'blur-2xl' : '[filter:url(#blurMe)_blur(40px)]',
         )}
       >
@@ -168,7 +172,7 @@ export const BackgroundGradientAnimation = ({
             `[mix-blend-mode:var(--blending-value)] w-[var(--size)] h-[var(--size)] top-[calc(50%-var(--size)/2)] left-[calc(50%-var(--size)/2)]`,
             `[transform-origin:center_center]`,
             `animate-first`,
-            `opacity-100`,
+            `opacity-50`,
           )}
         ></div>
         <div
@@ -177,7 +181,7 @@ export const BackgroundGradientAnimation = ({
             `[mix-blend-mode:var(--blending-value)] w-[var(--size)] h-[var(--size)] top-[calc(50%-var(--size)/2)] left-[calc(50%-var(--size)/2)]`,
             `[transform-origin:calc(50%-400px)]`,
             `animate-second`,
-            `opacity-100`,
+            `opacity-50`,
           )}
         ></div>
         <div
@@ -186,7 +190,7 @@ export const BackgroundGradientAnimation = ({
             `[mix-blend-mode:var(--blending-value)] w-[var(--size)] h-[var(--size)] top-[calc(50%-var(--size)/2)] left-[calc(50%-var(--size)/2)]`,
             `[transform-origin:calc(50%+400px)]`,
             `animate-third`,
-            `opacity-100`,
+            `opacity-50`,
           )}
         ></div>
         <div
@@ -195,7 +199,7 @@ export const BackgroundGradientAnimation = ({
             `[mix-blend-mode:var(--blending-value)] w-[var(--size)] h-[var(--size)] top-[calc(50%-var(--size)/2)] left-[calc(50%-var(--size)/2)]`,
             `[transform-origin:calc(50%-200px)]`,
             `animate-fourth`,
-            `opacity-70`,
+            `opacity-40`,
           )}
         ></div>
         <div
@@ -204,7 +208,7 @@ export const BackgroundGradientAnimation = ({
             `[mix-blend-mode:var(--blending-value)] w-[var(--size)] h-[var(--size)] top-[calc(50%-var(--size)/2)] left-[calc(50%-var(--size)/2)]`,
             `[transform-origin:calc(50%-800px)_calc(50%+800px)]`,
             `animate-fifth`,
-            `opacity-100`,
+            `opacity-50`,
           )}
         ></div>
 
@@ -215,7 +219,7 @@ export const BackgroundGradientAnimation = ({
             className={classNames(
               `absolute [background:radial-gradient(circle_at_center,_rgba(var(--pointer-color),_0.8)_0,_rgba(var(--pointer-color),_0)_50%)_no-repeat]`,
               `[mix-blend-mode:var(--blending-value)] w-full h-full -top-1/2 -left-1/2`,
-              `opacity-70`,
+              `opacity-40`,
             )}
           ></div>
         )}

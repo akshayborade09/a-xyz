@@ -35,8 +35,10 @@ export default function BhashikPage() {
           pointerColor='34, 197, 94'
           size='70%'
           blendingValue='soft-light'
+          gradientBackgroundStart='#f0fdf4'
+          gradientBackgroundEnd='#f0fdf4'
           containerClassName='min-h-[420px] rounded-2xl'
-          className='grid grid-cols-1 gap-8 items-center px-6 lg:px-12 py-10'
+          className='relative grid grid-cols-1 gap-8 items-center px-6 lg:px-12 py-10'
         >
           <div className='space-y-6 relative z-10 text-center max-w-3xl mx-auto'>
             <h2 className='text-2xl lg:text-3xl font-semibold tracking-tight text-foreground'>

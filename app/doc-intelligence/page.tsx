@@ -1,4 +1,5 @@
 import { PageShell } from '@/components/page-shell';
+import { EvervaultCard } from '@/components/ui/evervault-card';
 import { Button } from '@/components/ui/button';
 import { FileText, FileSearch, ScrollText, Shield } from 'lucide-react';
 
@@ -102,6 +103,10 @@ export default function DocIntelligenceAllServicesPage() {
                 </clipPath>
               </defs>
             </svg>
+          </div>
+          {/* Hover overlay effect while preserving base background */}
+          <div className='absolute inset-0'>
+            <EvervaultCard text='' className='h-full w-full' />
           </div>
           <div className='space-y-4 relative z-10 text-center max-w-3xl mx-auto'>
             <h2 className='text-2xl lg:text-3xl font-semibold tracking-tight text-foreground'>

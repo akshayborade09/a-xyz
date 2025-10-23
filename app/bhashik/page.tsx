@@ -161,9 +161,6 @@ export default function BhashikPage() {
               <p className='text-center text-sm text-muted-foreground mt-6'>
                 News agencies use Bhashik to quickly transcribe and translate video content into multiple Indic languages, enabling broader reach across diverse linguistic audiences.
               </p>
-              <div className='flex justify-center mt-6'>
-                <Button variant='outline'>See More Use Cases</Button>
-              </div>
             </CardContent>
           </Card>
       </div>

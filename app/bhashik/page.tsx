@@ -64,7 +64,7 @@ export default function BhashikPage() {
       </div>
 
       {/* Why Bhashik */}
-      <div className='space-y-6 pt-10 pb-10 md:pt-14 md:pb-14'>
+      <div className='space-y-6 pt-4 pb-10 md:pt-6 md:pb-14'>
         <div className='text-center'>
           <h3 className='text-xl font-semibold'>Why Bhashik?</h3>
           <p className='text-muted-foreground mt-2 max-w-2xl mx-auto'>

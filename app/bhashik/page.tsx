@@ -38,7 +38,7 @@ export default function BhashikPage() {
           gradientBackgroundStart='#f0fdf4'
           gradientBackgroundEnd='#f0fdf4'
           containerClassName='min-h-[420px] rounded-2xl'
-          className='relative grid grid-cols-1 gap-8 items-center px-6 lg:px-12 py-10'
+          className='relative flex min-h-[420px] items-center justify-center px-6 lg:px-12 py-10'
         >
           <div className='space-y-6 relative z-10 text-center max-w-3xl mx-auto'>
             <h2 className='text-2xl lg:text-3xl font-semibold tracking-tight text-foreground'>

@@ -881,7 +881,7 @@ export default function UsageMetricsPage() {
       if (coreTab === 'compute') {
         return (
           <div className='rounded-md border mt-4'>
-            <table className='min-w-full text-sm'>
+            <table className='min-w-full text-sm table-fixed'>
               <thead>
                 <tr className='bg-muted'>
                   <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md'>
@@ -946,7 +946,7 @@ export default function UsageMetricsPage() {
       if (coreTab === 'storage') {
         return (
           <div className='rounded-md border mt-4'>
-            <table className='min-w-full text-sm'>
+            <table className='min-w-full text-sm table-fixed'>
               <thead>
                 <tr className='bg-muted'>
                   <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md'>
@@ -1011,7 +1011,7 @@ export default function UsageMetricsPage() {
       if (coreTab === 'network') {
         return (
           <div className='rounded-md border mt-4'>
-            <table className='min-w-full text-sm'>
+            <table className='min-w-full text-sm table-fixed'>
               <thead>
                 <tr className='bg-muted'>
                   <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md'>
@@ -1222,7 +1222,7 @@ export default function UsageMetricsPage() {
       if (studioTab === 'model') {
         return (
           <div className='rounded-md border mt-4'>
-            <table className='min-w-full text-sm'>
+            <table className='min-w-full text-sm table-fixed'>
               <thead>
                 <tr className='bg-muted'>
                   <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md'>
@@ -1565,29 +1565,26 @@ export default function UsageMetricsPage() {
       if (kubernetesTab === 'controlPlane') {
         return (
           <div className='rounded-md border mt-4'>
-            <table className='min-w-full text-sm'>
+            <table className='min-w-full text-sm table-fixed'>
               <thead>
                 <tr className='bg-muted'>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md w-1/6'>
                     Cluster Name
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/6'>
                     Region
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/6'>
                     Version
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/6'>
                     Rate
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-center text-muted-foreground font-medium w-1/6'>
                     Total Time Used
                   </th>
-                  <th className='px-3 py-2 text-right text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-right text-muted-foreground font-medium w-1/6 rounded-tr-md'>
                     Total Credits Used
-                  </th>
-                  <th className='px-3 py-2 text-right text-muted-foreground font-medium rounded-tr-md'>
-                    Actions
                   </th>
                 </tr>
               </thead>
@@ -1608,7 +1605,7 @@ export default function UsageMetricsPage() {
                     <td className='px-3 py-2'>{row.region}</td>
                     <td className='px-3 py-2'>{row.version}</td>
                     <td className='px-3 py-2'>{row.rate}</td>
-                    <td className='px-3 py-2'>{row.totalTimeUsed}</td>
+                    <td className='px-3 py-2 text-center'>{row.totalTimeUsed}</td>
                     <td className='px-3 py-2 text-right'>
                       ₹
                       {row.credits.toLocaleString(undefined, {
@@ -1616,16 +1613,7 @@ export default function UsageMetricsPage() {
                         maximumFractionDigits: 2,
                       })}
                     </td>
-                    <td className='px-3 py-2 text-right'>
-                      <Button
-                        variant='link'
-                        size='sm'
-                        className='text-primary hover:underline p-0 h-auto'
-                        onClick={() => handleViewClusterDetails(row)}
-                      >
-                        Details
-                      </Button>
-                    </td>
+                    
                   </tr>
                 ))}
                 <tr className='font-bold'>
@@ -1634,14 +1622,13 @@ export default function UsageMetricsPage() {
                   <td></td>
                   <td></td>
                   <td></td>
-                  <td className='px-3 py-2 text-right align-middle font-bold'>
+                  <td className='px-3 py-2 text-right align-middle font-bold rounded-br-md' colSpan={2}>
                     Total&nbsp;&nbsp;&nbsp;₹
                     {controlPlaneTotal.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
                   </td>
-                  <td className='rounded-br-md'></td>
                 </tr>
               </tbody>
             </table>
@@ -1654,25 +1641,25 @@ export default function UsageMetricsPage() {
             <table className='min-w-full text-sm'>
               <thead>
                 <tr className='bg-muted'>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md w-1/7'>
                     Node Pool Name
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/7'>
                     Cluster Name
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/7'>
                     Instance Flavour
                   </th>
-                  <th className='px-3 py-2 text-center text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-center text-muted-foreground font-medium w-1/7'>
                     Desired VM Count
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/7'>
                     Rate
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-center text-muted-foreground font-medium w-1/7'>
                     Total Time Used
                   </th>
-                  <th className='px-3 py-2 text-right text-muted-foreground font-medium rounded-tr-md'>
+                  <th className='px-3 py-2 text-right text-muted-foreground font-medium rounded-tr-md w-1/7'>
                     Total Credits Used
                   </th>
                 </tr>
@@ -1688,7 +1675,7 @@ export default function UsageMetricsPage() {
                     <td className='px-3 py-2'>{row.instanceFlavour}</td>
                     <td className='px-3 py-2 text-center'>{row.desiredVMCount}</td>
                     <td className='px-3 py-2'>{row.rate}</td>
-                    <td className='px-3 py-2'>{row.totalTimeUsed}</td>
+                    <td className='px-3 py-2 text-center'>{row.totalTimeUsed}</td>
                     <td className='px-3 py-2 text-right'>
                       ₹
                       {row.credits.toLocaleString(undefined, {
@@ -1724,25 +1711,25 @@ export default function UsageMetricsPage() {
             <table className='min-w-full text-sm'>
               <thead>
                 <tr className='bg-muted'>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md w-1/7'>
                     Volume Name
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/7'>
                     Cluster Name
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/7'>
                     Storage Type
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/7'>
                     Average Size
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/7'>
                     Rate
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-center text-muted-foreground font-medium w-1/7'>
                     Total Time Used
                   </th>
-                  <th className='px-3 py-2 text-right text-muted-foreground font-medium rounded-tr-md'>
+                  <th className='px-3 py-2 text-right text-muted-foreground font-medium rounded-tr-md w-1/7'>
                     Total Credits Used
                   </th>
                 </tr>
@@ -1758,7 +1745,7 @@ export default function UsageMetricsPage() {
                     <td className='px-3 py-2'>{row.storageType}</td>
                     <td className='px-3 py-2'>{row.averageSize}</td>
                     <td className='px-3 py-2'>{row.rate}</td>
-                    <td className='px-3 py-2'>{row.totalTimeUsed}</td>
+                    <td className='px-3 py-2 text-center'>{row.totalTimeUsed}</td>
                     <td className='px-3 py-2 text-right'>
                       ₹
                       {row.credits.toLocaleString(undefined, {
@@ -1794,28 +1781,28 @@ export default function UsageMetricsPage() {
             <table className='min-w-full text-sm'>
               <thead>
                 <tr className='bg-muted'>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md w-1/8'>
                     LB Name
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/8'>
                     Cluster Name
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/8'>
                     LB Type
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-right text-muted-foreground font-medium w-1/8'>
                     Base Charge
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-center text-muted-foreground font-medium w-1/8'>
                     Total Time Used
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/8'>
                     Total Data Processed
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-right text-muted-foreground font-medium w-1/8'>
                     Data Processing Charges
                   </th>
-                  <th className='px-3 py-2 text-right text-muted-foreground font-medium rounded-tr-md'>
+                  <th className='px-3 py-2 text-right text-muted-foreground font-medium rounded-tr-md w-1/8'>
                     Total Credits Used
                   </th>
                 </tr>
@@ -1829,10 +1816,10 @@ export default function UsageMetricsPage() {
                     <td className='px-3 py-2'>{row.lbName}</td>
                     <td className='px-3 py-2'>{row.clusterName}</td>
                     <td className='px-3 py-2'>{row.lbType}</td>
-                    <td className='px-3 py-2'>{row.baseCharge}</td>
-                    <td className='px-3 py-2'>{row.totalTimeUsed}</td>
-                    <td className='px-3 py-2'>{row.totalDataProcessed}</td>
-                    <td className='px-3 py-2'>{row.dataProcessingCharges}</td>
+                    <td className='px-3 py-2 text-right'>{row.baseCharge}</td>
+                    <td className='px-3 py-2 text-center'>{row.totalTimeUsed}</td>
+                    <td className='px-3 py-2 text-center'>{row.totalDataProcessed}</td>
+                    <td className='px-3 py-2 text-right'>{row.dataProcessingCharges}</td>
                     <td className='px-3 py-2 text-right'>
                       ₹
                       {row.credits.toLocaleString(undefined, {
@@ -1869,19 +1856,19 @@ export default function UsageMetricsPage() {
             <table className='min-w-full text-sm'>
               <thead>
                 <tr className='bg-muted'>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md w-1/5'>
                     IP Address
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/5'>
                     Cluster Name
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/5'>
                     Rate
                   </th>
-                  <th className='px-3 py-2 text-left text-muted-foreground font-medium'>
+                  <th className='px-3 py-2 text-center text-muted-foreground font-medium w-1/5'>
                     Total Time Used
                   </th>
-                  <th className='px-3 py-2 text-right text-muted-foreground font-medium rounded-tr-md'>
+                  <th className='px-3 py-2 text-right text-muted-foreground font-medium rounded-tr-md w-1/5'>
                     Total Credits Used
                   </th>
                 </tr>
@@ -1895,7 +1882,7 @@ export default function UsageMetricsPage() {
                     <td className='px-3 py-2'>{row.ipAddress}</td>
                     <td className='px-3 py-2'>{row.clusterName}</td>
                     <td className='px-3 py-2'>{row.rate}</td>
-                    <td className='px-3 py-2'>{row.totalTimeUsed}</td>
+                    <td className='px-3 py-2 text-center'>{row.totalTimeUsed}</td>
                     <td className='px-3 py-2 text-right'>
                       ₹
                       {row.credits.toLocaleString(undefined, {

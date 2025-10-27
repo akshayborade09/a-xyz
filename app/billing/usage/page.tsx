@@ -421,7 +421,6 @@ function renderCustomizedLabel({
 const tabs = [
   { id: 'summary', label: 'Summary' },
   { id: 'core', label: 'Core Infrastructure' },
-  { id: 'kubernetes', label: 'Kubernetes' },
   { id: 'studio', label: 'AI Studio' },
   { id: 'solutions', label: 'AI Solutions' },
 ];
@@ -462,7 +461,7 @@ export default function UsageMetricsPage() {
 
   // State for nested tabs
   const [coreTab, setCoreTab] = useState('compute');
-  const [kubernetesTab, setKubernetesTab] = useState('controlPlane');
+  // Removed top-level Kubernetes tab
   const [studioTab, setStudioTab] = useState('model');
   const [solutionsTab, setSolutionsTab] = useState('bhashik');
 
@@ -742,6 +741,7 @@ export default function UsageMetricsPage() {
       { id: 'compute', label: 'Compute' },
       { id: 'storage', label: 'Storage' },
       { id: 'network', label: 'Network' },
+      { id: 'kubernetes', label: 'Kubernetes' },
     ];
 
     // Data for each tab (updated to match VPC structure)
@@ -1058,6 +1058,74 @@ export default function UsageMetricsPage() {
                   <td className='px-3 py-2 text-right align-middle font-bold rounded-br-md'>
                     Total&nbsp;&nbsp;&nbsp;₹
                     {networkTotal.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+      if (coreTab === 'kubernetes') {
+        return (
+          <div className='rounded-md border mt-4'>
+            <table className='min-w-full text-sm table-fixed'>
+              <thead>
+                <tr className='bg-muted'>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium rounded-tl-md w-1/6'>
+                    Cluster Name
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/6'>
+                    Region
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/6'>
+                    Version
+                  </th>
+                  <th className='px-3 py-2 text-left text-muted-foreground font-medium w-1/6'>
+                    Rate
+                  </th>
+                  <th className='px-3 py-2 text-center text-muted-foreground font-medium w-1/6'>
+                    Total Time Used
+                  </th>
+                  <th className='px-3 py-2 text-right text-muted-foreground font-medium w-1/6 rounded-tr-md'>
+                    Total Credits Used
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMockControlPlane.map((row: any, idx: number) => (
+                  <tr key={idx} className='border-b transition-colors hover:bg-gray-50/40'>
+                    <td className='px-3 py-2'>
+                      <button
+                        onClick={() => handleViewClusterDetails(row)}
+                        className='text-primary font-medium underline cursor-pointer'
+                      >
+                        {row.clusterName}
+                      </button>
+                    </td>
+                    <td className='px-3 py-2'>{row.region}</td>
+                    <td className='px-3 py-2'>{row.version}</td>
+                    <td className='px-3 py-2'>{row.rate}</td>
+                    <td className='px-3 py-2 text-center'>{row.totalTimeUsed}</td>
+                    <td className='px-3 py-2 text-right font-semibold'>
+                      ₹
+                      {row.credits.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </td>
+                  </tr>
+                ))}
+                <tr className='font-bold'>
+                  <td className='rounded-bl-md'></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td className='px-3 py-2 text-right align-middle font-bold rounded-br-md' colSpan={2}>
+                    Total&nbsp;&nbsp;&nbsp;₹
+                    {controlPlaneTotal.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
@@ -1501,10 +1569,6 @@ export default function UsageMetricsPage() {
   const KubernetesSection = () => {
     const kubernetesTabs = [
       { id: 'controlPlane', label: 'Control Plane' },
-      { id: 'nodePools', label: 'Node Pools' },
-      { id: 'volumes', label: 'Volumes' },
-      { id: 'loadBalancers', label: 'Load Balancers' },
-      { id: 'ip', label: 'IP' },
     ];
 
     // Render table for each tab
@@ -2494,7 +2558,6 @@ export default function UsageMetricsPage() {
 
         {activeTab === 'summary' && <SummarySection />}
         {activeTab === 'core' && <CoreInfrastructureSection />}
-        {activeTab === 'kubernetes' && <KubernetesSection />}
         {activeTab === 'studio' && <StudioSection />}
         {activeTab === 'solutions' && <SolutionsSection />}
 

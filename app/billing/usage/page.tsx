@@ -1,5 +1,4 @@
 'use client';
-export const dynamic = 'force-static';
 
 import { useState, useEffect, Fragment } from 'react';
 import { usePathname } from 'next/navigation';

@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-static';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { usePathname } from 'next/navigation';
 import { PageLayout } from '@/components/page-layout';
 import { VercelTabs } from '@/components/ui/vercel-tabs';
@@ -2782,7 +2782,7 @@ export default function UsageMetricsPage() {
                               {filteredMockNodePools
                                 .filter((np: any) => np.clusterName === selectedCluster.clusterName)
                                 .map((nodePool: any, idx: number) => (
-                                  <>
+                                  <Fragment key={`${nodePool.nodePoolName}-${idx}`}>
                                   <tr key={`${idx}-np`} className='border-b transition-colors hover:bg-gray-50/40'>
                                     <td className='px-3 py-2'>
                                       <button
@@ -2844,7 +2844,7 @@ export default function UsageMetricsPage() {
                                       </td>
                                     </tr>
                                   )}
-                                  </>
+                                  </Fragment>
                                 ))}
                             </tbody>
                           </table>

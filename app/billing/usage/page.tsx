@@ -2740,6 +2740,19 @@ export default function UsageMetricsPage() {
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className='px-4 pb-4'>
+                        {/* Column Headers */}
+                        <div className='flex items-center gap-4 px-4 py-3 bg-muted rounded-md text-sm font-medium text-muted-foreground mb-2'>
+                          <div className='w-4'></div>
+                          <div className='grid grid-cols-6 gap-4 flex-1'>
+                            <div className='text-left'>Name</div>
+                            <div className='text-left'>Flavour</div>
+                            <div className='text-center'>VM Count</div>
+                            <div className='text-left'>Rate</div>
+                            <div className='text-center'>Time Used</div>
+                            <div className='text-right'>Credits</div>
+                          </div>
+                        </div>
+                        
                         <Accordion type='multiple' defaultValue={[]} className='space-y-2'>
                           {filteredMockNodePools
                             .filter((np: any) => np.clusterName === selectedCluster.clusterName)
@@ -2762,7 +2775,7 @@ export default function UsageMetricsPage() {
                                   <div className='rounded-md border bg-white mt-2'>
                                     <table className='min-w-full text-sm'>
                                       <thead>
-                                        <tr className='bg-muted/50'>
+                                        <tr className='bg-blue-50'>
                                           <th className='px-3 py-2 text-left text-muted-foreground font-medium'>VM Name</th>
                                           <th className='px-3 py-2 text-left text-muted-foreground font-medium'>Status</th>
                                           <th className='px-3 py-2 text-center text-muted-foreground font-medium'>Total Time Used</th>

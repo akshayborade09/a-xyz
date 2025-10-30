@@ -2,6 +2,8 @@ import type React from 'react';
 import { PageShell } from '@/components/page-shell';
 import { EvervaultCard } from '@/components/ui/evervault-card';
 import { Button } from '@/components/ui/button';
+import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
+import { SetupCodeModal } from '@/components/modals/setup-code-modal';
 import { FileText, FileSearch, ScrollText, Shield } from 'lucide-react';
 
 interface ServiceCardData {
@@ -87,7 +89,7 @@ const cards: ServiceCardData[] = [
   },
 ];
 
-function ServiceCard({ data }: { data: ServiceCardData }) {
+function ServiceCard({ data, onOpenStarterCode }: { data: ServiceCardData; onOpenStarterCode: (id: string) => void }) {
   return (
     <div className={`bg-gradient-to-bl ${data.gradient} rounded-xl border ${data.borderClass} p-6 flex flex-col h-full`}>
       {/* Top Content - Flexible */}
@@ -133,11 +135,22 @@ function ServiceCard({ data }: { data: ServiceCardData }) {
           ))}
         </div>
 
-        {/* Action Button */}
+        {/* Action Buttons */}
         <div className='flex space-x-3'>
           <Button className='flex-1' asChild>
             <a href={data.playgroundUrl}>Playground</a>
           </Button>
+          <TooltipWrapper content='View starter code'>
+            <Button
+              variant='outline'
+              className='px-3 border-gray-500 text-gray-500 hover:bg-gray-900 hover:text-white hover:border-gray-900'
+              onClick={() => onOpenStarterCode(data.id)}
+            >
+              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' />
+              </svg>
+            </Button>
+          </TooltipWrapper>
         </div>
       </div>
     </div>
@@ -145,6 +158,8 @@ function ServiceCard({ data }: { data: ServiceCardData }) {
 }
 
 export default function DocIntelligenceAllServicesPage() {
+  const [isSetupCodeModalOpen, setIsSetupCodeModalOpen] = React.useState(false);
+  const [selectedModelId, setSelectedModelId] = React.useState('');
   return (
     <PageShell
       title='Document Intelligence'
@@ -192,10 +207,22 @@ export default function DocIntelligenceAllServicesPage() {
 
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
           {cards.map(card => (
-            <ServiceCard key={card.id} data={card} />
+            <ServiceCard
+              key={card.id}
+              data={card}
+              onOpenStarterCode={(id: string) => {
+                setSelectedModelId(id);
+                setIsSetupCodeModalOpen(true);
+              }}
+            />
           ))}
         </div>
       </div>
+      <SetupCodeModal
+        open={isSetupCodeModalOpen}
+        onClose={() => setIsSetupCodeModalOpen(false)}
+        modelId={selectedModelId}
+      />
     </PageShell>
   );
 }

@@ -17,6 +17,8 @@ import {
 import { PageShell } from '@/components/page-shell';
 import { VercelTabs } from '@/components/ui/vercel-tabs';
 import { Button } from '@/components/ui/button';
+import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
+import { SetupCodeModal } from '@/components/modals/setup-code-modal';
 import { generateBreadcrumbs } from '@/lib/generate-breadcrumbs';
 
 interface ServiceCardData {
@@ -187,7 +189,7 @@ const textCards: ServiceCardData[] = [
   },
 ];
 
-function ServiceCard({ data }: { data: ServiceCardData }) {
+function ServiceCard({ data, onOpenStarterCode }: { data: ServiceCardData; onOpenStarterCode: (id: string) => void }) {
   const borderClass = data.gradient.includes('indigo')
     ? 'border-indigo-200/60'
     : data.gradient.includes('green')
@@ -238,11 +240,22 @@ function ServiceCard({ data }: { data: ServiceCardData }) {
           ))}
         </div>
 
-        {/* Action Button */}
+        {/* Action Buttons */}
         <div className='flex space-x-3'>
           <Button className='flex-1' asChild>
             <a href={data.playgroundUrl}>Playground</a>
           </Button>
+          <TooltipWrapper content='View starter code'>
+            <Button
+              variant='outline'
+              className='px-3 border-gray-500 text-gray-500 hover:bg-gray-900 hover:text-white hover:border-gray-900'
+              onClick={() => onOpenStarterCode(data.id)}
+            >
+              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' />
+              </svg>
+            </Button>
+          </TooltipWrapper>
         </div>
       </div>
     </div>
@@ -253,6 +266,8 @@ export default function BhashikServicesPage() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState<'speech' | 'text'>('speech');
+  const [isSetupCodeModalOpen, setIsSetupCodeModalOpen] = useState(false);
+  const [selectedModelId, setSelectedModelId] = useState('');
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -290,7 +305,14 @@ export default function BhashikServicesPage() {
         {activeTab === 'speech' && (
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
             {speechCards.map(card => (
-              <ServiceCard key={card.id} data={card} />
+              <ServiceCard
+                key={card.id}
+                data={card}
+                onOpenStarterCode={(id: string) => {
+                  setSelectedModelId(id);
+                  setIsSetupCodeModalOpen(true);
+                }}
+              />
             ))}
           </div>
         )}
@@ -298,11 +320,23 @@ export default function BhashikServicesPage() {
         {activeTab === 'text' && (
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
             {textCards.map(card => (
-              <ServiceCard key={card.id} data={card} />
+              <ServiceCard
+                key={card.id}
+                data={card}
+                onOpenStarterCode={(id: string) => {
+                  setSelectedModelId(id);
+                  setIsSetupCodeModalOpen(true);
+                }}
+              />
             ))}
           </div>
         )}
       </div>
+      <SetupCodeModal
+        open={isSetupCodeModalOpen}
+        onClose={() => setIsSetupCodeModalOpen(false)}
+        modelId={selectedModelId}
+      />
     </PageShell>
   );
 }

@@ -7,38 +7,27 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
-import { HelpCircle, Globe, Search, ChevronDown, Check } from 'lucide-react';
-import { vpcs, subnets } from '@/lib/data';
+import { HelpCircle, Globe, Search, ChevronDown } from 'lucide-react';
+import { vpcs } from '@/lib/data';
 
 export default function CreateHostedZonePage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     domainName: '',
-    description: '',
-    type: 'Public',
-    vpc: '',
-    subnet: '',
+    type: 'Private',
+    vpcs: [] as string[],
   });
 
   const [formTouched, setFormTouched] = useState(false);
   const [vpcSelectorOpen, setVpcSelectorOpen] = useState(false);
-  const [subnetSelectorOpen, setSubnetSelectorOpen] = useState(false);
   const [vpcSearchTerm, setVpcSearchTerm] = useState('');
-  const [subnetSearchTerm, setSubnetSearchTerm] = useState('');
   const [errors, setErrors] = useState({
     domainName: '',
-    vpc: '',
-    subnet: '',
+    vpcs: '',
   });
 
   // Filter VPCs and subnets
@@ -48,27 +37,15 @@ export default function CreateHostedZonePage() {
       vpc.id.toLowerCase().includes(vpcSearchTerm.toLowerCase())
   );
 
-  const selectedVPCName = vpcs.find(vpc => vpc.id === formData.vpc)?.name;
-  const availableSubnets = selectedVPCName
-    ? subnets.filter(subnet => subnet.vpcName === selectedVPCName)
-    : [];
-  const filteredSubnets = availableSubnets.filter(
-    subnet =>
-      subnet.name.toLowerCase().includes(subnetSearchTerm.toLowerCase()) ||
-      subnet.id.toLowerCase().includes(subnetSearchTerm.toLowerCase())
-  );
-
   const isFormValid = () => {
     // Check if all required fields are filled
     const hasValidDomainName = formData.domainName.trim().length > 0;
     const hasValidType = formData.type.length > 0;
     const hasVpcIfPrivate =
-      formData.type === 'Private' ? formData.vpc.length > 0 : true;
-    const hasSubnetIfPrivate =
-      formData.type === 'Private' ? formData.subnet.length > 0 : true;
+      formData.type === 'Private' ? formData.vpcs.length > 0 : true;
 
     // Check if there are no validation errors
-    const noErrors = !errors.domainName && !errors.vpc && !errors.subnet;
+    const noErrors = !errors.domainName && !errors.vpcs;
 
     // Validate domain name format
     const validDomainFormat =
@@ -81,13 +58,12 @@ export default function CreateHostedZonePage() {
       hasValidDomainName &&
       hasValidType &&
       hasVpcIfPrivate &&
-      hasSubnetIfPrivate &&
       noErrors &&
       validDomainFormat
     );
   };
 
-  const validateField = (field: string, value: string) => {
+  const validateField = (field: string, value: any) => {
     let error = '';
 
     switch (field) {
@@ -102,14 +78,9 @@ export default function CreateHostedZonePage() {
           error = 'Please enter a valid domain name (e.g., example.com)';
         }
         break;
-      case 'vpc':
-        if (formData.type === 'Private' && !value) {
-          error = 'VPC is required for private hosted zones';
-        }
-        break;
-      case 'subnet':
-        if (formData.type === 'Private' && !value) {
-          error = 'Subnet is required for private hosted zones';
+      case 'vpcs':
+        if (formData.type === 'Private' && (!Array.isArray(formData.vpcs) || formData.vpcs.length === 0)) {
+          error = 'At least one VPC is required for private hosted zones';
         }
         break;
     }
@@ -122,18 +93,25 @@ export default function CreateHostedZonePage() {
     setFormData(prev => ({
       ...prev,
       [field]: value,
-      // Clear VPC and subnet when type changes to Public
-      ...(field === 'type' && value === 'Public'
-        ? { vpc: '', subnet: '' }
-        : {}),
-      // Clear subnet when VPC changes
-      ...(field === 'vpc' ? { subnet: '' } : {}),
     }));
     setFormTouched(true);
-
     // Validate field on change
     if (formTouched) {
       validateField(field, value);
+    }
+  };
+
+  const toggleVpcSelection = (vpcId: string) => {
+    setFormData(prev => {
+      const isSelected = prev.vpcs.includes(vpcId);
+      const next = isSelected
+        ? prev.vpcs.filter(id => id !== vpcId)
+        : [...prev.vpcs, vpcId];
+      return { ...prev, vpcs: next };
+    });
+    setFormTouched(true);
+    if (formTouched) {
+      validateField('vpcs', null);
     }
   };
 
@@ -191,24 +169,6 @@ export default function CreateHostedZonePage() {
                     )}
                   </div>
 
-                  <div className='mb-5'>
-                    <Label
-                      htmlFor='description'
-                      className='block mb-2 font-medium'
-                    >
-                      Description
-                    </Label>
-                    <Textarea
-                      id='description'
-                      placeholder='Enter a description for this hosted zone'
-                      value={formData.description}
-                      onChange={e =>
-                        handleChange('description', e.target.value)
-                      }
-                      className='focus:ring-2 focus:ring-ring focus:ring-offset-2 min-h-[100px]'
-                    />
-                  </div>
-
                   {/* Hosted Zone Type */}
                   <div className='mb-6'>
                     <Label className='block mb-3 font-medium'>
@@ -219,11 +179,12 @@ export default function CreateHostedZonePage() {
                       onValueChange={value => handleChange('type', value)}
                       className='grid grid-cols-1 md:grid-cols-2 gap-4'
                     >
-                      <div className='flex items-start space-x-3 p-4 border rounded-lg'>
+                      <div className='flex items-start space-x-3 p-4 border rounded-lg opacity-60 cursor-not-allowed'>
                         <RadioGroupItem
                           value='Public'
                           id='public'
                           className='mt-0.5'
+                          disabled
                         />
                         <div className='space-y-1'>
                           <Label
@@ -231,6 +192,9 @@ export default function CreateHostedZonePage() {
                             className='text-base font-medium'
                           >
                             Public Hosted Zone
+                            <Badge variant='secondary' className='ml-2'>
+                              Coming soon
+                            </Badge>
                           </Label>
                           <p className='text-sm text-muted-foreground'>
                             Creates a public hosted zone. Route traffic on the
@@ -262,7 +226,7 @@ export default function CreateHostedZonePage() {
                   </div>
                 </div>
 
-                {/* VPC and Subnet Selection (only for Private) */}
+                {/* VPC Selection (only for Private) */}
                 {formData.type === 'Private' && (
                   <div className='mb-8'>
                     <h3 className='text-lg font-semibold mb-4'>
@@ -286,30 +250,28 @@ export default function CreateHostedZonePage() {
                         <button
                           type='button'
                           onClick={() => setVpcSelectorOpen(!vpcSelectorOpen)}
-                          onBlur={() => validateField('vpc', formData.vpc)}
+                          onBlur={() => validateField('vpcs', formData.vpcs)}
                           className={`w-full flex items-center justify-between px-3 py-2 text-left border rounded-md bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring ${
-                            errors.vpc ? 'border-red-300 bg-red-50' : ''
+                            errors.vpcs ? 'border-red-300 bg-red-50' : ''
                           }`}
                         >
-                          {formData.vpc ? (
+                          {formData.vpcs.length > 0 ? (
                             <div className='flex flex-col'>
                               <span className='font-medium'>
-                                {
-                                  vpcs.find(vpc => vpc.id === formData.vpc)
-                                    ?.name
-                                }
+                                {formData.vpcs.length} selected
                               </span>
                               <span className='text-xs text-muted-foreground'>
-                                {formData.vpc} •{' '}
-                                {
-                                  vpcs.find(vpc => vpc.id === formData.vpc)
-                                    ?.region
-                                }
+                                {formData.vpcs
+                                  .slice(0, 2)
+                                  .map(id => vpcs.find(v => v.id === id)?.name)
+                                  .filter(Boolean)
+                                  .join(', ')}
+                                {formData.vpcs.length > 2 ? '…' : ''}
                               </span>
                             </div>
                           ) : (
                             <span className='text-muted-foreground'>
-                              Select a VPC
+                              Select VPCs
                             </span>
                           )}
                           <ChevronDown className='h-4 w-4 opacity-50' />
@@ -330,135 +292,38 @@ export default function CreateHostedZonePage() {
                               </div>
                             </div>
                             <div className='p-1 max-h-48 overflow-y-auto'>
-                              {filteredVPCs.map(vpc => (
-                                <button
-                                  key={vpc.id}
-                                  type='button'
-                                  onClick={() => {
-                                    handleChange('vpc', vpc.id);
-                                    setVpcSelectorOpen(false);
-                                    setVpcSearchTerm('');
-                                  }}
-                                  className='w-full flex items-center justify-between px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground rounded-sm'
-                                >
-                                  <div className='flex flex-col items-start'>
-                                    <span className='font-medium'>
-                                      {vpc.name}
-                                    </span>
-                                    <span className='text-xs text-muted-foreground'>
-                                      {vpc.id} • {vpc.region}
-                                    </span>
+                              {filteredVPCs.map(vpc => {
+                                const checked = formData.vpcs.includes(vpc.id);
+                                return (
+                                  <div
+                                    key={vpc.id}
+                                    onClick={() => toggleVpcSelection(vpc.id)}
+                                    className='w-full flex items-center justify-between px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground rounded-sm cursor-pointer'
+                                  >
+                                    <div className='flex items-start gap-3'>
+                                      <Checkbox
+                                        checked={checked}
+                                        onCheckedChange={() => toggleVpcSelection(vpc.id)}
+                                        onClick={e => e.stopPropagation()}
+                                      />
+                                      <div className='flex flex-col items-start'>
+                                        <span className='font-medium'>
+                                          {vpc.name}
+                                        </span>
+                                        <span className='text-xs text-muted-foreground'>
+                                          {vpc.id} • {vpc.region}
+                                        </span>
+                                      </div>
+                                    </div>
                                   </div>
-                                  {formData.vpc === vpc.id && (
-                                    <Check className='h-4 w-4' />
-                                  )}
-                                </button>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    {/* Subnet Selector */}
-                    <div className='mb-6'>
-                      <div className='flex items-center gap-2 mb-2'>
-                        <Label className='font-medium'>
-                          Subnet <span className='text-destructive'>*</span>
-                        </Label>
-                        <TooltipWrapper
-                          content='Select the subnet within the VPC for this private hosted zone'
-                          side='top'
-                        >
-                          <HelpCircle className='h-4 w-4 text-muted-foreground hover:text-foreground cursor-help' />
-                        </TooltipWrapper>
-                      </div>
-                      <div className='relative'>
-                        <button
-                          type='button'
-                          onClick={() =>
-                            setSubnetSelectorOpen(!subnetSelectorOpen)
-                          }
-                          onBlur={() =>
-                            validateField('subnet', formData.subnet)
-                          }
-                          disabled={!formData.vpc}
-                          className={`w-full flex items-center justify-between px-3 py-2 text-left border rounded-md bg-background hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed ${
-                            errors.subnet ? 'border-red-300 bg-red-50' : ''
-                          }`}
-                        >
-                          {formData.subnet ? (
-                            <div className='flex flex-col'>
-                              <span className='font-medium'>
-                                {
-                                  availableSubnets.find(
-                                    subnet => subnet.id === formData.subnet
-                                  )?.name
-                                }
-                              </span>
-                              <span className='text-xs text-muted-foreground'>
-                                {formData.subnet} •{' '}
-                                {
-                                  availableSubnets.find(
-                                    subnet => subnet.id === formData.subnet
-                                  )?.cidr
-                                }
-                              </span>
-                            </div>
-                          ) : (
-                            <span className='text-muted-foreground'>
-                              {!formData.vpc
-                                ? 'Select a VPC first'
-                                : 'Select a subnet'}
-                            </span>
-                          )}
-                          <ChevronDown className='h-4 w-4 opacity-50' />
-                        </button>
-                        {subnetSelectorOpen && formData.vpc && (
-                          <div className='absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-md'>
-                            <div className='p-2 border-b'>
-                              <div className='relative'>
-                                <Search className='absolute left-2 top-2.5 h-4 w-4 text-muted-foreground' />
-                                <Input
-                                  placeholder='Search subnets...'
-                                  value={subnetSearchTerm}
-                                  onChange={e =>
-                                    setSubnetSearchTerm(e.target.value)
-                                  }
-                                  className='pl-8'
-                                />
-                              </div>
-                            </div>
-                            <div className='p-1 max-h-48 overflow-y-auto'>
-                              {filteredSubnets.map(subnet => (
-                                <button
-                                  key={subnet.id}
-                                  type='button'
-                                  onClick={() => {
-                                    handleChange('subnet', subnet.id);
-                                    setSubnetSelectorOpen(false);
-                                    setSubnetSearchTerm('');
-                                  }}
-                                  className='w-full flex items-center justify-between px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground rounded-sm'
-                                >
-                                  <div className='flex flex-col items-start'>
-                                    <span className='font-medium'>
-                                      {subnet.name}
-                                    </span>
-                                    <span className='text-xs text-muted-foreground'>
-                                      {subnet.id} • {subnet.cidr}
-                                    </span>
-                                  </div>
-                                  {formData.subnet === subnet.id && (
-                                    <Check className='h-4 w-4' />
-                                  )}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 )}
               </form>

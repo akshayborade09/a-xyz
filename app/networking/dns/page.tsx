@@ -21,6 +21,11 @@ export default function HostedZonesPage() {
 
   // Filter data based on user type for demo
   const filteredHostedZones = filterDataForUser(hostedZones)
+  // Force all hosted zones to display as Private in the table
+  const hostedZonesPrivateOnly = filteredHostedZones.map((z: any) => ({
+    ...z,
+    type: 'Private',
+  }))
   const showEmptyState = shouldShowEmptyState() && filteredHostedZones.length === 0
 
   const handleDeleteClick = (zone: any) => {
@@ -222,7 +227,7 @@ export default function HostedZonesPage() {
       ) : (
         <ShadcnDataTable 
           columns={columns} 
-          data={filteredHostedZones}
+          data={hostedZonesPrivateOnly}
           searchableColumns={["domainName", "type"]}
           pageSize={10}
           enableSearch={true}
@@ -231,13 +236,7 @@ export default function HostedZonesPage() {
           onRefresh={handleRefresh}
           enableAutoRefresh={true}
           enableVpcFilter={false}
-          enableStatusFilter={true}
-          statusOptions={[
-            { value: "all", label: "All Types" },
-            { value: "Public", label: "Public" },
-            { value: "Private", label: "Private" },
-          ]}
-          statusFilterColumn="type"
+          enableStatusFilter={false}
         />
       )}
 

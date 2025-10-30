@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PageLayout } from '@/components/page-layout';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import { StatusBadge } from '@/components/status-badge';
 import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
 import { EmptyState } from '@/components/ui/empty-state';
 import { getEmptyStateMessage } from '@/lib/demo-data-filter';
+import { vpcs } from '@/lib/data';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ import {
 } from '@/components/ui/dialog';
 import { Plus, Info, CheckCircle, HelpCircle, Trash2 } from 'lucide-react';
 import { DeleteDnsRecordModal } from '@/components/modals/delete-dns-record-modal';
+import { useToast } from '@/hooks/use-toast';
 
 // DNS Records illustration
 const dnsRecordsIcon = (
@@ -162,11 +164,10 @@ const dnsRecordsIcon = (
 const hostedZoneData = {
   id: 'hz-1',
   domainName: 'example.com',
-  type: 'Public',
+  type: 'Private',
   status: 'success',
   recordCount: 8,
   createdOn: '2023-10-15T10:00:00Z',
-  description: 'Main production domain for example.com website',
 };
 
 // Mock DNS records data
@@ -278,6 +279,7 @@ export default function ManageHostedZonePage({
 }: {
   params: { id: string };
 }) {
+  const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isNewlyCreated = searchParams?.get('created') === 'true';
@@ -312,6 +314,93 @@ export default function ManageHostedZonePage({
     routingProtocol: 'Simple',
     value: '',
   });
+  const [isAttachModalOpen, setIsAttachModalOpen] = useState(false);
+  const [selectedAttachVpc, setSelectedAttachVpc] = useState<string>('');
+
+  // Associated VPCs mock association for this hosted zone
+  const [associatedVpcIds, setAssociatedVpcIds] = useState<string[]>([
+    'vpc-1',
+    'vpc-2',
+    'vpc-3',
+  ]);
+  const associatedVpcs = useMemo(
+    () => vpcs.filter(v => associatedVpcIds.includes(v.id)),
+    [associatedVpcIds]
+  );
+
+  const handleDetachVpc = (vpc: any) => {
+    setAssociatedVpcIds(prev => prev.filter(id => id !== vpc.id));
+    toast({
+      title: 'VPC detached',
+      description: `${vpc.name} has been detached from this hosted zone`,
+    });
+  };
+
+  const availableVpcsToAttach = useMemo(
+    () => vpcs.filter(v => !associatedVpcIds.includes(v.id)),
+    [associatedVpcIds]
+  );
+
+  const handleConfirmAttachVpc = () => {
+    if (!selectedAttachVpc) return;
+    setAssociatedVpcIds(prev => [...prev, selectedAttachVpc]);
+    const v = vpcs.find(x => x.id === selectedAttachVpc);
+    toast({
+      title: 'VPC attached',
+      description: `${v?.name || selectedAttachVpc} has been attached to this hosted zone`,
+    });
+    setSelectedAttachVpc('');
+    setIsAttachModalOpen(false);
+  };
+
+  const vpcColumns = [
+    {
+      key: 'name',
+      label: 'VPC Name',
+      sortable: true,
+      searchable: true,
+      width: '25%',
+      render: (value: string) => (
+        <div className='font-medium'>{value}</div>
+      ),
+    },
+    {
+      key: 'region',
+      label: 'Region',
+      sortable: true,
+      searchable: true,
+      width: '25%',
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      sortable: true,
+      width: '25%',
+      render: (value: string) => <StatusBadge status={value} />,
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      align: 'right' as const,
+      width: '25%',
+      render: (_: any, row: any) => (
+        <div className='flex justify-end'>
+          <ActionMenu
+            resourceName={row.name}
+            resourceType='VPC'
+            customActions={[
+              {
+                label: 'Detach',
+                variant: 'destructive',
+                icon: <Trash2 className='mr-2 h-4 w-4' />,
+                onClick: () => handleDetachVpc(row),
+              },
+            ]}
+          />
+        </div>
+      ),
+    },
+  ];
 
   // Form state for adding DNS records
   const [recordForm, setRecordForm] = useState({
@@ -754,24 +843,101 @@ export default function ManageHostedZonePage({
                 </div>
               </div>
 
-              {/* Description in second row */}
-              {hostedZoneData.description && (
-                <div className='col-span-full'>
-                  <div className='space-y-1'>
-                    <label
-                      className='text-sm font-normal text-gray-700'
-                      style={{ fontSize: '13px' }}
-                    >
-                      Description
-                    </label>
-                    <div className='font-medium' style={{ fontSize: '14px' }}>
-                      {hostedZoneData.description}
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Description removed as per requirements */}
             </DetailGrid>
           </div>
+
+          {/* Associated VPCs Section */}
+          <Card>
+            <CardHeader className='pb-4'>
+              <div className='flex items-start justify-between gap-2'>
+                <div>
+                  <CardTitle className='text-lg font-semibold'>VPCs</CardTitle>
+                  <p className='text-sm text-muted-foreground mt-1'>
+                    VPCs associated with this private hosted zone.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setIsAttachModalOpen(true)}
+                  className='bg-black text-white hover:bg-black/90'
+                >
+                  Attach VPC
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className='space-y-6'>
+              {associatedVpcs.length > 0 ? (
+                <ShadcnDataTable
+                  columns={vpcColumns}
+                  data={associatedVpcs as any}
+                  searchableColumns={['name', 'region']}
+                  pageSize={5}
+                  enableSearch={false}
+                  enableColumnVisibility={false}
+                  enablePagination={true}
+                />
+              ) : (
+                <div className='border rounded-lg'>
+                  <EmptyState
+                    title='No VPCs associated'
+                    description='This hosted zone is not associated with any VPCs.'
+                    actionText=''
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Attach VPC Modal */}
+          <Dialog open={isAttachModalOpen} onOpenChange={setIsAttachModalOpen}>
+            <DialogContent className='sm:max-w-[480px]'>
+              <DialogHeader>
+                <DialogTitle>Attach VPC</DialogTitle>
+              </DialogHeader>
+              <div className='space-y-4 pt-2'>
+                {availableVpcsToAttach.length > 0 ? (
+                  <div>
+                    <Label className='block mb-2'>Select VPC</Label>
+                    <Select
+                      value={selectedAttachVpc}
+                      onValueChange={value => setSelectedAttachVpc(value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select a VPC' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableVpcsToAttach.map(v => (
+                          <SelectItem key={v.id} value={v.id}>
+                            {v.name} ({v.id}) • {v.region}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <p className='text-sm text-muted-foreground'>
+                    All available VPCs are already attached.
+                  </p>
+                )}
+              </div>
+              <div className='flex justify-end gap-3 pt-4'>
+                <Button variant='outline' onClick={() => setIsAttachModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmAttachVpc}
+                  disabled={!selectedAttachVpc}
+                  className={
+                    selectedAttachVpc
+                      ? 'bg-black text-white hover:bg-black/90'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }
+                >
+                  Attach VPC
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* DNS Records Section */}
           <Card>

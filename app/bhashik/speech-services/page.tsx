@@ -48,7 +48,7 @@ const speechCards: ServiceCardData[] = [
     logo: <Volume2 className='w-8 h-8 text-gray-700' />,
     gradient: 'from-green-100/50 via-emerald-50/30 to-white',
     inputPrice: '₹4.2',
-    outputPrice: '—',
+    outputPrice: '',
     pricingType: 'text',
   },
   {
@@ -63,7 +63,7 @@ const speechCards: ServiceCardData[] = [
     logo: <Mic className='w-8 h-8 text-gray-700' />,
     gradient: 'from-slate-100/50 via-white/80 to-white',
     inputPrice: '₹24',
-    outputPrice: '—',
+    outputPrice: '',
     pricingType: 'audio',
   },
   {
@@ -78,7 +78,7 @@ const speechCards: ServiceCardData[] = [
     logo: <AudioLines className='w-8 h-8 text-gray-700' />,
     gradient: 'from-indigo-100/50 via-purple-50/30 to-white',
     inputPrice: '₹30',
-    outputPrice: '₹30',
+    outputPrice: '',
     pricingType: 'audio',
   },
 ];
@@ -95,7 +95,7 @@ const textCards: ServiceCardData[] = [
     logo: <Languages className='w-8 h-8 text-gray-700' />,
     gradient: 'from-slate-100/50 via-white/80 to-white',
     inputPrice: '₹3.0',
-    outputPrice: '₹12.0',
+    outputPrice: '',
     pricingType: 'text',
   },
   {
@@ -109,7 +109,7 @@ const textCards: ServiceCardData[] = [
     logo: <SearchCheck className='w-8 h-8 text-gray-700' />,
     gradient: 'from-indigo-100/50 via-purple-50/30 to-white',
     inputPrice: '₹0.5',
-    outputPrice: '—',
+    outputPrice: '',
     pricingType: 'text',
   },
   {
@@ -123,7 +123,7 @@ const textCards: ServiceCardData[] = [
     logo: <FileText className='w-8 h-8 text-gray-700' />,
     gradient: 'from-slate-100/50 via-white/80 to-white',
     inputPrice: '₹2.5',
-    outputPrice: '—',
+    outputPrice: '',
     pricingType: 'text',
   },
   {
@@ -138,7 +138,7 @@ const textCards: ServiceCardData[] = [
     logo: <Heart className='w-8 h-8 text-gray-700' />,
     gradient: 'from-orange-100/40 via-amber-50/30 to-white',
     inputPrice: '₹1.2',
-    outputPrice: '—',
+    outputPrice: '',
     pricingType: 'text',
   },
   {
@@ -152,7 +152,7 @@ const textCards: ServiceCardData[] = [
     logo: <ScrollText className='w-8 h-8 text-gray-700' />,
     gradient: 'from-green-100/40 via-emerald-50/30 to-white',
     inputPrice: '₹6.0',
-    outputPrice: '₹18.0',
+    outputPrice: '',
     pricingType: 'text',
   },
 ];
@@ -185,13 +185,17 @@ function ServiceCard({ data }: { data: ServiceCardData }) {
       <div className='mt-auto space-y-4'>
         {/* Pricing */}
         <div className='space-y-1'>
-          <div className='flex items-center justify-between'>
+          <div className={`flex items-center ${data.outputPrice ? 'justify-between' : 'justify-start'}`}>
             <span className='text-lg font-semibold text-gray-900'>{data.inputPrice}</span>
-            <span className={`text-lg font-semibold ${data.outputPrice === '—' ? 'text-gray-400' : 'text-gray-900'}`}>{data.outputPrice}</span>
+            {data.outputPrice ? (
+              <span className={`text-lg font-semibold ${data.outputPrice === '—' ? 'text-gray-400' : 'text-gray-900'}`}>{data.outputPrice}</span>
+            ) : null}
           </div>
-          <div className='flex items-center justify-between text-xs text-gray-500'>
+          <div className={`flex items-center text-xs text-gray-500 ${data.outputPrice ? 'justify-between' : 'justify-start'}`}>
             <span>{data.pricingType === 'audio' ? 'Per Hour of Input Audio' : 'Per 1M Input Tokens'}</span>
-            <span>{data.pricingType === 'audio' ? 'Output' : 'Per 1M Output Tokens'}</span>
+            {data.outputPrice ? (
+              <span>{data.pricingType === 'audio' ? 'Output' : 'Per 1M Output Tokens'}</span>
+            ) : null}
           </div>
         </div>
 

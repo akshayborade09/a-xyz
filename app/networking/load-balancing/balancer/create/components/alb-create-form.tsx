@@ -64,6 +64,7 @@ export interface ALBFormData {
       id: string;
       name: string;
       action: string;
+      redirectUrl?: string;
     }>;
     rules: Array<{
       id: string;

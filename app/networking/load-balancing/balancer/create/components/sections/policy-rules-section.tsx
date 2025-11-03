@@ -27,6 +27,7 @@ interface Policy {
   id: string;
   name: string;
   action: string;
+  redirectUrl?: string;
 }
 
 interface Rule {
@@ -115,9 +116,17 @@ export function PolicyRulesSection({
   };
 
   const isFormValid = () => {
-    const policiesValid = policies.every(
-      policy => policy.name.trim().length > 0 && policy.action.length > 0
-    );
+    const policiesValid = policies.every(policy => {
+      const hasBasicFields =
+        policy.name.trim().length > 0 && policy.action.length > 0;
+      
+      // If action is redirect-to-url, redirectUrl is required
+      if (policy.action === 'redirect-to-url') {
+        return hasBasicFields && policy.redirectUrl && policy.redirectUrl.trim().length > 0;
+      }
+      
+      return hasBasicFields;
+    });
 
     const rulesValid = rules.every(rule => {
       const ruleInfo = getRuleTypeInfo(rule.ruleType);
@@ -190,6 +199,23 @@ export function PolicyRulesSection({
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* URL Field - Only show when Redirect to URL is selected */}
+                {policy.action === 'redirect-to-url' && (
+                  <div className='md:col-span-2'>
+                    <Label className='block mb-2 font-medium'>
+                      URL <span className='text-destructive'>*</span>
+                    </Label>
+                    <Input
+                      placeholder='https://example.com/path'
+                      value={policy.redirectUrl || ''}
+                      onChange={e =>
+                        updatePolicy(policy.id, 'redirectUrl', e.target.value)
+                      }
+                      className='focus:ring-2 focus:ring-ring focus:ring-offset-2'
+                    />
+                  </div>
+                )}
               </div>
             </div>
           ))}

@@ -182,6 +182,11 @@ export function SummarySection({
                   </h4>
                   <Badge variant='secondary'>{policy.action}</Badge>
                 </div>
+                {policy.action === 'redirect-to-url' && policy.redirectUrl && (
+                  <div className='mt-2 text-sm text-muted-foreground'>
+                    <span className='font-medium'>URL:</span> {policy.redirectUrl}
+                  </div>
+                )}
               </div>
             ))}
           </div>

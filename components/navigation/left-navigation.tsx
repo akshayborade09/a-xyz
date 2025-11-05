@@ -1019,6 +1019,16 @@ export function LeftNavigation({ onClose }: LeftNavigationProps) {
 
       {/* Bottom navigation items */}
       <div className='mt-auto px-3'>
+        {/* Contact Support */}
+        <div className='px-2 pb-2 pt-3'>
+          <a 
+            href='mailto:support@olakrutrim.com'
+            className='text-xs text-muted-foreground hover:text-foreground transition-colors'
+          >
+            Contact Support
+          </a>
+        </div>
+        
         <div className='py-3 flex flex-col gap-1'>
           {/* Documentation */}
           <NavItem

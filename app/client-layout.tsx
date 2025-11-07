@@ -38,7 +38,7 @@ export default function ClientLayout({
 
   return (
     <AuthProvider>
-      <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
+      <ThemeProvider attribute='class' defaultTheme='light' enableSystem={false}>
         {isAuthPage ? (
           <>{children}</>
         ) : (

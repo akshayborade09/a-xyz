@@ -21,7 +21,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
-import { ArrowRight, Shield, Zap, Globe, X, HelpCircle } from 'lucide-react';
+import { ArrowRight, Shield, Zap, Globe, X, HelpCircle, AlertTriangle, Server, HardDrive, Camera, Network } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
@@ -249,6 +249,15 @@ export function ProfileCompletionDashboard({
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Multi-step delete account flow state
+  const [deleteStep, setDeleteStep] = useState<'initial' | 'resources' | 'confirm' | 'success'>('initial');
+  const [isDeletionInitiated, setIsDeletionInitiated] = useState(false);
+
+  // Mock credit balance - negative for new users (individual), positive for existing users (organization)
+  // Note: isNewUser is already declared earlier in the component (line 158)
+  const userCredits = isNewUser ? -500 : 1250;
+  const hasNegativeCredits = userCredits < 0;
+
   // Check if form data has changed
   useEffect(() => {
     const isChanged = Object.keys(formData).some(
@@ -443,25 +452,75 @@ export function ProfileCompletionDashboard({
     setShowIdentityVerificationModal(false);
   };
 
-  const handleDeleteAccount = () => {
-    // Simulate account deletion (prototype only)
-    // In production, this would call an API to delete the account
-    
-    // Show toast notification
+  // Delete Account Flow Handlers
+  const handleDeleteAccountClick = () => {
+    setShowDeleteAccountModal(true);
+    setDeleteStep('initial');
+    setDeleteConfirmText('');
+    setIsDeletionInitiated(false);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setShowDeleteAccountModal(false);
+    setDeleteStep('initial');
+    setDeleteConfirmText('');
+  };
+
+  const handlePayDues = () => {
+    // Close the delete modal and redirect to add credits page
+    handleCloseDeleteModal();
+    router.push('/billing/add-credits');
+  };
+
+  const handleContinueFromInitial = () => {
+    if (hasNegativeCredits) {
+      return; // Button should be disabled anyway
+    }
+    setDeleteStep('resources');
+  };
+
+  const handleContinueFromResources = () => {
+    setDeleteStep('confirm');
+  };
+
+  const handleFinalDelete = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      return;
+    }
+
+    // Simulate deletion process
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // Show email notification toast
     toast({
-      title: 'Account Deleted',
-      description: 'Your account has been permanently deleted.',
-      variant: 'destructive',
+      title: 'Deletion Initiation Email Sent',
+      description: 'We have sent a confirmation email to your registered email address.',
     });
 
-    // Close modal
-    setShowDeleteAccountModal(false);
-
-    // Redirect to sign-in page after a short delay
-    setTimeout(() => {
-      router.push('/auth/signin');
-    }, 1500);
+    setIsDeletionInitiated(true);
+    setDeleteStep('success');
   };
+
+  const handleCancelDeletion = async () => {
+    // Simulate cancellation process
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    toast({
+      title: 'Account Deletion Cancelled',
+      description: 'Your account deletion request has been cancelled successfully.',
+    });
+
+    setIsDeletionInitiated(false);
+    handleCloseDeleteModal();
+  };
+
+  // Mock active resources data
+  const activeResources = [
+    { type: 'Virtual Machines', icon: Server, items: ['vm-prod-01', 'vm-dev-02'], count: 2 },
+    { type: 'Block Storage Volumes', icon: HardDrive, items: ['150GB total'], count: 3 },
+    { type: 'Snapshots', icon: Camera, items: ['snapshot-backup-20231110'], count: 1 },
+    { type: 'VPC with Subnets', icon: Network, items: ['vpc-main (2 subnets)'], count: 1 },
+  ];
 
   const handleSuccessModalClose = () => {
     // Just close the success modal
@@ -1087,7 +1146,7 @@ export function ProfileCompletionDashboard({
         {/* Delete Account Link */}
         <button
           type='button'
-          onClick={() => setShowDeleteAccountModal(true)}
+          onClick={handleDeleteAccountClick}
           className='w-full text-center text-sm text-red-600 hover:text-red-700 underline transition-colors mt-3'
         >
           Delete Account
@@ -1351,104 +1410,343 @@ export function ProfileCompletionDashboard({
         </DialogContent>
       </Dialog>
 
-      {/* Delete Account Modal */}
-      <Dialog
-        open={showDeleteAccountModal}
-        onOpenChange={isOpen => {
-          setShowDeleteAccountModal(isOpen);
-          if (!isOpen) {
-            setDeleteConfirmText('');
-          } // Reset on close
-        }}
-      >
-        <DialogContent className='p-0 bg-white max-w-md w-full overflow-hidden flex flex-col'>
-          {/* Header */}
-          <div className='flex-shrink-0 p-6 border-b'>
-            <DialogHeader>
-              <DialogTitle className='text-red-600'>Delete Account</DialogTitle>
-              <DialogDescription>
-                This action cannot be undone. Please read carefully.
-              </DialogDescription>
-            </DialogHeader>
-          </div>
+      {/* Delete Account Modal - Multi-step flow */}
+      <Dialog open={showDeleteAccountModal} onOpenChange={handleCloseDeleteModal}>
+        <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+          {/* Step 1: Initial Credit Warning */}
+          {deleteStep === 'initial' && (
+            <>
+              <DialogHeader>
+                <DialogTitle className='text-base font-semibold text-black'>
+                  Delete Account
+                </DialogTitle>
+                <DialogDescription>
+                  This action cannot be undone. Please read carefully.
+                </DialogDescription>
+              </DialogHeader>
 
-          {/* Main Content */}
-          <div className='flex-1 p-6 space-y-4'>
-            {/* Warning Icon */}
-            <div className='flex justify-center mb-2'>
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 18 18">
-                <title>triangle-warning</title>
-                <g fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" stroke="#dc2626">
-                  <path d="M7.63796 3.48996L2.21295 12.89C1.60795 13.9399 2.36395 15.25 3.57495 15.25H14.425C15.636 15.25 16.392 13.9399 15.787 12.89L10.362 3.48996C9.75696 2.44996 8.24296 2.44996 7.63796 3.48996Z"></path>
-                  <path d="M9 6.75V9.75"></path>
-                  <path d="M9 13.5C8.448 13.5 8 13.05 8 12.5C8 11.95 8.448 11.5 9 11.5C9.552 11.5 10 11.9501 10 12.5C10 13.0499 9.552 13.5 9 13.5Z" fill="#dc2626" data-stroke="none" stroke="none"></path>
-                </g>
-              </svg>
-            </div>
+              <div className='space-y-6 py-4'>
+                {/* Current Credit Balance */}
+                <div className='bg-gray-50 border rounded-lg p-4'>
+                  <div className='flex items-center justify-between'>
+                    <div>
+                      <p className='text-sm font-medium text-gray-700'>Current Credit Balance</p>
+                      <p className={`text-2xl font-bold mt-1 ${hasNegativeCredits ? 'text-red-600' : 'text-green-600'}`}>
+                        ₹{userCredits.toLocaleString()}
+                      </p>
+                    </div>
+                    {hasNegativeCredits && (
+                      <AlertTriangle className='h-8 w-8 text-red-500' />
+                    )}
+                  </div>
+                </div>
 
-            {/* Warning Text */}
-            <div className='space-y-3'>
-              <div className='text-sm text-gray-700 text-center bg-red-50 p-4 rounded-lg border border-red-200'>
-                <p className='leading-relaxed'>
-                  All existing credits in your account will be lost and services including storage and computation will be terminated within the next 48 hours. Are you sure you want to go ahead with permanent deletion?
-                </p>
+                {hasNegativeCredits ? (
+                  // Negative credits scenario - for new users
+                  <>
+                    <div className='bg-red-50 border border-red-200 rounded-lg p-4'>
+                      <div className='flex gap-3'>
+                        <AlertTriangle className='h-5 w-5 text-red-600 flex-shrink-0 mt-0.5' />
+                        <div className='space-y-2'>
+                          <p className='text-sm font-medium text-red-900'>
+                            Outstanding Dues Must Be Cleared
+                          </p>
+                          <p className='text-sm text-red-700'>
+                            Kindly clear your existing dues of INR {Math.abs(userCredits)} before proceeding with account deletion.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className='flex gap-3'>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        onClick={handleCloseDeleteModal}
+                        className='flex-1'
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type='button'
+                        onClick={handlePayDues}
+                        className='flex-1 bg-primary hover:bg-primary/90'
+                      >
+                        Pay Dues
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  // Positive credits scenario - for existing users
+                  <>
+                    <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-4'>
+                      <div className='flex gap-3'>
+                        <AlertTriangle className='h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5' />
+                        <div className='space-y-2'>
+                          <p className='text-sm font-medium text-yellow-900'>
+                            Credit Balance Will Be Lost
+                          </p>
+                          <p className='text-sm text-yellow-700'>
+                            Any existing credits in your account (₹{userCredits.toLocaleString()}) will be lost upon deletion as per our policy. Do you wish to continue?
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className='flex gap-3'>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        onClick={handleCloseDeleteModal}
+                        className='flex-1'
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type='button'
+                        onClick={handleContinueFromInitial}
+                        className='flex-1 bg-red-600 text-white hover:bg-red-700'
+                      >
+                        Continue
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
+            </>
+          )}
 
-              {/* Support Contact */}
-              <div className='text-sm text-center text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200'>
-                <p>
-                  Need help or have concerns?{' '}
-                  <a
-                    href='mailto:support@olakrutrim.com'
-                    className='text-blue-600 hover:text-blue-700 font-medium underline'
+          {/* Step 2: Active Resources Warning */}
+          {deleteStep === 'resources' && (
+            <>
+              <DialogHeader>
+                <DialogTitle className='text-base font-semibold text-black'>
+                  Active Resources
+                </DialogTitle>
+                <DialogDescription>
+                  Review your active resources before proceeding
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className='space-y-6 py-4'>
+                {/* Active Resources List */}
+                <div className='space-y-3'>
+                  <p className='text-sm font-medium text-gray-900'>
+                    You have the following active resources:
+                  </p>
+                  
+                  <div className='border rounded-lg divide-y'>
+                    {activeResources.map((resource, index) => {
+                      const Icon = resource.icon;
+                      return (
+                        <div key={index} className='p-4 flex items-start gap-3'>
+                          <Icon className='h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5' />
+                          <div className='flex-1 min-w-0'>
+                            <p className='text-sm font-medium text-gray-900'>
+                              {resource.count} {resource.type}
+                            </p>
+                            <div className='mt-1 space-y-1'>
+                              {resource.items.map((item, idx) => (
+                                <p key={idx} className='text-xs text-gray-600 font-mono'>
+                                  {item}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Warning Message */}
+                <div className='bg-red-50 border border-red-200 rounded-lg p-4'>
+                  <div className='flex gap-3'>
+                    <AlertTriangle className='h-5 w-5 text-red-600 flex-shrink-0 mt-0.5' />
+                    <div className='space-y-2'>
+                      <p className='text-sm font-medium text-red-900'>
+                        Data Loss Warning
+                      </p>
+                      <p className='text-sm text-red-700 leading-relaxed'>
+                        We recommend you to delete all running instances and associated storage blocks to avoid loss of data. 
+                        Once you opt for account deletion, all running instances will be lost and you will be unable to recover 
+                        any data from within your Krutrim Cloud account.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className='flex gap-3'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={() => setDeleteStep('initial')}
+                    className='flex-1'
                   >
-                    Contact Support
-                  </a>
-                </p>
+                    Back
+                  </Button>
+                  <Button
+                    type='button'
+                    onClick={handleContinueFromResources}
+                    className='flex-1 bg-red-600 text-white hover:bg-red-700'
+                  >
+                    Continue
+                  </Button>
+                </div>
               </div>
-            </div>
+            </>
+          )}
 
-            {/* Confirmation Input */}
-            <div className='space-y-2 pt-2'>
-              <Label htmlFor='delete-confirmation' className='text-sm font-medium'>
-                Type <span className='font-mono font-bold text-red-600'>DELETE</span> to confirm:
-              </Label>
-              <Input
-                id='delete-confirmation'
-                type='text'
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value)}
-                placeholder='Type DELETE here'
-                className='font-mono'
-                autoComplete='off'
-              />
-            </div>
-          </div>
+          {/* Step 3: Final Confirmation */}
+          {deleteStep === 'confirm' && (
+            <>
+              <DialogHeader>
+                <DialogTitle className='text-base font-semibold text-black'>
+                  Delete Account
+                </DialogTitle>
+                <DialogDescription>
+                  This action cannot be undone. Please read carefully.
+                </DialogDescription>
+              </DialogHeader>
 
-          {/* Footer */}
-          <div className='flex-shrink-0 p-6 border-t bg-gray-50'>
-            <div className='flex gap-3'>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={() => {
-                  setShowDeleteAccountModal(false);
-                  setDeleteConfirmText('');
-                }}
-                className='flex-1'
-              >
-                Cancel
-              </Button>
-              <Button
-                type='button'
-                onClick={handleDeleteAccount}
-                disabled={deleteConfirmText !== 'DELETE'}
-                className='flex-1 bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed'
-              >
-                Delete Account
-              </Button>
-            </div>
-          </div>
+              <div className='space-y-6 py-4'>
+                {/* Warning Icon */}
+                <div className='flex justify-center'>
+                  <div className='w-16 h-16 rounded-full bg-red-100 flex items-center justify-center'>
+                    <AlertTriangle className='h-8 w-8 text-red-600' />
+                  </div>
+                </div>
+
+                {/* Warning Text */}
+                <div className='space-y-3'>
+                  <div className='text-sm text-gray-700 text-center bg-red-50 p-4 rounded-lg border border-red-200'>
+                    <p className='leading-relaxed'>
+                      All existing credits in your account will be lost and services including storage and computation 
+                      will be terminated within the next 48 hours. Are you sure you want to go ahead with permanent deletion?
+                    </p>
+                  </div>
+
+                  {/* Support Contact */}
+                  <div className='text-sm text-center text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200'>
+                    <p>
+                      Need help or have concerns?{' '}
+                      <a
+                        href='mailto:support@olakrutrim.com'
+                        className='text-blue-600 hover:text-blue-700 font-medium underline'
+                      >
+                        Contact Support
+                      </a>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Confirmation Input */}
+                <div className='space-y-2 pt-2'>
+                  <Label htmlFor='delete-confirmation' className='text-sm font-medium'>
+                    Type <span className='font-mono font-bold text-red-600'>DELETE</span> to confirm:
+                  </Label>
+                  <Input
+                    id='delete-confirmation'
+                    type='text'
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder='Type DELETE here'
+                    className='font-mono'
+                    autoComplete='off'
+                  />
+                </div>
+
+                <div className='flex gap-3'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={() => setDeleteStep('resources')}
+                    className='flex-1'
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    type='button'
+                    onClick={handleFinalDelete}
+                    disabled={deleteConfirmText !== 'DELETE'}
+                    className='flex-1 bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                  >
+                    Delete Account
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Step 4: Success with Grace Period */}
+          {deleteStep === 'success' && (
+            <>
+              <DialogHeader>
+                <DialogTitle className='text-base font-semibold text-black'>Account Deletion Initiated</DialogTitle>
+                <DialogDescription>
+                  Your account deletion request has been received
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className='space-y-6 py-4'>
+                {/* Success Message */}
+                <div className='bg-green-50 border border-green-200 rounded-lg p-4'>
+                  <div className='flex gap-3'>
+                    <div className='flex-shrink-0'>
+                      <div className='w-10 h-10 rounded-full bg-green-100 flex items-center justify-center'>
+                        <svg className='h-5 w-5 text-green-600' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className='space-y-2'>
+                      <p className='text-sm font-medium text-green-900'>
+                        Deletion Initiated Successfully
+                      </p>
+                      <p className='text-sm text-green-700'>
+                        We have sent a confirmation email to your registered email address.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grace Period Information */}
+                <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+                  <div className='space-y-3'>
+                    <p className='text-sm font-medium text-blue-900'>
+                      48-Hour Grace Period
+                    </p>
+                    <p className='text-sm text-blue-700 leading-relaxed'>
+                      We retain your data for 48 hours after the deletion request. If you wish to recover your account, 
+                      kindly email <a href='mailto:support@olakrutrim.com' className='font-medium underline'>support@olakrutrim.com</a> with 
+                      your registered email-id within the first 48 hours. Post this, no recovery is possible.
+                    </p>
+                    <p className='text-xs text-blue-600 mt-2'>
+                      If no reactivation is requested within 48 hours, a final deletion confirmation email will be sent.
+                    </p>
+                  </div>
+                </div>
+
+                <div className='flex gap-3'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={handleCancelDeletion}
+                    className='flex-1'
+                  >
+                    Cancel Deletion
+                  </Button>
+                  <Button
+                    type='button'
+                    onClick={handleCloseDeleteModal}
+                    className='flex-1 bg-primary hover:bg-primary/90'
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

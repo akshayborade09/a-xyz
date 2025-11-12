@@ -37,7 +37,8 @@ import {
   RotateCcw,
   User,
   ChevronUp,
-  Upload
+  Upload,
+  Info
 } from 'lucide-react';
 
 // Mock model data - in real app, this would come from API
@@ -247,6 +248,8 @@ export default function PlaygroundPage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isSystemPromptVisible, setIsSystemPromptVisible] = useState(true);
   const [isDraggingImage, setIsDraggingImage] = useState(false);
+  const [showModelLoadingBanner, setShowModelLoadingBanner] = useState(true);
+  const [hasShownFirstResponse, setHasShownFirstResponse] = useState(false);
 
   const handleCopySystemPrompt = async () => {
     try {
@@ -269,6 +272,8 @@ export default function PlaygroundPage() {
     setTotalCost(0);
     setTotalTokens(0);
     setIsSystemPromptVisible(true);
+    setHasShownFirstResponse(false);
+    setShowModelLoadingBanner(true);
     toast({
       title: "Chat cleared",
       description: "All conversation history has been cleared.",
@@ -421,6 +426,11 @@ export default function PlaygroundPage() {
       setTotalTokens(prev => prev + tokensUsed);
       setShowCostShimmer(true);
       setTimeout(() => setShowCostShimmer(false), 2000);
+      
+      // Mark that we've shown the first response
+      if (!hasShownFirstResponse) {
+        setHasShownFirstResponse(true);
+      }
 
       // Remove thinking message and add actual response with reasoning
       setChatHistory(prev => {
@@ -501,6 +511,11 @@ export default function PlaygroundPage() {
       const estimatedTokens = Math.ceil(action.response.length / 4);
       setTotalTokens(prev => prev + estimatedTokens);
       setTotalCost(prev => prev + (estimatedTokens * model.costPerToken));
+      
+      // Mark that we've shown the first response
+      if (!hasShownFirstResponse) {
+        setHasShownFirstResponse(true);
+      }
     }, 2000);
   };
 
@@ -1173,6 +1188,25 @@ export default function PlaygroundPage() {
                                         </div>
                                       </div>
                                     )}
+                                  </div>
+                                )}
+                                
+                                {/* Model Loading Info Banner - Only show on first response */}
+                                {index === 1 && !msg.isThinking && showModelLoadingBanner && (
+                                  <div className='rounded-lg border border-blue-200 bg-blue-50/50 p-3 flex items-start gap-3'>
+                                    <Info className='h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5' />
+                                    <div className='flex-1'>
+                                      <p className='text-sm text-blue-900/90 leading-relaxed'>
+                                        We periodically deprovision models that haven't received an API request for some time, your model weights are currently being loaded into memory and subsequent requests will be served immediately
+                                      </p>
+                                    </div>
+                                    <button
+                                      onClick={() => setShowModelLoadingBanner(false)}
+                                      className='flex-shrink-0 p-0.5 rounded-md hover:bg-blue-100 transition-colors text-blue-600'
+                                      aria-label='Close banner'
+                                    >
+                                      <X className='h-4 w-4' />
+                                    </button>
                                   </div>
                                 )}
                                 

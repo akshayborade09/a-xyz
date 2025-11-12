@@ -532,7 +532,7 @@ export default function CreateDatabasePage() {
 
                 {/* Replica Configuration */}
                 <div className='mb-8'>
-                  <div className='mb-4'>
+                  <div className='mb-6'>
                     <h3 className='text-base font-semibold mb-2'>
                       Replica Configuration
                     </h3>
@@ -543,102 +543,146 @@ export default function CreateDatabasePage() {
                     </p>
                   </div>
 
-                  <div className='space-y-4'>
-                    {/* High Availability */}
-                    <div>
-                      <div className='flex items-center justify-between mb-3'>
-                        <div>
-                          <div className='font-medium'>
-                            Upgrade for high availability
+                  <RadioGroup
+                    value={formData.replicaConfig}
+                    onValueChange={value =>
+                      handleSelectChange('replicaConfig', value)
+                    }
+                    className='space-y-4'
+                  >
+                    {/* High Availability Card */}
+                    <Card className='border-2 hover:border-primary/50 transition-colors'>
+                      <CardContent className='pt-6'>
+                        <div className='flex items-start justify-between mb-4'>
+                          <div className='flex-1'>
+                            <div className='flex items-center gap-3 mb-2'>
+                              <h4 className='font-semibold text-base'>
+                                High Availability
+                              </h4>
+                              <div className='px-2.5 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-md'>
+                                RECOMMENDED
+                              </div>
+                            </div>
+                            <p className='text-sm text-muted-foreground mt-2'>
+                              Automatically replace the primary node in case of a failure,
+                              ensuring your data stays available.
+                            </p>
                           </div>
-                          <div className='text-xs text-muted-foreground'>
-                            99.95% uptime
-                          </div>
-                          <div className='text-xs text-muted-foreground'>
-                            Automatically replace the primary node in case of a failure,
-                            ensuring your data stays available.
+                          <div className='ml-4'>
+                            <span className='text-sm font-semibold text-green-600'>
+                              99.95% uptime
+                            </span>
                           </div>
                         </div>
-                        <div className='px-2 py-1 bg-primary text-primary-foreground text-xs font-medium rounded'>
-                          RECOMMENDED
-                        </div>
-                      </div>
 
-                      <RadioGroup
-                        value={formData.replicaConfig}
-                        onValueChange={value =>
-                          handleSelectChange('replicaConfig', value)
-                        }
-                        className='space-y-2'
-                      >
-                        <div className='flex items-center justify-between p-3 border rounded-lg'>
+                        <div className='space-y-3 mt-4'>
+                          <div
+                            className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                              formData.replicaConfig === 'one-standby'
+                                ? 'border-primary bg-primary/5'
+                                : 'border-border hover:border-primary/30'
+                            }`}
+                            onClick={() =>
+                              handleSelectChange('replicaConfig', 'one-standby')
+                            }
+                          >
+                            <div className='flex items-center gap-3'>
+                              <RadioGroupItem value='one-standby' id='one-standby' className='pointer-events-none' />
+                              <div>
+                                <div className='cursor-pointer font-medium'>
+                                  Add one standby node
+                                </div>
+                                <p className='text-xs text-muted-foreground mt-0.5'>
+                                  1 primary + 1 standby replica
+                                </p>
+                              </div>
+                            </div>
+                            <div className='text-right'>
+                              <div className='text-sm font-semibold'>₹231.35</div>
+                              <div className='text-xs text-muted-foreground'>/month</div>
+                            </div>
+                          </div>
+
+                          <div
+                            className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                              formData.replicaConfig === 'two-standby'
+                                ? 'border-primary bg-primary/5'
+                                : 'border-border hover:border-primary/30'
+                            }`}
+                            onClick={() =>
+                              handleSelectChange('replicaConfig', 'two-standby')
+                            }
+                          >
+                            <div className='flex items-center gap-3'>
+                              <RadioGroupItem value='two-standby' id='two-standby' className='pointer-events-none' />
+                              <div>
+                                <div className='cursor-pointer font-medium'>
+                                  Add two standby nodes
+                                </div>
+                                <p className='text-xs text-muted-foreground mt-0.5'>
+                                  1 primary + 2 standby replicas
+                                </p>
+                              </div>
+                            </div>
+                            <div className='text-right'>
+                              <div className='text-sm font-semibold'>₹462.70</div>
+                              <div className='text-xs text-muted-foreground'>/month</div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Standard Configuration Card */}
+                    <Card className='border-2 hover:border-primary/50 transition-colors'>
+                      <CardContent className='pt-6'>
+                        <div className='flex items-start justify-between mb-4'>
+                          <div className='flex-1'>
+                            <h4 className='font-semibold text-base mb-2'>
+                              Standard Configuration
+                            </h4>
+                            <p className='text-sm text-muted-foreground'>
+                              Basic setup with automated failover, suitable for development and
+                              testing environments.
+                            </p>
+                          </div>
+                          <div className='ml-4'>
+                            <span className='text-sm font-semibold text-muted-foreground'>
+                              99.5% uptime
+                            </span>
+                          </div>
+                        </div>
+
+                        <div
+                          className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                            formData.replicaConfig === 'no-standby'
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:border-primary/30'
+                          }`}
+                          onClick={() =>
+                            handleSelectChange('replicaConfig', 'no-standby')
+                          }
+                        >
                           <div className='flex items-center gap-3'>
-                            <RadioGroupItem
-                              value='one-standby'
-                              id='one-standby'
-                            />
-                            <Label
-                              htmlFor='one-standby'
-                              className='cursor-pointer flex items-center gap-2'
-                            >
-                              <span>Add one standby node</span>
-                            </Label>
+                            <RadioGroupItem value='no-standby' id='no-standby' className='pointer-events-none' />
+                            <div>
+                              <div className='cursor-pointer font-medium'>
+                                No standby node
+                              </div>
+                              <p className='text-xs text-muted-foreground mt-0.5'>
+                                Single primary node only
+                              </p>
+                            </div>
                           </div>
-                          <div className='text-sm font-medium'>₹231.35/mo</div>
-                        </div>
-
-                        <div className='flex items-center justify-between p-3 border rounded-lg'>
-                          <div className='flex items-center gap-3'>
-                            <RadioGroupItem
-                              value='two-standby'
-                              id='two-standby'
-                            />
-                            <Label
-                              htmlFor='two-standby'
-                              className='cursor-pointer flex items-center gap-2'
-                            >
-                              <span>Add two standby nodes</span>
-                            </Label>
-                          </div>
-                          <div className='text-sm font-medium'>₹462.70/mo</div>
-                        </div>
-                      </RadioGroup>
-                    </div>
-
-                    {/* Automated Failover */}
-                    <div>
-                      <div className='flex items-center justify-between mb-3'>
-                        <div>
-                          <div className='font-medium'>Automated failover</div>
-                          <div className='text-xs text-muted-foreground'>
-                            99.5% uptime guarantee
+                          <div className='text-right'>
+                            <div className='text-sm font-semibold text-muted-foreground'>
+                              Included
+                            </div>
                           </div>
                         </div>
-                      </div>
-
-                      <RadioGroup
-                        value={formData.replicaConfig}
-                        onValueChange={value =>
-                          handleSelectChange('replicaConfig', value)
-                        }
-                      >
-                        <div className='flex items-center justify-between p-3 border rounded-lg bg-primary/5'>
-                          <div className='flex items-center gap-3'>
-                            <RadioGroupItem
-                              value='no-standby'
-                              id='no-standby'
-                            />
-                            <Label
-                              htmlFor='no-standby'
-                              className='cursor-pointer flex items-center gap-2'
-                            >
-                              <span>No standby node</span>
-                            </Label>
-                          </div>
-                        </div>
-                      </RadioGroup>
-                    </div>
-                  </div>
+                      </CardContent>
+                    </Card>
+                  </RadioGroup>
                 </div>
 
                 {/* Divider */}
@@ -1159,7 +1203,7 @@ export default function CreateDatabasePage() {
         </div>
 
         {/* Side Panel */}
-        <div className='w-full md:w-80 space-y-6'>
+        <div className='w-full md:w-80 space-y-6 md:sticky md:top-4 md:self-start'>
           {/* Best Practices */}
           <Card>
             <CardHeader>

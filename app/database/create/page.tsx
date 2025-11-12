@@ -232,9 +232,17 @@ export default function CreateDatabasePage() {
                       </h3>
                       <RadioGroup
                         value={formData.dbType}
-                        onValueChange={value =>
-                          handleSelectChange('dbType', value)
-                        }
+                        onValueChange={value => {
+                          handleSelectChange('dbType', value);
+                          // Auto-select MongoDB when NoSQL is chosen
+                          if (value === 'nosql') {
+                            handleSelectChange('engine', 'mongodb');
+                            handleSelectChange('version', ''); // Reset version
+                          } else if (value === 'relational') {
+                            handleSelectChange('engine', 'mysql');
+                            handleSelectChange('version', ''); // Reset version
+                          }
+                        }}
                         className='flex gap-8'
                       >
                         <div className='flex items-center space-x-2'>
@@ -246,13 +254,12 @@ export default function CreateDatabasePage() {
                             Relational Databases
                           </Label>
                         </div>
-                        <div className='flex items-center space-x-2 opacity-50'>
+                        <div className='flex items-center space-x-2'>
                           <RadioGroupItem
                             value='nosql'
                             id='nosql'
-                            disabled
                           />
-                          <Label htmlFor='nosql' className='font-medium'>
+                          <Label htmlFor='nosql' className='font-medium cursor-pointer'>
                             NoSQL Databases
                           </Label>
                         </div>
@@ -332,6 +339,36 @@ export default function CreateDatabasePage() {
                             </Select>
                           </div>
                         </RadioGroup>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {formData.dbType === 'nosql' && (
+                    <Card className='mt-6'>
+                      <CardContent className='pt-6'>
+                        <div className='flex items-center gap-3'>
+                          <div className='flex items-center gap-2'>
+                            <span className='text-xl'>🍃</span>
+                            <span className='font-medium'>MongoDB</span>
+                          </div>
+                          <Select
+                            value={formData.version}
+                            onValueChange={value => {
+                              handleSelectChange('version', value);
+                            }}
+                          >
+                            <SelectTrigger className='w-[140px]'>
+                              <SelectValue placeholder='Version' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value='7.0.5'>7.0.5</SelectItem>
+                              <SelectItem value='7.0.4'>7.0.4</SelectItem>
+                              <SelectItem value='6.0.13'>6.0.13</SelectItem>
+                              <SelectItem value='6.0.12'>6.0.12</SelectItem>
+                              <SelectItem value='5.0.24'>5.0.24</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </CardContent>
                     </Card>
                   )}
@@ -1203,7 +1240,7 @@ export default function CreateDatabasePage() {
         </div>
 
         {/* Side Panel */}
-        <div className='w-full md:w-80 space-y-6 md:sticky md:top-4 md:self-start'>
+        <div className='w-full md:w-80 space-y-6'>
           {/* Best Practices */}
           <Card>
             <CardHeader>
@@ -1265,6 +1302,7 @@ export default function CreateDatabasePage() {
 
           {/* Estimated Cost */}
           <div
+            className='md:sticky md:top-4'
             style={{
               borderRadius: '16px',
               border: '4px solid #FFF',

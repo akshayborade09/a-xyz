@@ -39,20 +39,26 @@ export interface Database {
   storage: string
   createdOn: string
   description?: string
+  vpc?: string
+  subnet?: string
+  configuration?: string
 }
 
 export const databases: Database[] = [
   {
     id: "db-1",
-    name: "production-mysql-db",
+    name: "production-db",
     dbEngine: "MySQL",
-    engineVersion: "8.0.35",
+    engineVersion: "v8.0.35",
     status: "active",
     region: "us-east-1",
     instanceType: "db.t3.large",
-    storage: "100 GB SSD",
-    createdOn: "2023-01-15T10:30:00Z",
+    storage: "100 GB",
+    createdOn: "2024-05-10T22:00:00Z",
     description: "Main production MySQL database for web application",
+    vpc: "vpc-default-us-east-1",
+    subnet: "subnet-public-1a",
+    configuration: "Growth - 4 vCPU / 8 GB RAM",
   },
   {
     id: "db-2",
@@ -62,9 +68,12 @@ export const databases: Database[] = [
     status: "active",
     region: "us-west-2",
     instanceType: "db.r5.xlarge",
-    storage: "500 GB SSD",
+    storage: "500 GB",
     createdOn: "2023-02-20T14:20:00Z",
     description: "PostgreSQL database for analytics and reporting",
+    vpc: "vpc-production-us-west-2",
+    subnet: "subnet-private-2b",
+    configuration: "Performance - 8 vCPU / 16 GB RAM",
   },
   {
     id: "db-3",
@@ -74,9 +83,12 @@ export const databases: Database[] = [
     status: "active",
     region: "eu-west-1",
     instanceType: "db.t3.medium",
-    storage: "50 GB SSD",
+    storage: "50 GB",
     createdOn: "2023-04-05T11:45:00Z",
     description: "MongoDB database for development environment",
+    vpc: "vpc-dev-eu-west-1",
+    subnet: "subnet-public-1c",
+    configuration: "Basic - 2 vCPU / 4 GB RAM",
   },
   {
     id: "db-4",
@@ -86,9 +98,12 @@ export const databases: Database[] = [
     status: "stopped",
     region: "us-east-1",
     instanceType: "db.t3.medium",
-    storage: "50 GB SSD",
+    storage: "50 GB",
     createdOn: "2023-05-12T16:30:00Z",
     description: "Staging environment MySQL database - currently stopped",
+    vpc: "vpc-staging-us-east-1",
+    subnet: "subnet-private-1a",
+    configuration: "Basic - 2 vCPU / 4 GB RAM",
   },
   {
     id: "db-5",
@@ -1255,6 +1270,10 @@ export const getVPC = (id: string) => {
 
 export const getSnapshot = (id: string) => {
   return snapshots.find((snapshot) => snapshot.id === id)
+}
+
+export const getDatabase = (id: string) => {
+  return databases.find((database) => database.id === id)
 }
 
 export const canDeletePrimarySnapshot = (snapshotId: string) => {

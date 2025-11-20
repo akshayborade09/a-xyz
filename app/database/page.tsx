@@ -14,7 +14,8 @@ import {
 } from '../../lib/demo-data-filter';
 import { EmptyState } from '../../components/ui/empty-state';
 import { Card, CardContent } from '../../components/ui/card';
-import { Database, Pause, Play, RotateCcw, FolderDown, ArrowUpCircle } from 'lucide-react';
+import { Database, Pause, Play, RotateCcw, FolderDown, ArrowUpCircle, HardDrive } from 'lucide-react';
+import { UpdateDatabaseStorageModal } from '../../components/modals/update-database-storage-modal';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +48,8 @@ export default function DatabaseListPage() {
   const [selectedDatabase, setSelectedDatabase] = useState<any>(null);
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
   const [selectedUpgradeVersion, setSelectedUpgradeVersion] = useState('');
+  const [updateStorageModalOpen, setUpdateStorageModalOpen] = useState(false);
+  const [selectedDatabaseForStorageUpdate, setSelectedDatabaseForStorageUpdate] = useState<any>(null);
   
   // Toast hook
   const { toast } = useToast();
@@ -171,6 +174,31 @@ export default function DatabaseListPage() {
     setDeleteConfirmationInput('');
     setDeleteModalOpen(true);
   };
+
+  const handleUpdateStorage = (database: any) => {
+    setSelectedDatabaseForStorageUpdate(database);
+    setUpdateStorageModalOpen(true);
+  };
+
+  const handleStorageUpdate = (newStorageSize: number) => {
+    if (!selectedDatabaseForStorageUpdate) return;
+    
+    // Mock API call
+    console.log('Updating storage for database:', selectedDatabaseForStorageUpdate.name, 'to', newStorageSize, 'GB');
+    
+    // Show success toast
+    toast({
+      title: 'Storage Updated',
+      description: `${selectedDatabaseForStorageUpdate.name} storage has been updated to ${newStorageSize} GB successfully.`,
+    });
+    
+    // Refresh the page data (in real app, this would refetch from API)
+    handleRefresh();
+    
+    // Close modal and reset
+    setUpdateStorageModalOpen(false);
+    setSelectedDatabaseForStorageUpdate(null);
+  };
   
   // Confirm delete action
   const confirmDelete = () => {
@@ -278,6 +306,11 @@ export default function DatabaseListPage() {
             label: 'Upgrade',
             onClick: () => handleUpgrade(row),
             icon: <ArrowUpCircle className='mr-2 h-4 w-4' />,
+          },
+          {
+            label: 'Update Storage',
+            onClick: () => handleUpdateStorage(row),
+            icon: <HardDrive className='mr-2 h-4 w-4' />,
           },
         ];
 
@@ -519,6 +552,23 @@ export default function DatabaseListPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Update Storage Modal */}
+      {selectedDatabaseForStorageUpdate && (
+        <UpdateDatabaseStorageModal
+          isOpen={updateStorageModalOpen}
+          onClose={() => {
+            setUpdateStorageModalOpen(false);
+            setSelectedDatabaseForStorageUpdate(null);
+          }}
+          database={{
+            id: selectedDatabaseForStorageUpdate.id,
+            name: selectedDatabaseForStorageUpdate.name,
+            storage: selectedDatabaseForStorageUpdate.storage,
+          }}
+          onUpdate={handleStorageUpdate}
+        />
+      )}
     </PageShell>
   );
 }

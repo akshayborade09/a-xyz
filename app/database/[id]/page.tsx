@@ -11,6 +11,7 @@ import { getDatabase } from '../../../lib/data';
 import { DeleteConfirmationModal } from '../../../components/delete-confirmation-modal';
 import { StatusBadge } from '../../../components/status-badge';
 import { Edit, Trash2, RotateCcw, Pause, Play, Copy, Eye, EyeOff, Plus, TrendingUp, TrendingDown, Activity, AlertCircle, HelpCircle } from 'lucide-react';
+import { UpdateDatabaseStorageModal } from '../../../components/modals/update-database-storage-modal';
 import { VercelTabs } from '../../../components/ui/vercel-tabs';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
@@ -178,6 +179,7 @@ export default function DatabaseDetailsPage({ params }: { params: { id: string }
   const [activeTab, setActiveTab] = useState('connection');
   const [showPassword, setShowPassword] = useState(false);
   const [showConnectionURL, setShowConnectionURL] = useState(false);
+  const [updateStorageModalOpen, setUpdateStorageModalOpen] = useState(false);
   
   // Create Backup Modal State
   const [isCreateBackupModalOpen, setIsCreateBackupModalOpen] = useState(false);
@@ -204,7 +206,24 @@ export default function DatabaseDetailsPage({ params }: { params: { id: string }
   };
 
   const handleEdit = () => {
-    router.push(`/database/${database.id}/edit`);
+    setUpdateStorageModalOpen(true);
+  };
+
+  const handleStorageUpdate = (newStorageSize: number) => {
+    // Mock API call
+    console.log('Updating storage for database:', database.name, 'to', newStorageSize, 'GB');
+    
+    // Show success toast
+    toast({
+      title: 'Storage Updated',
+      description: `${database.name} storage has been updated to ${newStorageSize} GB successfully.`,
+    });
+    
+    // Refresh the page (in real app, this would refetch from API)
+    router.refresh();
+    
+    // Close modal
+    setUpdateStorageModalOpen(false);
   };
 
   const handleRestart = () => {
@@ -1404,6 +1423,18 @@ export default function DatabaseDetailsPage({ params }: { params: { id: string }
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Update Storage Modal */}
+      <UpdateDatabaseStorageModal
+        isOpen={updateStorageModalOpen}
+        onClose={() => setUpdateStorageModalOpen(false)}
+        database={{
+          id: database.id,
+          name: database.name,
+          storage: database.storage,
+        }}
+        onUpdate={handleStorageUpdate}
+      />
     </PageLayout>
   );
 }

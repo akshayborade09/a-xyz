@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,10 +13,37 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Search, X, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Search, X, ChevronRight, ChevronLeft, RefreshCw, Copy, Check, Eye, EyeOff } from 'lucide-react';
 import { mockRoles, mockGroups, type Role, type Group } from '@/lib/iam-data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+
+// Generate a random password
+const generatePassword = (length: number = 16): string => {
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+  const numbers = '0123456789';
+  const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+  const allChars = uppercase + lowercase + numbers + symbols;
+
+  let password = '';
+  // Ensure at least one of each type
+  password += uppercase[Math.floor(Math.random() * uppercase.length)];
+  password += lowercase[Math.floor(Math.random() * lowercase.length)];
+  password += numbers[Math.floor(Math.random() * numbers.length)];
+  password += symbols[Math.floor(Math.random() * symbols.length)];
+
+  // Fill the rest randomly
+  for (let i = password.length; i < length; i++) {
+    password += allChars[Math.floor(Math.random() * allChars.length)];
+  }
+
+  // Shuffle the password
+  return password
+    .split('')
+    .sort(() => Math.random() - 0.5)
+    .join('');
+};
 
 interface InviteUserModalProps {
   open: boolean;
@@ -31,6 +58,10 @@ export function InviteUserModal({
 }: InviteUserModalProps) {
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [consoleAccess, setConsoleAccess] = useState(false);
   const [programmaticAccess, setProgrammaticAccess] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
@@ -39,10 +70,32 @@ export function InviteUserModal({
   const [groupSearch, setGroupSearch] = useState('');
   const [viewMode, setViewMode] = useState<'roles' | 'groups'>('roles');
 
+  // Generate password when modal opens
+  useEffect(() => {
+    if (open) {
+      setPassword(generatePassword());
+    }
+  }, [open]);
+
+  const handleRegeneratePassword = () => {
+    setPassword(generatePassword());
+    setCopied(false);
+  };
+
+  const handleCopyPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(password);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy password:', err);
+    }
+  };
+
   const handleNext = () => {
     if (step === 1) {
       // Validate step 1
-      if (!email || (!consoleAccess && !programmaticAccess)) {
+      if (!email || !username || !password || (!consoleAccess && !programmaticAccess)) {
         return;
       }
       setStep(2);
@@ -65,6 +118,8 @@ export function InviteUserModal({
     // Mock invitation
     console.log('Inviting user:', {
       email,
+      username,
+      password,
       consoleAccess,
       programmaticAccess,
       roles: selectedRoles,
@@ -81,6 +136,10 @@ export function InviteUserModal({
   const handleClose = () => {
     setStep(1);
     setEmail('');
+    setUsername('');
+    setPassword('');
+    setShowPassword(false);
+    setCopied(false);
     setConsoleAccess(false);
     setProgrammaticAccess(false);
     setSelectedRoles([]);
@@ -117,7 +176,7 @@ export function InviteUserModal({
     group.description.toLowerCase().includes(groupSearch.toLowerCase())
   );
 
-  const isValidStep1 = email && (consoleAccess || programmaticAccess);
+  const isValidStep1 = email && username && password && (consoleAccess || programmaticAccess);
   const isValidStep2 = selectedRoles.length > 0 || selectedGroups.length > 0;
 
   return (
@@ -160,6 +219,23 @@ export function InviteUserModal({
               </p>
             </div>
 
+            <div className='space-y-2'>
+              <Label htmlFor='username' className='text-sm font-medium'>
+                Username <span className='text-destructive'>*</span>
+              </Label>
+              <Input
+                id='username'
+                type='text'
+                placeholder='johndoe'
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                className='w-full'
+              />
+              <p className='text-xs text-muted-foreground'>
+                Enter a unique username for the user
+              </p>
+            </div>
+
             <div className='space-y-4'>
               <Label className='text-sm font-medium'>Access Type</Label>
               <div className='space-y-3'>
@@ -194,6 +270,61 @@ export function InviteUserModal({
               </div>
               <p className='text-xs text-muted-foreground'>
                 Select at least one access type
+              </p>
+            </div>
+
+            <div className='space-y-2'>
+              <Label htmlFor='password' className='text-sm font-medium'>
+                Generated Password <span className='text-destructive'>*</span>
+              </Label>
+              <div className='flex items-center gap-2'>
+                <div className='relative flex-1'>
+                  <Input
+                    id='password'
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    readOnly
+                    className='pr-10 font-mono text-sm'
+                  />
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    className='absolute right-0 top-0 h-full px-3 hover:bg-transparent'
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className='h-4 w-4 text-muted-foreground' />
+                    ) : (
+                      <Eye className='h-4 w-4 text-muted-foreground' />
+                    )}
+                  </Button>
+                </div>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='icon'
+                  onClick={handleRegeneratePassword}
+                  title='Regenerate password'
+                >
+                  <RefreshCw className='h-4 w-4' />
+                </Button>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='icon'
+                  onClick={handleCopyPassword}
+                  title='Copy password'
+                >
+                  {copied ? (
+                    <Check className='h-4 w-4 text-green-600' />
+                  ) : (
+                    <Copy className='h-4 w-4' />
+                  )}
+                </Button>
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                This password will be sent to the user. Make sure to copy it before proceeding.
               </p>
             </div>
           </div>

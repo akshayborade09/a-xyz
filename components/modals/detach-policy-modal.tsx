@@ -12,23 +12,17 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Shield, Users } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import {
   type Policy,
-  type Role,
-  type Group,
   getRolesByPolicyId,
-  getGroupsByRoleId,
-  mockGroups,
 } from '@/lib/iam-data';
 
 interface DetachPolicyModalProps {
   open: boolean;
   onClose: () => void;
   policy: Policy;
-  onDetach: (detachedRoleIds: string[], detachedGroupIds: string[]) => void;
+  onDetach: (detachedRoleIds: string[]) => void;
 }
 
 export function DetachPolicyModal({
@@ -38,16 +32,9 @@ export function DetachPolicyModal({
   onDetach,
 }: DetachPolicyModalProps) {
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const roles = getRolesByPolicyId(policy.id);
-  // Get groups that use roles which use this policy
-  const groupsUsingPolicy = mockGroups.filter(group =>
-    group.roleIds.some(roleId =>
-      roles.some(role => role.id === roleId)
-    )
-  );
 
   const toggleRole = (roleId: string) => {
     setSelectedRoles(prev =>
@@ -57,12 +44,12 @@ export function DetachPolicyModal({
     );
   };
 
-  const toggleGroup = (groupId: string) => {
-    setSelectedGroups(prev =>
-      prev.includes(groupId)
-        ? prev.filter(id => id !== groupId)
-        : [...prev, groupId]
-    );
+  const handleSelectAll = () => {
+    if (selectedRoles.length === roles.length) {
+      setSelectedRoles([]);
+    } else {
+      setSelectedRoles(roles.map(r => r.id));
+    }
   };
 
   const handleBulkDetachRoles = () => {
@@ -70,52 +57,41 @@ export function DetachPolicyModal({
     setLoading(true);
     // Simulate API call
     setTimeout(() => {
-      onDetach(allRoleIds, []);
+      onDetach(allRoleIds);
       setLoading(false);
       onClose();
       setSelectedRoles([]);
-      setSelectedGroups([]);
-    }, 1000);
-  };
-
-  const handleBulkDetachGroups = () => {
-    const allGroupIds = groupsUsingPolicy.map(g => g.id);
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      onDetach([], allGroupIds);
-      setLoading(false);
-      onClose();
-      setSelectedRoles([]);
-      setSelectedGroups([]);
     }, 1000);
   };
 
   const handleDetach = () => {
-    if (selectedRoles.length === 0 && selectedGroups.length === 0) {
+    if (selectedRoles.length === 0) {
       return;
     }
 
     setLoading(true);
     // Simulate API call
     setTimeout(() => {
-      onDetach(selectedRoles, selectedGroups);
+      onDetach(selectedRoles);
       setLoading(false);
       onClose();
-      // Reset selections
       setSelectedRoles([]);
-      setSelectedGroups([]);
     }, 1000);
   };
 
+  const handleClose = () => {
+    setSelectedRoles([]);
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className='sm:max-w-3xl max-h-[90vh] overflow-y-auto'>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className='sm:max-w-2xl max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>Detach Policy from Roles and Groups</DialogTitle>
+          <DialogTitle>Detach Policy from Roles</DialogTitle>
           <DialogDescription>
             Before deleting <strong>{policy.name}</strong>, you need to detach it
-            from the following roles and groups.
+            from the following roles.
           </DialogDescription>
         </DialogHeader>
 
@@ -130,126 +106,79 @@ export function DetachPolicyModal({
                     Roles ({roles.length})
                   </Label>
                 </div>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  onClick={handleBulkDetachRoles}
-                  disabled={loading}
-                >
-                  Bulk Detach
-                </Button>
+                <div className='flex items-center gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={handleSelectAll}
+                    disabled={loading}
+                  >
+                    {selectedRoles.length === roles.length ? 'Deselect All' : 'Select All'}
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={handleBulkDetachRoles}
+                    disabled={loading}
+                  >
+                    Detach All
+                  </Button>
+                </div>
               </div>
-              <div className='max-h-[200px] overflow-y-auto space-y-2'>
-                {roles.map(role => (
-                  <Card
+              <div className='max-h-[300px] overflow-y-auto border rounded-md'>
+                {roles.map((role, index) => (
+                  <div
                     key={role.id}
-                    className={`cursor-pointer transition-colors ${
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${
                       selectedRoles.includes(role.id)
-                        ? 'border-primary bg-primary/5'
+                        ? 'bg-primary/5'
                         : 'hover:bg-muted/50'
-                    }`}
+                    } ${index !== roles.length - 1 ? 'border-b' : ''}`}
                     onClick={() => toggleRole(role.id)}
                   >
-                    <CardContent className='p-3'>
-                      <div className='flex items-center justify-between'>
-                        <div className='flex-1'>
-                          <div className='font-medium text-sm'>{role.name}</div>
-                          <div className='text-xs text-muted-foreground mt-1'>
-                            {role.description}
-                          </div>
-                        </div>
-                        <Checkbox
-                          checked={selectedRoles.includes(role.id)}
-                          onCheckedChange={() => toggleRole(role.id)}
-                          onClick={e => e.stopPropagation()}
-                        />
+                    <Checkbox
+                      checked={selectedRoles.includes(role.id)}
+                      onCheckedChange={() => toggleRole(role.id)}
+                      onClick={e => e.stopPropagation()}
+                    />
+                    <div className='flex-1 min-w-0'>
+                      <div className='font-medium text-sm truncate'>
+                        {role.name}
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className='text-xs text-muted-foreground truncate'>
+                        {role.description}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Groups Section */}
-          {groupsUsingPolicy.length > 0 && (
-            <div className='space-y-3'>
-              <div className='flex items-center justify-between'>
-                <div className='flex items-center gap-2'>
-                  <Users className='h-4 w-4 text-muted-foreground' />
-                  <Label className='text-sm font-medium'>
-                    Groups ({groupsUsingPolicy.length})
-                  </Label>
-                </div>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  onClick={handleBulkDetachGroups}
-                  disabled={loading}
-                >
-                  Bulk Detach
-                </Button>
-              </div>
-              <div className='max-h-[200px] overflow-y-auto space-y-2'>
-                {groupsUsingPolicy.map(group => (
-                  <Card
-                    key={group.id}
-                    className={`cursor-pointer transition-colors ${
-                      selectedGroups.includes(group.id)
-                        ? 'border-primary bg-primary/5'
-                        : 'hover:bg-muted/50'
-                    }`}
-                    onClick={() => toggleGroup(group.id)}
-                  >
-                    <CardContent className='p-3'>
-                      <div className='flex items-center justify-between'>
-                        <div className='flex-1'>
-                          <div className='font-medium text-sm'>{group.name}</div>
-                          <div className='text-xs text-muted-foreground mt-1'>
-                            {group.description}
-                          </div>
-                        </div>
-                        <Checkbox
-                          checked={selectedGroups.includes(group.id)}
-                          onCheckedChange={() => toggleGroup(group.id)}
-                          onClick={e => e.stopPropagation()}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {roles.length === 0 && groupsUsingPolicy.length === 0 && (
+          {roles.length === 0 && (
             <div className='text-center py-8 text-sm text-muted-foreground'>
-              No roles or groups are using this policy
+              No roles are using this policy
             </div>
           )}
         </div>
 
         <DialogFooter>
-          <Button variant='outline' onClick={onClose} disabled={loading}>
+          <Button variant='outline' onClick={handleClose} disabled={loading}>
             Cancel
           </Button>
           <Button
             onClick={handleDetach}
-            disabled={
-              loading ||
-              (selectedRoles.length === 0 && selectedGroups.length === 0)
-            }
+            disabled={loading || selectedRoles.length === 0}
             className='bg-black text-white hover:bg-neutral-800'
           >
             {loading
               ? 'Detaching...'
-              : `Detach (${selectedRoles.length + selectedGroups.length})`}
+              : `Detach (${selectedRoles.length})`}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-

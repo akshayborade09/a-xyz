@@ -46,11 +46,11 @@ export default function PoliciesPage() {
     setDeleteModalOpen(true);
   };
 
-  const handleDetach = (detachedRoleIds: string[], detachedGroupIds: string[]) => {
+  const handleDetach = (detachedRoleIds: string[]) => {
     if (selectedPolicy) {
       toast({
         title: 'Policy detached',
-        description: `Policy has been detached from ${detachedRoleIds.length} role(s) and ${detachedGroupIds.length} group(s).`,
+        description: `Policy has been detached from ${detachedRoleIds.length} role(s).`,
       });
       // After detachment, try deletion again
       const validation = canDeletePolicy(selectedPolicy.id);

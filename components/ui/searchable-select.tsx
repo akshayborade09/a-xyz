@@ -112,11 +112,11 @@ export function SearchableMultiSelect({
     .filter(Boolean)
     .join(', ');
 
-  const toggleValue = (value: string) => {
-    if (values.includes(value)) {
-      onValuesChange(values.filter(v => v !== value));
+  const toggleValue = (optionValue: string) => {
+    if (values.includes(optionValue)) {
+      onValuesChange(values.filter(v => v !== optionValue));
     } else {
-      onValuesChange([...values, value]);
+      onValuesChange([...values, optionValue]);
     }
   };
 
@@ -142,10 +142,10 @@ export function SearchableMultiSelect({
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               {options.map(option => (
-                <CommandItem
+                <div
                   key={option.value}
-                  value={option.value}
-                  onSelect={() => toggleValue(option.value)}
+                  className='relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50'
+                  onClick={() => toggleValue(option.value)}
                 >
                   <Check
                     className={cn(
@@ -154,7 +154,7 @@ export function SearchableMultiSelect({
                     )}
                   />
                   {option.label}
-                </CommandItem>
+                </div>
               ))}
             </CommandGroup>
           </CommandList>

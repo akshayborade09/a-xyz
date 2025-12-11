@@ -104,16 +104,8 @@ export default function RoleDetailsPage() {
           </div>
 
           <DetailGrid>
-            {/* Row 1: Role ID, Created At */}
-            <div className='col-span-full grid grid-cols-3 gap-4'>
-              <div className='space-y-1'>
-                <label className='text-sm font-normal text-gray-700' style={{ fontSize: '13px' }}>
-                  Role ID
-                </label>
-                <div className='font-medium' style={{ fontSize: '14px' }}>
-                  {role.id}
-                </div>
-              </div>
+            {/* Row 1: Created At, Policies */}
+            <div className='col-span-full grid grid-cols-2 gap-4'>
               <div className='space-y-1'>
                 <label className='text-sm font-normal text-gray-700' style={{ fontSize: '13px' }}>
                   Created At

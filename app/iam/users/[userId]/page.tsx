@@ -166,21 +166,13 @@ export default function UserDetailsPage() {
             </div>
 
             {/* Row 2: Dates */}
-            <div className='col-span-full grid grid-cols-3 gap-4 mt-4'>
+            <div className='col-span-full grid grid-cols-2 gap-4 mt-4'>
               <div className='space-y-1'>
                 <label className='text-sm font-normal text-gray-700' style={{ fontSize: '13px' }}>
                   Invited At
                 </label>
                 <div className='font-medium' style={{ fontSize: '14px' }}>
                   {formatDate(user.invitedAt)}
-                </div>
-              </div>
-              <div className='space-y-1'>
-                <label className='text-sm font-normal text-gray-700' style={{ fontSize: '13px' }}>
-                  Activated At
-                </label>
-                <div className='font-medium' style={{ fontSize: '14px' }}>
-                  {formatDate(user.activatedAt)}
                 </div>
               </div>
               <div className='space-y-1'>

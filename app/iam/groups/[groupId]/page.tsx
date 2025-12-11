@@ -116,16 +116,8 @@ export default function GroupDetailsPage() {
           </div>
 
           <DetailGrid>
-            {/* Row 1: Group ID, Created At, Roles */}
-            <div className='col-span-full grid grid-cols-3 gap-4'>
-              <div className='space-y-1'>
-                <label className='text-sm font-normal text-gray-700' style={{ fontSize: '13px' }}>
-                  Group ID
-                </label>
-                <div className='font-medium' style={{ fontSize: '14px' }}>
-                  {group.id}
-                </div>
-              </div>
+            {/* Row 1: Created At, Roles */}
+            <div className='col-span-full grid grid-cols-2 gap-4'>
               <div className='space-y-1'>
                 <label className='text-sm font-normal text-gray-700' style={{ fontSize: '13px' }}>
                   Created At

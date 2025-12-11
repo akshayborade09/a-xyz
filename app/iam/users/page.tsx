@@ -12,7 +12,6 @@ import { mockUsers, type User, getUserById, getRolesByUserId, getGroupsByUserId 
 import { StatusBadge } from '@/components/status-badge';
 import { InviteUserModal } from '@/components/modals/invite-user-modal';
 import { EditUserAccessModal } from '@/components/modals/edit-user-access-modal';
-import { ResendInviteModal } from '@/components/modals/resend-invite-modal';
 import { ResetPasswordModal } from '@/components/modals/reset-password-modal';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +21,6 @@ export default function UsersPage() {
   const { toast } = useToast();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [resendInviteModalOpen, setResendInviteModalOpen] = useState(false);
   const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
   const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -55,21 +53,6 @@ export default function UsersPage() {
   const handleDeleteClick = (user: User) => {
     setSelectedUser(user);
     setDeleteModalOpen(true);
-  };
-
-  const handleResendInvite = (user: User) => {
-    setSelectedUser(user);
-    setResendInviteModalOpen(true);
-  };
-
-  const handleResendInviteSuccess = () => {
-    setResendInviteModalOpen(false);
-    if (selectedUser) {
-      toast({
-        title: 'Invitation resent',
-        description: `Invitation email has been resent to ${selectedUser.email}.`,
-      });
-    }
   };
 
   const handleBlockUserClick = (user: User) => {
@@ -245,15 +228,6 @@ export default function UsersPage() {
             resourceName={row.name}
             resourceType='User'
             customActions={[
-              ...(row.status === 'invited' || row.status === 'pending'
-                ? [
-                    {
-                      label: 'Resend Invite',
-                      onClick: () => handleResendInvite(row),
-                      icon: null,
-                    },
-                  ]
-                : []),
               ...(row.status === 'active'
                 ? [
                     {
@@ -315,13 +289,6 @@ export default function UsersPage() {
             onOpenChange={setEditModalOpen}
             user={selectedUser}
             onSuccess={handleEditSuccess}
-          />
-
-          <ResendInviteModal
-            open={resendInviteModalOpen}
-            onOpenChange={setResendInviteModalOpen}
-            user={selectedUser}
-            onSuccess={handleResendInviteSuccess}
           />
 
           <ResetPasswordModal

@@ -6,8 +6,9 @@ import { PageLayout } from '@/components/page-layout';
 import { DetailGrid } from '@/components/detail-grid';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Eye, EyeOff, Copy } from 'lucide-react';
-import { getPolicyById, getRolesByPolicyId } from '@/lib/iam-data';
+import { Edit, Trash2, Eye, EyeOff, Copy } from 'lucide-react';
+import { getPolicyById, getRolesByPolicyId, type Policy } from '@/lib/iam-data';
+import { EditPolicyModal } from '@/components/modals/edit-policy-modal';
 import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal';
 import { useToast } from '@/hooks/use-toast';
 import { notFound } from 'next/navigation';
@@ -20,14 +21,25 @@ export default function PolicyDetailsPage() {
   const policyId = params.policyId as string;
   const policy = getPolicyById(policyId);
 
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [jsonView, setJsonView] = useState(false);
+  const [currentPolicy, setCurrentPolicy] = useState<Policy>(policy);
 
   if (!policy) {
     notFound();
   }
 
   const roles = getRolesByPolicyId(policyId);
+
+  const handleEditSuccess = () => {
+    setEditModalOpen(false);
+    toast({
+      title: 'Policy updated',
+      description: 'Policy has been updated successfully.',
+    });
+    router.refresh();
+  };
 
   const handleDeleteConfirm = () => {
     toast({
@@ -93,6 +105,14 @@ export default function PolicyDetailsPage() {
             <Button
               variant='ghost'
               size='sm'
+              onClick={() => setEditModalOpen(true)}
+              className='h-8 w-8 p-0 text-muted-foreground hover:text-foreground bg-white/80 hover:bg-white border border-gray-200 shadow-sm'
+            >
+              <Edit className='h-4 w-4' />
+            </Button>
+            <Button
+              variant='ghost'
+              size='sm'
               onClick={() => setDeleteModalOpen(true)}
               className='h-8 w-8 p-0 text-muted-foreground hover:text-red-600 bg-white/80 hover:bg-white border border-gray-200 shadow-sm'
             >
@@ -101,16 +121,8 @@ export default function PolicyDetailsPage() {
           </div>
 
           <DetailGrid>
-            {/* Row 1: Policy ID, Created By, Created At */}
-            <div className='col-span-full grid grid-cols-4 gap-4'>
-              <div className='space-y-1'>
-                <label className='text-sm font-normal text-gray-700' style={{ fontSize: '13px' }}>
-                  Policy ID
-                </label>
-                <div className='font-medium' style={{ fontSize: '14px' }}>
-                  {policy.id}
-                </div>
-              </div>
+            {/* Row 1: Created By, Created At, Rules */}
+            <div className='col-span-full grid grid-cols-3 gap-4'>
               <div className='space-y-1'>
                 <label className='text-sm font-normal text-gray-700' style={{ fontSize: '13px' }}>
                   Created By
@@ -132,7 +144,7 @@ export default function PolicyDetailsPage() {
                   Rules
                 </label>
                 <div className='font-medium' style={{ fontSize: '14px' }}>
-                  {policy.rules.length} {policy.rules.length === 1 ? 'rule' : 'rules'}
+                  {currentPolicy.rules.length} {currentPolicy.rules.length === 1 ? 'rule' : 'rules'}
                 </div>
               </div>
             </div>
@@ -168,14 +180,14 @@ export default function PolicyDetailsPage() {
         )}
 
         {/* Access Rules Section */}
-        {!jsonView && policy.rules.length > 0 && (
+        {!jsonView && currentPolicy.rules.length > 0 && (
           <div className='bg-card text-card-foreground border-border border rounded-lg p-6 mb-6'>
-            <h3 className='text-base font-semibold mb-4'>Access Rules ({policy.rules.length})</h3>
+            <h3 className='text-base font-semibold mb-4'>Access Rules ({currentPolicy.rules.length})</h3>
             <div className='border rounded-md'>
-              {policy.rules.map((rule, index) => (
+              {currentPolicy.rules.map((rule, index) => (
                 <div
                   key={rule.id}
-                  className={`px-4 py-3 ${index !== policy.rules.length - 1 ? 'border-b' : ''}`}
+                  className={`px-4 py-3 ${index !== currentPolicy.rules.length - 1 ? 'border-b' : ''}`}
                 >
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center gap-3'>
@@ -223,6 +235,13 @@ export default function PolicyDetailsPage() {
           </div>
         )}
       </PageLayout>
+
+      <EditPolicyModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        policy={currentPolicy}
+        onSuccess={handleEditSuccess}
+      />
 
       <DeleteConfirmationModal
         isOpen={deleteModalOpen}

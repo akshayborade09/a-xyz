@@ -288,54 +288,8 @@ export function DashboardContent() {
 
               {activeResourceTab === "all" && (
                 <div className="m-0">
-                <div className="space-y-2">
-                  {resources.map((resource) => (
-                    <div
-                      key={resource.id}
-                      className="flex items-center justify-between p-2 rounded-md hover:bg-accent/50 transition-colors"
-                    >
-                      <Link href={resource.href} className="flex items-center flex-1">
-                        <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center mr-3">
-                          {resource.type === "compute" && <Server className="h-4 w-4" />}
-                          {resource.type === "storage" && <Database className="h-4 w-4" />}
-                          {resource.type === "model" && <Brain className="h-4 w-4" />}
-                          {resource.type === "api" && <Code className="h-4 w-4" />}
-                        </div>
-                        <div>
-                          <div className="font-medium text-sm">{resource.name}</div>
-                          <div className="text-xs text-muted-foreground capitalize">{resource.type}</div>
-                        </div>
-                      </Link>
-
-                      <div className="flex items-center gap-2">
-                        {resource.status !== "stopped" && (
-                          <div className="w-24">
-                            <div className="text-xs text-right mb-1">{resource.usage}%</div>
-                            <Progress value={resource.usage} className="h-1" />
-                          </div>
-                        )}
-
-                        <Badge variant={getStatusBadge(resource.status).variant} className="flex items-center ml-2">
-                          {getStatusBadge(resource.status).icon}
-                          {resource.status}
-                        </Badge>
-
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => togglePin(resource.id)}>
-                          <Pin
-                            className={`h-4 w-4 ${pinnedResources.includes(resource.id) ? "fill-primary text-primary" : ""}`}
-                          />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="active" className="m-0">
-                <div className="space-y-2">
-                  {resources
-                    .filter((resource) => resource.status === "running" || resource.status === "error")
-                    .map((resource) => (
+                  <div className="space-y-2">
+                    {resources.map((resource) => (
                       <div
                         key={resource.id}
                         className="flex items-center justify-between p-2 rounded-md hover:bg-accent/50 transition-colors"
@@ -354,22 +308,19 @@ export function DashboardContent() {
                         </Link>
 
                         <div className="flex items-center gap-2">
-                          <div className="w-24">
-                            <div className="text-xs text-right mb-1">{resource.usage}%</div>
-                            <Progress value={resource.usage} className="h-1" />
-                          </div>
+                          {resource.status !== "stopped" && (
+                            <div className="w-24">
+                              <div className="text-xs text-right mb-1">{resource.usage}%</div>
+                              <Progress value={resource.usage} className="h-1" />
+                            </div>
+                          )}
 
                           <Badge variant={getStatusBadge(resource.status).variant} className="flex items-center ml-2">
                             {getStatusBadge(resource.status).icon}
                             {resource.status}
                           </Badge>
 
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => togglePin(resource.id)}
-                          >
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => togglePin(resource.id)}>
                             <Pin
                               className={`h-4 w-4 ${pinnedResources.includes(resource.id) ? "fill-primary text-primary" : ""}`}
                             />
@@ -377,9 +328,61 @@ export function DashboardContent() {
                         </div>
                       </div>
                     ))}
+                  </div>
                 </div>
-              </TabsContent>
-            </Tabs>
+              )}
+
+              {activeResourceTab === "active" && (
+                <div className="m-0">
+                  <div className="space-y-2">
+                    {resources
+                      .filter((resource) => resource.status === "running" || resource.status === "error")
+                      .map((resource) => (
+                        <div
+                          key={resource.id}
+                          className="flex items-center justify-between p-2 rounded-md hover:bg-accent/50 transition-colors"
+                        >
+                          <Link href={resource.href} className="flex items-center flex-1">
+                            <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center mr-3">
+                              {resource.type === "compute" && <Server className="h-4 w-4" />}
+                              {resource.type === "storage" && <Database className="h-4 w-4" />}
+                              {resource.type === "model" && <Brain className="h-4 w-4" />}
+                              {resource.type === "api" && <Code className="h-4 w-4" />}
+                            </div>
+                            <div>
+                              <div className="font-medium text-sm">{resource.name}</div>
+                              <div className="text-xs text-muted-foreground capitalize">{resource.type}</div>
+                            </div>
+                          </Link>
+
+                          <div className="flex items-center gap-2">
+                            <div className="w-24">
+                              <div className="text-xs text-right mb-1">{resource.usage}%</div>
+                              <Progress value={resource.usage} className="h-1" />
+                            </div>
+
+                            <Badge variant={getStatusBadge(resource.status).variant} className="flex items-center ml-2">
+                              {getStatusBadge(resource.status).icon}
+                              {resource.status}
+                            </Badge>
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => togglePin(resource.id)}
+                            >
+                              <Pin
+                                className={`h-4 w-4 ${pinnedResources.includes(resource.id) ? "fill-primary text-primary" : ""}`}
+                              />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </CardContent>
           <CardFooter>
             <Button variant="outline" className="w-full">

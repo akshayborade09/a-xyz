@@ -72,14 +72,16 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
   }
 }
 
 /* Open Sauce Fonts */
 html,
 body {
-  font-family: "Open Sauce One", sans-serif;
+  font-family: 'Open Sauce One', sans-serif;
 }
 
 h1,
@@ -88,7 +90,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: "Open Sauce One", sans-serif;
+  font-family: 'Open Sauce One', sans-serif;
   font-weight: 600;
 }
 
@@ -163,6 +165,93 @@ h6 {
 }
 
 /* Ensure radio buttons use black accent color across all browsers */
-input[type="radio"] {
+input[type='radio'] {
   accent-color: #000000;
+}
+
+/* Ensure consistent placeholder text color for Select components */
+[data-placeholder] {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Ensure Select trigger placeholder text matches Input placeholder color */
+.select-placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Background gradient animation keyframes */
+@keyframes first {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(50px, -30px) scale(1.1);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes second {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-60px, 40px) scale(1.05);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes third {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(40px, 60px) scale(1.08);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes fourth {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-30px, -50px) scale(1.06);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes fifth {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(70px, 20px) scale(1.12);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+.animate-first {
+  animation: first 12s ease-in-out infinite;
+}
+.animate-second {
+  animation: second 14s ease-in-out infinite;
+}
+.animate-third {
+  animation: third 16s ease-in-out infinite;
+}
+.animate-fourth {
+  animation: fourth 18s ease-in-out infinite;
+}
+.animate-fifth {
+  animation: fifth 20s ease-in-out infinite;
 }

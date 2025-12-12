@@ -28,6 +28,181 @@ export interface PublicIP {
   createdOn: string
 }
 
+export interface Database {
+  id: string
+  name: string
+  dbEngine: string
+  engineVersion: string
+  status: "active" | "creating" | "stopped" | "failed" | "maintenance"
+  region: string
+  instanceType: string
+  storage: string
+  createdOn: string
+  description?: string
+  vpc?: string
+  subnet?: string
+  configuration?: string
+}
+
+export const databases: Database[] = [
+  {
+    id: "db-1",
+    name: "production-db",
+    dbEngine: "MySQL",
+    engineVersion: "v8.0.35",
+    status: "active",
+    region: "us-east-1",
+    instanceType: "db.t3.large",
+    storage: "100 GB",
+    createdOn: "2024-05-10T22:00:00Z",
+    description: "Main production MySQL database for web application",
+    vpc: "vpc-default-us-east-1",
+    subnet: "subnet-public-1a",
+    configuration: "Growth - 4 vCPU / 8 GB RAM",
+  },
+  {
+    id: "db-2",
+    name: "analytics-postgres",
+    dbEngine: "PostgreSQL",
+    engineVersion: "15.4",
+    status: "active",
+    region: "us-west-2",
+    instanceType: "db.r5.xlarge",
+    storage: "500 GB",
+    createdOn: "2023-02-20T14:20:00Z",
+    description: "PostgreSQL database for analytics and reporting",
+    vpc: "vpc-production-us-west-2",
+    subnet: "subnet-private-2b",
+    configuration: "Performance - 8 vCPU / 16 GB RAM",
+  },
+  {
+    id: "db-3",
+    name: "dev-mongodb",
+    dbEngine: "MongoDB",
+    engineVersion: "7.0.5",
+    status: "active",
+    region: "eu-west-1",
+    instanceType: "db.t3.medium",
+    storage: "50 GB",
+    createdOn: "2023-04-05T11:45:00Z",
+    description: "MongoDB database for development environment",
+    vpc: "vpc-dev-eu-west-1",
+    subnet: "subnet-public-1c",
+    configuration: "Basic - 2 vCPU / 4 GB RAM",
+  },
+  {
+    id: "db-4",
+    name: "staging-mysql",
+    dbEngine: "MySQL",
+    engineVersion: "8.0.33",
+    status: "stopped",
+    region: "us-east-1",
+    instanceType: "db.t3.medium",
+    storage: "50 GB",
+    createdOn: "2023-05-12T16:30:00Z",
+    description: "Staging environment MySQL database - currently stopped",
+    vpc: "vpc-staging-us-east-1",
+    subnet: "subnet-private-1a",
+    configuration: "Basic - 2 vCPU / 4 GB RAM",
+  },
+  {
+    id: "db-5",
+    name: "warehouse-postgres",
+    dbEngine: "PostgreSQL",
+    engineVersion: "14.9",
+    status: "creating",
+    region: "us-west-2",
+    instanceType: "db.r5.2xlarge",
+    storage: "1 TB SSD",
+    createdOn: "2024-12-19T10:15:00Z",
+    description: "Data warehouse PostgreSQL instance - currently provisioning",
+  },
+  {
+    id: "db-6",
+    name: "api-mysql",
+    dbEngine: "MySQL",
+    engineVersion: "8.0.32",
+    status: "active",
+    region: "ap-south-1",
+    instanceType: "db.t3.large",
+    storage: "100 GB SSD",
+    createdOn: "2023-06-18T08:20:00Z",
+    description: "MySQL database for API backend services",
+  },
+  {
+    id: "db-7",
+    name: "content-mongodb",
+    dbEngine: "MongoDB",
+    engineVersion: "6.0.13",
+    status: "active",
+    region: "us-east-1",
+    instanceType: "db.r5.large",
+    storage: "200 GB SSD",
+    createdOn: "2023-07-22T13:40:00Z",
+    description: "MongoDB cluster for content management system",
+  },
+  {
+    id: "db-8",
+    name: "reporting-postgres",
+    dbEngine: "PostgreSQL",
+    engineVersion: "15.3",
+    status: "maintenance",
+    region: "us-west-2",
+    instanceType: "db.r5.xlarge",
+    storage: "300 GB SSD",
+    createdOn: "2023-08-30T10:00:00Z",
+    description: "PostgreSQL for reporting and business intelligence - scheduled maintenance",
+  },
+  {
+    id: "db-9",
+    name: "test-postgres-replica",
+    dbEngine: "PostgreSQL",
+    engineVersion: "15.4",
+    status: "active",
+    region: "eu-west-1",
+    instanceType: "db.t3.small",
+    storage: "30 GB SSD",
+    createdOn: "2023-09-15T15:25:00Z",
+    description: "Read replica for testing environment",
+  },
+  {
+    id: "db-10",
+    name: "user-data-mongodb",
+    dbEngine: "MongoDB",
+    engineVersion: "7.0.4",
+    status: "active",
+    region: "us-east-1",
+    instanceType: "db.t3.xlarge",
+    storage: "150 GB SSD",
+    createdOn: "2023-10-20T09:30:00Z",
+    description: "MongoDB database for user data and profiles",
+  },
+  {
+    id: "db-11",
+    name: "legacy-mysql",
+    dbEngine: "MySQL",
+    engineVersion: "5.7.42",
+    status: "active",
+    region: "us-east-1",
+    instanceType: "db.t3.small",
+    storage: "40 GB SSD",
+    createdOn: "2023-11-10T14:15:00Z",
+    description: "Legacy MySQL database for older applications",
+  },
+  {
+    id: "db-12",
+    name: "sessions-mongodb",
+    dbEngine: "MongoDB",
+    engineVersion: "6.0.12",
+    status: "active",
+    region: "ap-south-1",
+    instanceType: "db.t3.medium",
+    storage: "80 GB SSD",
+    createdOn: "2023-12-05T11:20:00Z",
+    description: "MongoDB for session storage and real-time data",
+  },
+]
+
 export const vpcs = [
   {
     id: "vpc-1",
@@ -836,7 +1011,7 @@ export const snapshots = [
     }
   },
   {
-    id: "snap-002", 
+    id: "snap-002",
     name: "db-storage-daily",
     type: "Delta",
     size: "25 GB",
@@ -892,7 +1067,7 @@ export const snapshots = [
   {
     id: "snap-005",
     name: "staging-vm-snapshot",
-    type: "Primary", 
+    type: "Primary",
     size: "40 GB",
     volumeVM: "staging-server-01",
     status: "available",
@@ -947,7 +1122,7 @@ export const snapshots = [
     id: "snap-008",
     name: "cache-vol-delta",
     type: "Delta",
-    size: "30 GB", 
+    size: "30 GB",
     volumeVM: "cache-volume",
     status: "available",
     createdOn: "2024-12-19T04:15:00Z",
@@ -1039,7 +1214,7 @@ export const snapshots = [
     type: "Delta",
     size: "35 GB",
     volumeVM: "dev-workspace",
-    status: "available", 
+    status: "available",
     createdOn: "2024-12-19T07:30:00Z",
     description: "Delta snapshot of development workspace",
     policy: {
@@ -1097,28 +1272,32 @@ export const getSnapshot = (id: string) => {
   return snapshots.find((snapshot) => snapshot.id === id)
 }
 
+export const getDatabase = (id: string) => {
+  return databases.find((database) => database.id === id)
+}
+
 export const canDeletePrimarySnapshot = (snapshotId: string) => {
   const snapshot = getSnapshot(snapshotId)
   if (!snapshot) return false
-  
+
   // If it's not a Primary snapshot, it can always be deleted
   if (snapshot.type !== "Primary") return true
-  
+
   // Check if there are other Primary snapshots for the same volume/VM
-  const otherPrimarySnapshots = snapshots.filter(s => 
-    s.id !== snapshotId && 
-    s.type === "Primary" && 
+  const otherPrimarySnapshots = snapshots.filter(s =>
+    s.id !== snapshotId &&
+    s.type === "Primary" &&
     s.volumeVM === snapshot.volumeVM &&
     s.status !== "deleting" &&
     s.status !== "failed"
   )
-  
+
   return otherPrimarySnapshots.length > 0
 }
 
 export const getPrimarySnapshotsForResource = (volumeVM: string) => {
-  return snapshots.filter(s => 
-    s.type === "Primary" && 
+  return snapshots.filter(s =>
+    s.type === "Primary" &&
     s.volumeVM === volumeVM &&
     s.status !== "deleting" &&
     s.status !== "failed"
@@ -1144,7 +1323,7 @@ export const subnetVMAttachments = [
     vmName: "web-server-01"
   },
   {
-    subnetId: "subnet-2", 
+    subnetId: "subnet-2",
     vmName: "db-server-01"
   },
   // subnet-3 and others are not attached to any VM
@@ -1162,7 +1341,7 @@ export const subnetConnections = [
     connectedSubnets: ["subnet-2"] // connected to production-subnet-private
   },
   {
-    subnetId: "subnet-2", // production-subnet-private  
+    subnetId: "subnet-2", // production-subnet-private
     connectedSubnets: ["subnet-1"] // connected to production-subnet-public
   },
   {
@@ -1266,7 +1445,7 @@ export const getIPsInSubnet = (subnetName: string) => {
 export const canDeleteSubnet = (subnetName: string) => {
   const vmsInSubnet = getVMsInSubnet(subnetName)
   const ipsInSubnet = getIPsInSubnet(subnetName)
-  
+
   return {
     canDelete: vmsInSubnet.length === 0 && ipsInSubnet.length === 0,
     vms: vmsInSubnet,
@@ -1304,7 +1483,7 @@ export const vmInstances = [
       vpcId: "vpc-1",
       vpcName: "production-vpc",
       region: "us-east-1",
-      
+
       // Volume Configuration
       bootableVolume: {
         type: "existing",
@@ -1321,13 +1500,13 @@ export const vmInstances = [
           type: "ssd"
         }
       ],
-      
+
       // SSH Configuration
       sshKey: {
         id: "ssh-1",
         name: "prod-admin-key"
       },
-      
+
       // Network Configuration
       subnet: {
         id: "subnet-1",
@@ -1343,10 +1522,10 @@ export const vmInstances = [
       ipAddressType: "floating",
       reservedIp: null,
       networkSpeed: "100 Mbps",
-      
+
       // Additional Configuration
       startupScript: "#!/bin/bash\n# Install nginx\napt-get update\napt-get install -y nginx\nsystemctl enable nginx\nsystemctl start nginx",
-      
+
       // Pricing Information
       pricing: {
         vm: 12,
@@ -1378,7 +1557,7 @@ export const vmInstances = [
       vpcId: "vpc-17",
       vpcName: "ai-workload-vpc",
       region: "us-west-2",
-      
+
       bootableVolume: {
         type: "new",
         volumeName: "ai-training-boot",
@@ -1399,12 +1578,12 @@ export const vmInstances = [
           type: "ssd"
         }
       ],
-      
+
       sshKey: {
         id: "ssh-1",
         name: "prod-admin-key"
       },
-      
+
       subnet: {
         id: "subnet-2",
         name: "private-subnet-1",
@@ -1422,9 +1601,9 @@ export const vmInstances = [
         address: "203.0.113.1"
       },
       networkSpeed: "1 Gbps",
-      
+
       startupScript: "#!/bin/bash\n# Install CUDA and ML libraries\napt-get update\napt-get install -y nvidia-cuda-toolkit\npip install torch torchvision",
-      
+
       pricing: {
         vm: 45,
         storage: 15,
@@ -1455,7 +1634,7 @@ export const vmInstances = [
       vpcId: "vpc-1",
       vpcName: "production-vpc",
       region: "us-east-1",
-      
+
       bootableVolume: {
         type: "existing",
         volumeId: "vol-2",
@@ -1477,12 +1656,12 @@ export const vmInstances = [
           type: "hdd"
         }
       ],
-      
+
       sshKey: {
         id: "ssh-3",
         name: "backup-key"
       },
-      
+
       subnet: {
         id: "subnet-1",
         name: "public-subnet-1",
@@ -1497,9 +1676,9 @@ export const vmInstances = [
       ipAddressType: "floating",
       reservedIp: null,
       networkSpeed: "100 Mbps",
-      
+
       startupScript: "#!/bin/bash\n# Install PostgreSQL\napt-get update\napt-get install -y postgresql postgresql-contrib\nsystemctl enable postgresql\nsystemctl start postgresql",
-      
+
       pricing: {
         vm: 18,
         storage: 9,
@@ -1529,7 +1708,7 @@ export const vmInstances = [
       vpcId: "vpc-2",
       vpcName: "development-vpc",
       region: "us-west-2",
-      
+
       bootableVolume: {
         type: "new",
         volumeName: "dev-sandbox-boot",
@@ -1537,12 +1716,12 @@ export const vmInstances = [
         image: "Ubuntu 22.04 LTS"
       },
       storageVolumes: [],
-      
+
       sshKey: {
         id: "ssh-2",
         name: "dev-key"
       },
-      
+
       subnet: {
         id: "subnet-2",
         name: "private-subnet-1",
@@ -1557,9 +1736,9 @@ export const vmInstances = [
       ipAddressType: "floating",
       reservedIp: null,
       networkSpeed: "100 Mbps",
-      
+
       startupScript: "",
-      
+
       pricing: {
         vm: 6,
         storage: 0,
@@ -1590,7 +1769,7 @@ export const vmInstances = [
       vpcId: "vpc-16",
       vpcName: "microservices-vpc",
       region: "us-east-1",
-      
+
       bootableVolume: {
         type: "existing",
         volumeId: "vol-010",
@@ -1606,12 +1785,12 @@ export const vmInstances = [
           type: "ssd"
         }
       ],
-      
+
       sshKey: {
         id: "ssh-1",
         name: "prod-admin-key"
       },
-      
+
       subnet: {
         id: "subnet-18",
         name: "microservices-subnet-public",
@@ -1626,9 +1805,9 @@ export const vmInstances = [
       ipAddressType: "floating",
       reservedIp: "203.0.113.175",
       networkSpeed: "100 Mbps",
-      
+
       startupScript: "#!/bin/bash\n# Install Node.js and PM2\ncurl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -\napt-get install -y nodejs\nnpm install -g pm2",
-      
+
       pricing: {
         vm: 12,
         storage: 3,
@@ -1737,7 +1916,7 @@ export const volumes = [
     createdOn: "2023-12-01T10:00:00Z",
   },
   {
-    id: "vol-002", 
+    id: "vol-002",
     name: "AI Training Boot",
     size: "100 GB",
     type: "bootable" as const,
@@ -1749,7 +1928,7 @@ export const volumes = [
   {
     id: "vol-003",
     name: "Database Boot",
-    size: "80 GB", 
+    size: "80 GB",
     type: "bootable" as const,
     status: "attached" as const,
     source: "machine-image",
@@ -1762,7 +1941,7 @@ export const volumes = [
     size: "30 GB",
     type: "bootable" as const,
     status: "attached" as const,
-    source: "machine-image", 
+    source: "machine-image",
     attachedTo: "vm-004",
     createdOn: "2023-12-12T11:45:00Z",
   },
@@ -1847,7 +2026,7 @@ export const vmSecurityGroups = [
     ]
   },
   {
-    id: "sg-002", 
+    id: "sg-002",
     name: "database-sg",
     description: "Security group for database servers with restricted access",
     rules: 3,
@@ -1880,7 +2059,7 @@ export const vmSecurityGroups = [
   },
   {
     id: "sg-004",
-    name: "development-sg", 
+    name: "development-sg",
     description: "Security group for development environments",
     rules: 6,
     attachedTo: ["vm-004"],
@@ -1929,7 +2108,7 @@ export const vmSecurityGroups = [
   }
 ];
 
-// Public IP Address data for VM attachment/detachment  
+// Public IP Address data for VM attachment/detachment
 export const publicIPs = [
   {
     id: "ip-001",
@@ -1942,7 +2121,7 @@ export const publicIPs = [
   },
   {
     id: "ip-002",
-    address: "52.14.22.8", 
+    address: "52.14.22.8",
     type: "reserved" as const,
     status: "attached" as const,
     attachedTo: "vm-002",
@@ -2537,6 +2716,7 @@ export interface TargetMember {
   name: string
   ipAddress: string
   port: number
+  weight: number
   status: "healthy" | "unhealthy" | "draining"
 }
 
@@ -2600,7 +2780,7 @@ export const loadBalancers: LoadBalancer[] = [
     publicIP: "54.123.45.68"
   },
   {
-    id: "lb-2", 
+    id: "lb-2",
     name: "api-gateway-lb",
     status: "active",
     provisioningStatus: "provisioned",
@@ -2631,7 +2811,7 @@ export const loadBalancers: LoadBalancer[] = [
     name: "internal-services-lb",
     status: "offline",
     provisioningStatus: "provisioned",
-    operatingStatus: "degraded", 
+    operatingStatus: "degraded",
     type: "network",
     scheme: "internal",
     vpc: "production-vpc",
@@ -2674,7 +2854,7 @@ export const loadBalancers: LoadBalancer[] = [
     provisioningStatus: "provisioned",
     operatingStatus: "error",
     type: "application",
-    scheme: "internet-facing", 
+    scheme: "internet-facing",
     vpc: "staging-vpc",
     dnsName: "staging-web-lb-111222333.us-west-2.elb.amazonaws.com",
     targetGroups: 1,
@@ -2702,7 +2882,7 @@ export const loadBalancers: LoadBalancer[] = [
     operatingStatus: "inactive",
     type: "application",
     scheme: "internet-facing",
-    vpc: "development-vpc", 
+    vpc: "development-vpc",
     dnsName: "dev-app-lb-444555666.us-west-2.elb.amazonaws.com",
     targetGroups: 1,
     createdOn: "2024-12-19T10:30:00Z",
@@ -2744,35 +2924,39 @@ export const targetGroups: TargetGroup[] = [
     targets: 4,
     targetMembers: [
       {
-        id: "vm-web-1",
+        id: "vm-rkd-1231",
         type: "VM",
-        name: "web-server-01",
-        ipAddress: "10.0.1.10",
+        name: "vm-rkd-1231",
+        ipAddress: "192.168.1.87",
         port: 80,
+        weight: 1,
         status: "healthy"
       },
       {
-        id: "vm-web-2", 
+        id: "vm-rkd-1232",
         type: "VM",
-        name: "web-server-02",
-        ipAddress: "10.0.1.11",
+        name: "vm-rkd-1232",
+        ipAddress: "192.168.1.88",
         port: 80,
+        weight: 1,
+        status: "unhealthy"
+      },
+      {
+        id: "vm-rkd-1233",
+        type: "VM",
+        name: "vm-rkd-1233",
+        ipAddress: "192.168.1.89",
+        port: 80,
+        weight: 2,
         status: "healthy"
       },
       {
-        id: "vm-web-3",
-        type: "VM", 
-        name: "web-server-03",
-        ipAddress: "10.0.1.12",
-        port: 80,
-        status: "healthy"
-      },
-      {
-        id: "vm-web-4",
+        id: "vm-rkd-1234",
         type: "VM",
-        name: "web-server-04", 
-        ipAddress: "10.0.1.13",
+        name: "vm-rkd-1234",
+        ipAddress: "192.168.1.90",
         port: 80,
+        weight: 1,
         status: "healthy"
       }
     ],
@@ -2782,7 +2966,7 @@ export const targetGroups: TargetGroup[] = [
   },
   {
     id: "tg-2",
-    name: "production-api-targets", 
+    name: "production-api-targets",
     type: "instance",
     protocol: "HTTPS",
     port: 443,
@@ -2804,14 +2988,16 @@ export const targetGroups: TargetGroup[] = [
         name: "api-server-01",
         ipAddress: "10.0.2.20",
         port: 443,
+        weight: 1,
         status: "healthy"
       },
       {
         id: "vm-api-2",
-        type: "VM", 
+        type: "VM",
         name: "api-server-02",
         ipAddress: "10.0.2.21",
         port: 443,
+        weight: 1,
         status: "healthy"
       }
     ],
@@ -2825,7 +3011,7 @@ export const targetGroups: TargetGroup[] = [
     type: "instance",
     protocol: "HTTP",
     port: 8080,
-    vpc: "production-vpc", 
+    vpc: "production-vpc",
     healthCheck: {
       path: "/gateway/health",
       protocol: "HTTP",
@@ -2843,6 +3029,7 @@ export const targetGroups: TargetGroup[] = [
         name: "gateway-server-01",
         ipAddress: "10.0.3.30",
         port: 8080,
+        weight: 1,
         status: "healthy"
       },
       {
@@ -2851,6 +3038,7 @@ export const targetGroups: TargetGroup[] = [
         name: "gateway-server-02",
         ipAddress: "10.0.3.31",
         port: 8080,
+        weight: 1,
         status: "healthy"
       }
     ],
@@ -2881,6 +3069,7 @@ export const targetGroups: TargetGroup[] = [
         name: "mysql-primary",
         ipAddress: "10.0.4.40",
         port: 3306,
+        weight: 1,
         status: "healthy"
       },
       {
@@ -2889,6 +3078,7 @@ export const targetGroups: TargetGroup[] = [
         name: "mysql-secondary",
         ipAddress: "10.0.4.41",
         port: 3306,
+        weight: 1,
         status: "healthy"
       }
     ],
@@ -2919,6 +3109,7 @@ export const targetGroups: TargetGroup[] = [
         name: "redis-primary",
         ipAddress: "10.0.5.50",
         port: 6379,
+        weight: 1,
         status: "healthy"
       },
       {
@@ -2927,6 +3118,7 @@ export const targetGroups: TargetGroup[] = [
         name: "redis-replica",
         ipAddress: "10.0.5.51",
         port: 6379,
+        weight: 1,
         status: "healthy"
       }
     ],
@@ -2957,6 +3149,7 @@ export const targetGroups: TargetGroup[] = [
         name: "rabbitmq-01",
         ipAddress: "10.0.6.60",
         port: 5672,
+        weight: 1,
         status: "healthy"
       },
       {
@@ -2965,10 +3158,11 @@ export const targetGroups: TargetGroup[] = [
         name: "rabbitmq-02",
         ipAddress: "10.0.6.61",
         port: 5672,
+        weight: 1,
         status: "healthy"
       }
     ],
-    status: "healthy", 
+    status: "healthy",
     loadBalancer: "internal-services-lb",
     createdOn: "2023-12-01T12:00:00Z"
   },
@@ -2996,6 +3190,7 @@ export const targetGroups: TargetGroup[] = [
         name: "staging-app-01",
         ipAddress: "10.1.1.10",
         port: 80,
+        weight: 1,
         status: "healthy"
       },
       {
@@ -3004,6 +3199,7 @@ export const targetGroups: TargetGroup[] = [
         name: "staging-app-02",
         ipAddress: "10.1.1.11",
         port: 80,
+        weight: 1,
         status: "draining"
       }
     ],
@@ -3035,6 +3231,7 @@ export const targetGroups: TargetGroup[] = [
         name: "prometheus-exporter",
         ipAddress: "10.0.7.70",
         port: 9090,
+        weight: 1,
         status: "unhealthy"
       },
       {
@@ -3043,6 +3240,7 @@ export const targetGroups: TargetGroup[] = [
         name: "grafana-instance",
         ipAddress: "10.0.7.71",
         port: 9090,
+        weight: 1,
         status: "healthy"
       },
       {
@@ -3051,6 +3249,7 @@ export const targetGroups: TargetGroup[] = [
         name: "analytics-vm-01",
         ipAddress: "10.0.7.72",
         port: 9090,
+        weight: 1,
         status: "unhealthy"
       }
     ],
@@ -3235,7 +3434,7 @@ export const getModelsByCapability = (capability: string) => {
 
 export const searchModels = (query: string) => {
   const lowercaseQuery = query.toLowerCase()
-  return models.filter((model) => 
+  return models.filter((model) =>
     model.name.toLowerCase().includes(lowercaseQuery) ||
     model.provider.toLowerCase().includes(lowercaseQuery) ||
     model.description.toLowerCase().includes(lowercaseQuery) ||
@@ -3428,11 +3627,14 @@ export interface AutoScalingGroup {
   id: string
   name: string
   status: "Creating" | "Active" | "Failed" | "Updating"
-  instanceType: string
+  type: "CPU" | "GPU"
+  flavour: string
   desiredCapacity: number
   minCapacity: number
   maxCapacity: number
   vpc: string
+  region?: string
+  subnet?: string
   createdOn: string
   healthCheckType: string
   healthCheckGracePeriod: number
@@ -3440,6 +3642,10 @@ export interface AutoScalingGroup {
   availabilityZones: string[]
   loadBalancers?: string[]
   targetGroups?: string[]
+  sshKey?: string
+  securityGroups?: string
+  bootableVolumeSize?: string
+  machineImage?: string
   tags: Record<string, string>
 }
 
@@ -3448,41 +3654,56 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     id: "asg-1",
     name: "worker-node-asg",
     status: "Creating",
-    instanceType: "t3.xlarge",
+    type: "CPU",
+    flavour: "t3.xlarge",
     desiredCapacity: 5,
     minCapacity: 3,
     maxCapacity: 15,
     vpc: "vpc-main-prod",
+    region: "US East N. Virginia",
+    subnet: "subnet-5",
     createdOn: "2024-12-19T14:45:00Z",
     healthCheckType: "ELB",
     healthCheckGracePeriod: 300,
     defaultCooldown: 300,
     availabilityZones: ["us-east-1a", "us-east-1b", "us-east-1c"],
     loadBalancers: ["elb-worker-nodes"],
+    sshKey: "ssh-3",
+    securityGroups: "sg-12345f789abcd2",
+    bootableVolumeSize: "20 GB",
+    machineImage: "Ubuntu 22.04 LTS",
     tags: { Environment: "Production", Purpose: "Worker Nodes", Team: "Backend" }
   },
   {
     id: "asg-2",
     name: "media-processing-asg",
     status: "Active",
-    instanceType: "t3.xlarge",
+    type: "GPU",
+    flavour: "t3.xlarge",
     desiredCapacity: 4,
     minCapacity: 2,
     maxCapacity: 8,
     vpc: "vpc-media",
+    region: "US East N. Virginia",
+    subnet: "subnet-media",
     createdOn: "2024-03-05T21:40:00Z",
     healthCheckType: "EC2",
     healthCheckGracePeriod: 300,
     defaultCooldown: 300,
     availabilityZones: ["us-east-1a", "us-east-1b"],
     targetGroups: ["tg-media-processing"],
+    sshKey: "ssh-media",
+    securityGroups: "sg-media-processing",
+    bootableVolumeSize: "50 GB",
+    machineImage: "Ubuntu 20.04 LTS GPU",
     tags: { Environment: "Production", Purpose: "Media Processing", Team: "Media" }
   },
   {
     id: "asg-3",
     name: "analytics-asg",
     status: "Failed",
-    instanceType: "t3.2xlarge",
+    type: "CPU",
+    flavour: "t3.2xlarge",
     desiredCapacity: 6,
     minCapacity: 3,
     maxCapacity: 12,
@@ -3499,7 +3720,8 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     id: "asg-4",
     name: "cache-asg",
     status: "Active",
-    instanceType: "t3.medium",
+    type: "CPU",
+    flavour: "t3.medium",
     desiredCapacity: 2,
     minCapacity: 1,
     maxCapacity: 4,
@@ -3515,7 +3737,8 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     id: "asg-5",
     name: "ml-training-asg",
     status: "Updating",
-    instanceType: "g4dn.xlarge",
+    type: "GPU",
+    flavour: "g4dn.xlarge",
     desiredCapacity: 8,
     minCapacity: 4,
     maxCapacity: 20,
@@ -3531,7 +3754,8 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     id: "asg-6",
     name: "staging-asg",
     status: "Active",
-    instanceType: "t3.small",
+    type: "CPU",
+    flavour: "t3.small",
     desiredCapacity: 1,
     minCapacity: 1,
     maxCapacity: 3,
@@ -3547,7 +3771,8 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     id: "asg-7",
     name: "app-server-asg",
     status: "Active",
-    instanceType: "t3.large",
+    type: "CPU",
+    flavour: "t3.large",
     desiredCapacity: 2,
     minCapacity: 1,
     maxCapacity: 5,
@@ -3564,7 +3789,8 @@ export const autoScalingGroups: AutoScalingGroup[] = [
     id: "asg-8",
     name: "web-server-asg",
     status: "Active",
-    instanceType: "t3.medium",
+    type: "CPU",
+    flavour: "t3.medium",
     desiredCapacity: 3,
     minCapacity: 2,
     maxCapacity: 10,
@@ -3585,7 +3811,8 @@ export interface AutoScalingTemplate {
   id: string
   name: string
   description: string
-  instanceType: string
+  type: "CPU" | "GPU"
+  flavour: string
   isLatest: boolean
   imageId: string
   keyName: string
@@ -3604,7 +3831,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-1",
     name: "analytics-template",
     description: "Template for analytics processing auto scaling gr...",
-    instanceType: "t3.2xlarge",
+    type: "CPU",
+    flavour: "t3.2xlarge",
     isLatest: true,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "analytics-keypair",
@@ -3621,7 +3849,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-2",
     name: "cache-server-template",
     description: "Template for cache server auto scaling groups",
-    instanceType: "t3.medium",
+    type: "CPU",
+    flavour: "t3.medium",
     isLatest: true,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "production-keypair",
@@ -3638,7 +3867,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-3",
     name: "ml-training-template",
     description: "Template for ML training auto scaling groups",
-    instanceType: "g4dn.xlarge",
+    type: "GPU",
+    flavour: "g4dn.xlarge",
     isLatest: true,
     imageId: "ami-0d70546e43a941d70",
     keyName: "ml-keypair",
@@ -3655,7 +3885,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-4",
     name: "staging-template",
     description: "Template for staging environment auto scaling gr...",
-    instanceType: "t3.small",
+    type: "CPU",
+    flavour: "t3.small",
     isLatest: true,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "staging-keypair",
@@ -3672,7 +3903,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-5",
     name: "worker-node-template",
     description: "Template for worker node auto scaling groups",
-    instanceType: "t3.xlarge",
+    type: "CPU",
+    flavour: "t3.xlarge",
     isLatest: true,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "production-keypair",
@@ -3689,7 +3921,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-6",
     name: "app-server-template",
     description: "Template for application server auto scaling grou...",
-    instanceType: "t3.large",
+    type: "CPU",
+    flavour: "cpu-4x-16gb",
     isLatest: true,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "production-keypair",
@@ -3706,7 +3939,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-7",
     name: "web-server-template",
     description: "Standard template for web server auto scaling gr...",
-    instanceType: "t3.medium",
+    type: "CPU",
+    flavour: "cpu-2x-8gb",
     isLatest: true,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "production-keypair",
@@ -3723,7 +3957,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-8",
     name: "app-server-template",
     description: "Original template for application server auto scali...",
-    instanceType: "t3.medium",
+    type: "CPU",
+    flavour: "t3.medium",
     isLatest: false,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "production-keypair",
@@ -3740,7 +3975,8 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     id: "lt-9",
     name: "media-processing-template",
     description: "Template for media processing auto scaling grou...",
-    instanceType: "t3.large",
+    type: "GPU",
+    flavour: "t3.large",
     isLatest: false,
     imageId: "ami-0c7217cdde317cfec",
     keyName: "production-keypair",
@@ -3751,23 +3987,6 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
     createdOn: "2024-01-10T13:30:00Z",
     lastModified: "2024-01-10T13:30:00Z",
     version: 1,
-    tags: { Environment: "Production", Purpose: "Media Processing", Team: "Media" }
-  },
-  {
-    id: "lt-10",
-    name: "media-processing-template",
-    description: "Template for media processing auto scaling grou...",
-    instanceType: "t3.xlarge",
-    isLatest: true,
-    imageId: "ami-0c7217cdde317cfec",
-    keyName: "production-keypair",
-    securityGroups: ["sg-media-processing"],
-    userData: "#!/bin/bash\nyum update -y\nyum install -y ffmpeg",
-    iamInstanceProfile: "EC2-MediaProcessing-Role",
-    monitoring: true,
-    createdOn: "2024-01-10T13:30:00Z",
-    lastModified: "2024-01-10T13:30:00Z",
-    version: 8,
     tags: { Environment: "Production", Purpose: "Media Processing", Team: "Media" }
   }
 ]

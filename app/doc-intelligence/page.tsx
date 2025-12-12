@@ -1,80 +1,245 @@
-import { PageShell } from "@/components/page-shell"
-import { FileText, FileSearch, ScrollText, Shield } from "lucide-react"
-import Link from "next/link"
+'use client';
 
-const documentServices = [
+import { useState, type ReactNode } from 'react';
+import { PageShell } from '@/components/page-shell';
+import { EvervaultCard } from '@/components/ui/evervault-card';
+import { Button } from '@/components/ui/button';
+import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
+import { SetupCodeModal } from '@/components/modals/setup-code-modal';
+import { CreateApiKeyModal } from '@/components/modals/create-api-key-modal';
+import { FileText, FileSearch, ScrollText, Shield } from 'lucide-react';
+
+interface ServiceCardData {
+  id: string;
+  title: string;
+  description: string;
+  icon: any;
+  gradient: string;
+  borderClass: string;
+  playgroundUrl: string;
+  // Catalog-style additions
+  logo: ReactNode;
+  tags: string[];
+  inputPrice: string; // display string
+  outputPrice: string; // display string
+  pricingType: 'text' | 'audio';
+  inputLabel?: string;
+  outputLabel?: string;
+}
+
+const cards: ServiceCardData[] = [
   {
-    title: "Extract Text",
-    description: "Seamlessly extract text from documents, scanned files and images",
+    id: 'extract-text',
+    title: 'Extract Text',
+    description: 'Seamlessly extract text from documents, scanned files and images',
     icon: FileText,
-    href: "/doc-intelligence/extract-text"
+    gradient: 'from-slate-100/50 via-white/80 to-white',
+    borderClass: 'border-slate-200',
+    playgroundUrl: '/playground/extract-text',
+    logo: <FileText className='w-8 h-8 text-gray-700' />,
+    tags: ['OCR', 'PDF/Image', 'Multilingual'],
+    inputPrice: '₹99.60',
+    outputPrice: '₹398.4',
+    pricingType: 'text',
+    inputLabel: 'per Document',
+    outputLabel: 'per OCR',
   },
   {
-    title: "Extract Information",
-    description: "Extract key information from your unstructured data",
+    id: 'extract-info',
+    title: 'Extract Information',
+    description: 'Extract key information from your unstructured data',
     icon: FileSearch,
-    href: "/doc-intelligence/extract-info"
+    gradient: 'from-indigo-100/50 via-purple-50/30 to-white',
+    borderClass: 'border-indigo-200/60',
+    playgroundUrl: '/playground/extract-info',
+    logo: <FileSearch className='w-8 h-8 text-gray-700' />,
+    tags: ['Custom schema', 'Entities', 'JSON'],
+    inputPrice: '₹1726.40',
+    outputPrice: '',
+    pricingType: 'text',
+    inputLabel: 'per Document',
   },
   {
-    title: "Document Summarization",
-    description: "Upload your file to generate a summary",
+    id: 'summarization',
+    title: 'Document Summarization',
+    description: 'Upload your file to generate a summary',
     icon: ScrollText,
-    href: "/doc-intelligence/summarization"
+    gradient: 'from-green-100/50 via-emerald-50/30 to-white',
+    borderClass: 'border-green-200/60',
+    playgroundUrl: '/playground/doc-summarization',
+    logo: <ScrollText className='w-8 h-8 text-gray-700' />,
+    tags: ['Abstractive', 'Configurable length'],
+    inputPrice: '₹166.00',
+    outputPrice: '₹531.20',
+    pricingType: 'text',
+    inputLabel: 'per Document',
+    outputLabel: 'per OCR',
   },
   {
-    title: "PII Masking",
-    description: "Get PII data masked in your documents",
+    id: 'pii-masking',
+    title: 'PII Masking',
+    description: 'Get PII data masked in your documents',
     icon: Shield,
-    href: "/doc-intelligence/pii-masking"
-  }
-]
+    gradient: 'from-orange-100/40 via-amber-50/30 to-white',
+    borderClass: 'border-amber-200/60',
+    playgroundUrl: '/playground/pii-masking',
+    logo: <Shield className='w-8 h-8 text-gray-700' />,
+    tags: ['PII', 'GDPR', 'HIPAA'],
+    inputPrice: '₹232.40',
+    outputPrice: '',
+    pricingType: 'text',
+    inputLabel: 'per Document',
+  },
+];
 
-function ServiceCard({ title, description, icon: Icon, href }: { title: string; description: string; icon: any; href: string }) {
+function ServiceCard({ data, onOpenStarterCode }: { data: ServiceCardData; onOpenStarterCode: (id: string) => void }) {
   return (
-    <Link href={href}>
-      <div 
-        style={{
-          borderRadius: '16px',
-          border: '4px solid #FFF',
-          background: 'linear-gradient(265deg, #FFF -13.17%, #F7F8FD 133.78%)',
-          boxShadow: '0px 8px 39.1px -9px rgba(0, 27, 135, 0.08)',
-          padding: '1.5rem'
-        }}
-        className="h-full transition-transform hover:scale-105 hover:shadow-lg cursor-pointer"
-      >
-        <div className="text-center">
-          <div className="flex justify-center mb-4">
-            <Icon className="h-8 w-8 text-muted-foreground" />
+    <div className={`bg-gradient-to-bl ${data.gradient} rounded-xl border ${data.borderClass} p-6 flex flex-col h-full`}>
+      {/* Top Content - Flexible */}
+      <div className='flex-1 flex flex-col'>
+        {/* Logo/Icon */}
+        <div className='flex justify-start mb-4'>
+          <div className='w-8 h-8 flex items-center justify-center'>
+            {data.logo}
           </div>
-          <h3 className="text-lg font-semibold mb-3">{title}</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+        </div>
+
+        {/* Title and description */}
+        <div className='space-y-1 mb-10'>
+          <h3 className='text-lg font-semibold text-gray-900'>{data.title}</h3>
+          <p className='text-sm text-gray-600'>{data.description}</p>
         </div>
       </div>
-    </Link>
-  )
+
+      {/* Bottom Content - Fixed to bottom */}
+      <div className='mt-auto space-y-4'>
+        {/* Pricing */}
+        <div className='space-y-1'>
+          <div className={`flex items-center ${data.outputPrice ? 'justify-between' : 'justify-start'}`}>
+            <span className='text-lg font-semibold text-gray-900'>{data.inputPrice}</span>
+            {data.outputPrice ? (
+              <span className={`text-lg font-semibold ${data.outputPrice === '—' ? 'text-gray-400' : 'text-gray-900'}`}>{data.outputPrice}</span>
+            ) : null}
+          </div>
+          <div className={`flex items-center text-xs text-gray-500 ${data.outputPrice ? 'justify-between' : 'justify-start'}`}>
+            <span>{data.inputLabel ?? (data.pricingType === 'audio' ? 'Per Hour of Input Audio' : 'Per 1M Input Tokens')}</span>
+            {data.outputPrice ? (
+              <span>{data.outputLabel ?? (data.pricingType === 'audio' ? 'Output' : 'Per 1M Output Tokens')}</span>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Tags */}
+        <div className='flex flex-wrap gap-2'>
+          {data.tags.map(tag => (
+            <span key={tag} className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        {/* Action Buttons */}
+        <div className='flex space-x-3'>
+          <Button className='flex-1' asChild>
+            <a href={data.playgroundUrl}>Playground</a>
+          </Button>
+          <TooltipWrapper content='View starter code'>
+            <Button
+              variant='outline'
+              className='px-3 border-gray-500 text-gray-500 hover:bg-gray-900 hover:text-white hover:border-gray-900'
+              onClick={() => onOpenStarterCode(data.id)}
+            >
+              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' />
+              </svg>
+            </Button>
+          </TooltipWrapper>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function DocIntelligenceAllServicesPage() {
+  const [isSetupCodeModalOpen, setIsSetupCodeModalOpen] = useState(false);
+  const [selectedModelId, setSelectedModelId] = useState('');
+  const [isCreateApiKeyModalOpen, setIsCreateApiKeyModalOpen] = useState(false);
   return (
     <PageShell
-      title="Document Intelligence"
-      description="Comprehensive document processing and analysis services powered by AI"
+      title='Document Intelligence'
+      description='Comprehensive document processing and analysis services powered by AI'
+      headerActions={
+        <Button 
+          variant='default' 
+          size='sm' 
+          onClick={() => setIsCreateApiKeyModalOpen(true)}
+        >
+          Get API key
+        </Button>
+      }
     >
-      <div className="space-y-12">
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {documentServices.map((service, index) => (
-              <ServiceCard
-                key={index}
-                title={service.title}
-                description={service.description}
-                icon={service.icon}
-                href={service.href}
-              />
-            ))}
+      <div className='space-y-6'>
+        {/* Banner - reduced height, similar to Bhashik hero */}
+        <div
+          className='grid grid-cols-1 gap-6 items-center min-h-[260px] px-6 lg:px-12 py-8 rounded-2xl relative overflow-hidden'
+          style={{ backgroundColor: '#f0fdf4' }}
+        >
+          <div className='absolute inset-0 opacity-100 pointer-events-none'>
+            <svg className='w-full h-full object-cover' viewBox='0 0 1232 640' fill='none' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='xMidYMid slice'>
+              <g clipPath='url(#clip0_docintelligence)'>
+                <rect width='1232' height='640' fill='#f0fdf4'></rect>
+                <path
+                  fillRule='evenodd'
+                  clipRule='evenodd'
+                  d='M929.704 412C928.178 412 927.047 410.582 927.387 409.094L933.471 382.466C933.811 380.979 932.681 379.561 931.155 379.561H853.876C853.18 379.561 852.519 379.256 852.068 378.726L733.568 239.754C732.811 238.866 732.811 237.559 733.568 236.671L850.74 99.2564C851.192 98.727 851.852 98.422 852.548 98.422H941.134C943.161 98.422 944.258 100.797 942.942 102.34L828.4 236.671C827.642 237.559 827.642 238.866 828.4 239.754L933.912 363.495C935.181 364.982 937.602 364.388 938.037 362.483L1005.58 66.847C1005.83 65.7664 1006.79 65 1007.9 65H1072.45C1073.97 65 1075.1 66.4179 1074.76 67.9056L1068.46 95.5164C1068.12 97.0041 1069.25 98.422 1070.77 98.422H1150.65C1151.35 98.422 1152.01 98.727 1152.46 99.2564L1269.63 236.671C1270.39 237.559 1270.39 238.866 1269.63 239.754L1151.13 378.726C1150.68 379.256 1150.02 379.561 1149.32 379.561H1131.57L1060.85 379.42C1058.83 379.416 1057.73 377.043 1059.05 375.502L1174.8 239.754C1175.56 238.866 1175.56 237.559 1174.8 236.671L1068.56 112.083C1067.3 110.596 1064.87 111.19 1064.44 113.095L996.567 410.153C996.32 411.234 995.359 412 994.251 412H929.704Z'
+                  fill='#dcfce7'
+                />
+              </g>
+              <defs>
+                <clipPath id='clip0_docintelligence'>
+                  <rect width='1232' height='640' fill='white' />
+                </clipPath>
+              </defs>
+            </svg>
+          </div>
+          {/* Hover overlay effect while preserving base background */}
+          <div className='absolute inset-0'>
+            <EvervaultCard text='' className='h-full w-full' />
+          </div>
+          <div className='space-y-4 relative z-10 text-center max-w-3xl mx-auto'>
+            <h2 className='text-2xl lg:text-3xl font-semibold tracking-tight text-foreground'>
+              Automate text extraction, summarization, and PII masking with advanced document AI.
+            </h2>
+            <div className='pt-2 flex justify-center'>
+              <Button size='lg' variant='outline' className='px-6 border-foreground text-foreground' asChild>
+                <a href='/playground/extract-text'>Go to Playground</a>
+              </Button>
+            </div>
           </div>
         </div>
+
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+          {cards.map(card => (
+            <ServiceCard
+              key={card.id}
+              data={card}
+              onOpenStarterCode={(id: string) => {
+                setSelectedModelId(id);
+                setIsSetupCodeModalOpen(true);
+              }}
+            />
+          ))}
+        </div>
       </div>
+      <SetupCodeModal
+        open={isSetupCodeModalOpen}
+        onClose={() => setIsSetupCodeModalOpen(false)}
+        modelId={selectedModelId}
+      />
+      <CreateApiKeyModal
+        open={isCreateApiKeyModalOpen}
+        onClose={() => setIsCreateApiKeyModalOpen(false)}
+      />
     </PageShell>
-  )
-} 
+  );
+}

@@ -32,6 +32,8 @@ export function generateBreadcrumbs(pathname: string): Breadcrumb[] {
     "static-ips": "Static IP Addresses",
     "certificates": "Certificate Manager",
     "load-balancing": "Load Balancers",
+    "auto-scaling": "Auto Scaling Groups",
+    "database": "Databases",
   }
 
   // Build the rest of the breadcrumbs
@@ -41,7 +43,7 @@ export function generateBreadcrumbs(pathname: string): Breadcrumb[] {
 
     // Format the title (convert kebab-case to Title Case with special cases)
     let title: string
-    
+
     // Check if the entire path segment is a special case first
     if (specialCases[path.toLowerCase()]) {
       title = specialCases[path.toLowerCase()]

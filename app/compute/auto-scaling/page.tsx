@@ -1,25 +1,29 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { usePathname, useRouter } from "next/navigation"
-import { PageLayout } from "@/components/page-layout"
-import { VercelTabs } from "@/components/ui/vercel-tabs"
-import { Button } from "@/components/ui/button"
-import { ShadcnDataTable } from "@/components/ui/shadcn-data-table"
-import { StatusBadge } from "@/components/status-badge"
 import { ActionMenu } from "@/components/action-menu"
+import { CreateButton } from "@/components/create-button"
 import { DeleteConfirmationModal } from "@/components/delete-confirmation-modal"
-import { useToast } from "@/hooks/use-toast"
-import { filterDataForUser, shouldShowEmptyState, getEmptyStateMessage } from "@/lib/demo-data-filter"
-import { autoScalingGroups, autoScalingTemplates, type AutoScalingGroup, type AutoScalingTemplate } from "@/lib/data"
-import { EmptyState } from "@/components/ui/empty-state"
+import { PageLayout } from "@/components/page-layout"
+import { StatusBadge } from "@/components/status-badge"
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { MoreVertical, Trash2, Eye, Edit } from "lucide-react"
+import { EmptyState } from "@/components/ui/empty-state"
+import { ShadcnDataTable } from "@/components/ui/shadcn-data-table"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { VercelTabs } from "@/components/ui/vercel-tabs"
+import { useToast } from "@/hooks/use-toast"
+import { autoScalingGroups, autoScalingTemplates, type AutoScalingGroup, type AutoScalingTemplate } from "@/lib/data"
+import { filterDataForUser, getEmptyStateMessage, shouldShowEmptyState } from "@/lib/demo-data-filter"
+import { Edit, Eye, Trash2, TrendingUp } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { AutoScalingSettingsModal } from "@/components/modals/auto-scaling-settings-modal"
 
 // Auto Scaling Groups Section
 function AutoScalingGroupsSection() {
   const [selectedASG, setSelectedASG] = useState<AutoScalingGroup | null>(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isScalingModalOpen, setIsScalingModalOpen] = useState(false)
   const { toast } = useToast()
 
   // Filter data based on user access
@@ -43,10 +47,15 @@ function AutoScalingGroupsSection() {
   }
 
   const handleEdit = (asg: AutoScalingGroup) => {
-    toast({
-      title: "Edit Auto Scaling Group",
-      description: `Editing ${asg.name}...`,
-    })
+    if (asg.status === "Creating") {
+      toast({
+        title: "Edit not available",
+        description: "Cannot edit Auto Scaling Group while it's being created.",
+        variant: "destructive",
+      })
+      return
+    }
+    window.location.href = `/compute/auto-scaling/groups/${asg.id}/edit`
   }
 
   const handlePause = (asg: AutoScalingGroup) => {
@@ -64,10 +73,12 @@ function AutoScalingGroupsSection() {
   }
 
   const handleViewDetails = (asg: AutoScalingGroup) => {
-    toast({
-      title: "View Details",
-      description: `Viewing details for ${asg.name}...`,
-    })
+    window.location.href = `/compute/auto-scaling/groups/${asg.id}`
+  }
+
+  const handleAutoScalingSettings = (asg: AutoScalingGroup) => {
+    setSelectedASG(asg)
+    setIsScalingModalOpen(true)
   }
 
   const handleSettings = (asg: AutoScalingGroup) => {
@@ -85,7 +96,12 @@ function AutoScalingGroupsSection() {
       sortable: true,
       searchable: true,
       render: (value: string, row: AutoScalingGroup) => (
-        <div className="font-medium">{value}</div>
+        <a
+          href={`/compute/auto-scaling/groups/${row.id}`}
+          className="text-primary font-medium hover:underline leading-5"
+        >
+          {value}
+        </a>
       ),
     },
     {
@@ -97,11 +113,25 @@ function AutoScalingGroupsSection() {
       ),
     },
     {
-      key: "instanceType",
-      label: "Instance Type",
+      key: "type",
+      label: "Type",
+      sortable: true,
+      searchable: true,
+      render: (value: string) => (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${value === "CPU"
+            ? "bg-gray-100 text-gray-700"
+            : "bg-gray-100 text-gray-700"
+          }`}>
+          {value}
+        </span>
+      ),
+    },
+    {
+      key: "flavour",
+      label: "Flavour",
       sortable: true,
       render: (value: string) => (
-        <div className="text-sm">{value}</div>
+        <div className="text-sm leading-5">{value}</div>
       ),
     },
     {
@@ -109,32 +139,26 @@ function AutoScalingGroupsSection() {
       label: "Desired Capacity",
       sortable: true,
       render: (value: number, row: AutoScalingGroup) => (
-        <div>
-          <div className="font-medium">{value}</div>
-          <div className="text-sm text-muted-foreground">
+        <div className="text-sm leading-5">
+          <span className="font-medium">{value}</span>
+          <span className="text-muted-foreground ml-2">
             Min: {row.minCapacity} | Max: {row.maxCapacity}
-          </div>
+          </span>
         </div>
-      ),
-    },
-    {
-      key: "vpc",
-      label: "VPC",
-      sortable: true,
-      searchable: true,
-      render: (value: string) => (
-        <div className="text-sm">{value}</div>
       ),
     },
     {
       key: "createdOn",
       label: "Created On",
       sortable: true,
-      render: (value: string) => (
-        <div className="text-sm text-muted-foreground">
-          {new Date(value).toLocaleString()}
-        </div>
-      ),
+      render: (value: string) => {
+        const date = new Date(value);
+        return (
+          <div className="text-muted-foreground leading-5">
+            {date.toLocaleDateString()} {date.toLocaleTimeString()}
+          </div>
+        );
+      },
     },
     {
       key: "actions",
@@ -142,7 +166,7 @@ function AutoScalingGroupsSection() {
       align: "right",
       render: (value: any, row: AutoScalingGroup) => {
         const asg = row
-        
+
         return (
           <div className="flex justify-end">
             <ActionMenu
@@ -152,6 +176,20 @@ function AutoScalingGroupsSection() {
                   icon: <Eye className="mr-2 h-4 w-4" />,
                   onClick: () => handleViewDetails(asg),
                 },
+                ...(asg.status !== "Creating" ? [
+                  {
+                    label: "Edit",
+                    icon: <Edit className="mr-2 h-4 w-4" />,
+                    onClick: () => handleEdit(asg),
+                  }
+                ] : []),
+                ...(asg.status !== "Creating" ? [
+                  {
+                    label: "Auto Scaling Settings",
+                    icon: <TrendingUp className="mr-2 h-4 w-4" />,
+                    onClick: () => handleAutoScalingSettings(asg),
+                  }
+                ] : []),
                 {
                   label: "Delete",
                   icon: <Trash2 className="mr-2 h-4 w-4" />,
@@ -213,6 +251,18 @@ function AutoScalingGroupsSection() {
         resourceType="Auto Scaling Group"
         onConfirm={handleDeleteConfirm}
       />
+
+      {selectedASG && (
+        <AutoScalingSettingsModal
+          isOpen={isScalingModalOpen}
+          onClose={() => setIsScalingModalOpen(false)}
+          asgName={selectedASG.name}
+          currentVMs={selectedASG.desiredCapacity}
+          minCapacity={selectedASG.minCapacity}
+          maxCapacity={selectedASG.maxCapacity}
+          desiredCapacity={selectedASG.desiredCapacity}
+        />
+      )}
     </div>
   )
 }
@@ -244,17 +294,11 @@ function TemplatesSection() {
   }
 
   const handleEdit = (template: AutoScalingTemplate) => {
-    toast({
-      title: "Edit Template",
-      description: `Editing ${template.name}...`,
-    })
+    window.location.href = `/compute/auto-scaling/templates/${template.id}/edit`
   }
 
   const handleViewDetails = (template: AutoScalingTemplate) => {
-    toast({
-      title: "View Details",
-      description: `Viewing details for ${template.name}...`,
-    })
+    window.location.href = `/compute/auto-scaling/templates/${template.id}`
   }
 
   const handleClone = (template: AutoScalingTemplate) => {
@@ -271,18 +315,35 @@ function TemplatesSection() {
       label: "Name",
       sortable: true,
       searchable: true,
-      render: (value: string) => (
-        <div className="font-medium">{value}</div>
+      render: (value: string, row: AutoScalingTemplate) => (
+        <a
+          href={`/compute/auto-scaling/templates/${row.id}`}
+          className="text-primary font-medium hover:underline leading-5"
+        >
+          {value}
+        </a>
       ),
     },
     {
-      key: "description",
-      label: "Description",
+      key: "type",
+      label: "Type",
+      sortable: true,
       searchable: true,
       render: (value: string) => (
-        <div className="text-sm text-muted-foreground max-w-xs truncate">
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${value === "CPU"
+            ? "bg-gray-100 text-gray-700"
+            : "bg-gray-100 text-gray-700"
+          }`}>
           {value}
-        </div>
+        </span>
+      ),
+    },
+    {
+      key: "flavour",
+      label: "Flavour",
+      sortable: true,
+      render: (value: string) => (
+        <div className="text-sm leading-5">{value}</div>
       ),
     },
     {
@@ -290,35 +351,37 @@ function TemplatesSection() {
       label: "Version",
       sortable: true,
       render: (value: number, row: AutoScalingTemplate) => (
-        <div className="flex flex-col items-start">
-          <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-            row.isLatest ? 'bg-gray-900 text-white' : 'bg-blue-100 text-blue-800'
-          }`}>
-            V{value}
-          </div>
+        <div className="flex items-center gap-1">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="secondary" className="font-mono text-xs cursor-help">
+                  V{value}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{row.isLatest ? "This is the latest version of the template" : "This is not the latest version"}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           {row.isLatest && (
-            <div className="text-xs text-muted-foreground mt-1">Latest Version</div>
+            <div className="w-2 h-2 bg-green-500 rounded-full" title="Latest version" />
           )}
         </div>
-      ),
-    },
-    {
-      key: "instanceType",
-      label: "Instance Type",
-      sortable: true,
-      render: (value: string) => (
-        <div className="text-sm">{value}</div>
       ),
     },
     {
       key: "createdOn",
       label: "Created On",
       sortable: true,
-      render: (value: string) => (
-        <div className="text-sm text-muted-foreground">
-          {new Date(value).toLocaleString()}
-        </div>
-      ),
+      render: (value: string) => {
+        const date = new Date(value);
+        return (
+          <div className="text-muted-foreground leading-5">
+            {date.toLocaleDateString()} {date.toLocaleTimeString()}
+          </div>
+        );
+      },
     },
     {
       key: "actions",
@@ -326,7 +389,7 @@ function TemplatesSection() {
       align: "right",
       render: (value: any, row: AutoScalingTemplate) => {
         const template = row
-        
+
         return (
           <div className="flex justify-end">
             <ActionMenu
@@ -375,10 +438,7 @@ function TemplatesSection() {
               description="Create your first auto scaling template to standardize your instance configurations and make it easier to launch consistent auto scaling groups."
               actionText="Create Your First Template"
               onAction={() => {
-                toast({
-                  title: "Create Template",
-                  description: "Opening template creation wizard...",
-                })
+                router.push("/compute/auto-scaling/templates/create")
               }}
             />
           </CardContent>
@@ -387,12 +447,13 @@ function TemplatesSection() {
         <ShadcnDataTable
           columns={columns}
           data={dataWithActions}
-          searchableColumns={["name", "description"]}
+          searchableColumns={["name", "type"]}
           defaultSort={{ column: "createdOn", direction: "desc" }}
           pageSize={10}
           enableSearch={true}
           enablePagination={true}
           onRefresh={handleRefresh}
+          enableVpcFilter={false}
         />
       )}
 
@@ -415,13 +476,13 @@ const tabs = [
 export default function AutoScalingPage() {
   const pathname = usePathname()
   const router = useRouter()
-  
+
   // Determine active tab from URL, but don't change URL on tab change
   const getActiveTabFromPath = () => {
     if (pathname.includes('/templates')) return "templates"
     return "asg" // default to asg
   }
-  
+
   const [activeTab, setActiveTab] = useState(getActiveTabFromPath())
 
   // Handle tab change without URL navigation to prevent refreshes
@@ -438,19 +499,14 @@ export default function AutoScalingPage() {
   // Get title and description based on active tab
   const getPageInfo = () => {
     switch (activeTab) {
-      case "asg":
-        return { 
-          title: "Auto Scaling Groups", 
-          description: "Create and manage auto scaling groups for your compute resources."
-        }
       case "templates":
-        return { 
-          title: "Auto Scaling Templates", 
+        return {
+          title: "Auto Scaling Templates",
           description: "Create and manage templates for your auto scaling configurations."
         }
       default:
-        return { 
-          title: "Auto Scaling Groups", 
+        return {
+          title: "Auto Scaling Groups",
           description: "Create and manage auto scaling groups for your compute resources."
         }
     }
@@ -459,30 +515,13 @@ export default function AutoScalingPage() {
   // Get dynamic button info based on active tab
   const getHeaderActions = () => {
     switch (activeTab) {
-      case "asg":
-        return (
-          <Button onClick={() => {
-            router.push("/compute/auto-scaling/create")
-          }}>
-            Create Auto Scaling Group
-          </Button>
-        )
       case "templates":
         return (
-          <Button onClick={() => {
-            // Handle create template
-            console.log("Create Template clicked")
-          }}>
-            Create Template
-          </Button>
+          <CreateButton href="/compute/auto-scaling/templates/create" label="Create Template" />
         )
       default:
         return (
-          <Button onClick={() => {
-            router.push("/compute/auto-scaling/create")
-          }}>
-            Create Auto Scaling Group
-          </Button>
+          <CreateButton href="/compute/auto-scaling/create" label="Create Auto Scaling Group" />
         )
     }
   }
@@ -490,8 +529,8 @@ export default function AutoScalingPage() {
   const { title, description } = getPageInfo()
 
   return (
-    <PageLayout 
-      title={title} 
+    <PageLayout
+      title={title}
       description={description}
       headerActions={getHeaderActions()}
     >

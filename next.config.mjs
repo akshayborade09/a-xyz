@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// Force cache clear - Updated Nov 17, 2025
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
@@ -36,15 +37,6 @@ const nextConfig = {
     };
     return config;
   },
-  async redirects() {
-    return [
-      {
-        source: '/administration/billing/usage',
-        destination: '/billing/usage',
-        permanent: true,
-      },
-    ];
-  },
-}
+};
 
-export default nextConfig
+export default nextConfig;

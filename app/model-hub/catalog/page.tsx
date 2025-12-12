@@ -1,246 +1,1120 @@
-"use client"
+'use client';
 
-import { useState, useMemo } from "react"
-import { PageShell } from "@/components/page-shell"
-import { VercelTabs } from "@/components/ui/vercel-tabs"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Search, ExternalLink, Code, Gauge, Zap, Brain, Key } from "lucide-react"
-import { models, type Model, getModelsByType, getAllModels, getModelsByCapability, searchModels } from "@/lib/data"
-
-// Capability filter options
-const capabilityFilters = [
-  { id: "summarization", label: "Summarization", icon: Brain },
-  { id: "context-rag", label: "Context & RAG", icon: Search },
-  { id: "code", label: "Code", icon: Code },
-  { id: "fast-cost-efficient", label: "Fast & Cost-efficient", icon: Zap },
-  { id: "complex-writing-conversations", label: "Complex writing & Conversations", icon: Brain },
-  { id: "function-calling-tools", label: "Function calling & Tools", icon: Key },
-  { id: "reasoning", label: "Reasoning", icon: Gauge },
-  { id: "text-generation", label: "Text Generation", icon: Brain },
-  { id: "vision-understanding", label: "Vision Understanding", icon: Brain },
-  { id: "image-generation", label: "Image Generation", icon: Brain },
-  { id: "audio-transcription", label: "Audio Transcription", icon: Brain },
-  { id: "audio-generation", label: "Audio Generation", icon: Brain },
-]
-
-function ModelCard({ model }: { model: Model }) {
-  return (
-    <Card className="relative overflow-hidden">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center">
-              <Code className="h-4 w-4" />
-            </div>
-            <div>
-              <CardTitle className="text-lg font-medium">{model.name}</CardTitle>
-              <p className="text-sm text-muted-foreground">{model.provider}</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm">
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        <div className="flex gap-2">
-          <Badge variant="outline" className="text-xs">Description</Badge>
-          <Badge variant="outline" className="text-xs">License</Badge>
-        </div>
-        
-        <div className="space-y-3">
-          {/* Flavor section */}
-          <div>
-            <span className="text-sm font-medium">Flavor</span>
-            <span className="float-right text-sm font-medium">Base</span>
-          </div>
-          
-          {/* Pricing */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span>Input tokens, 1M</span>
-              <span className="font-medium">${model.pricing.inputTokens.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Output tokens, 1M</span>
-              <span className="font-medium">${model.pricing.outputTokens.toFixed(2)}</span>
-            </div>
-          </div>
-          
-          {/* Performance metrics */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span>Tokens per sec</span>
-              <span className="font-medium">{model.performance.tokensPerSec}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Quantization</span>
-              <span className="font-medium">{model.performance.quantization}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Quality</span>
-              <span className="font-medium">{model.performance.quality}</span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Context window tags */}
-        <div className="flex flex-wrap gap-1">
-          <Badge variant="secondary" className="text-xs">{model.contextWindow}</Badge>
-          <Badge variant="secondary" className="text-xs">code</Badge>
-          <Badge variant="secondary" className="text-xs">JSON mode</Badge>
-          {model.tags.includes("math") && (
-            <Badge variant="secondary" className="text-xs">math</Badge>
-          )}
-          {model.tags.includes("reasoning") && (
-            <Badge variant="secondary" className="text-xs">reasoning</Badge>
-          )}
-        </div>
-        
-        {/* Action button */}
-        <Button variant="outline" className="w-full" size="sm">
-          <ExternalLink className="h-4 w-4 mr-2" />
-          Go to playground
-        </Button>
-      </CardContent>
-    </Card>
-  )
-}
+import { useState, useMemo, useEffect } from 'react';
+import { PageShell } from '@/components/page-shell';
+import { VercelTabs } from '@/components/ui/vercel-tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
+import { useToast } from '@/hooks/use-toast';
+import { Search, Key, Info } from 'lucide-react';
+import { SetupCodeModal } from '@/components/modals/setup-code-modal';
+import { CreateApiKeyModal } from '@/components/modals/create-api-key-modal';
+import { RequestNewModelModal } from '@/components/modals/request-new-model-modal';
+import { EmptyState } from '@/components/ui/empty-state';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { MultiSelectFilter } from '@/components/ui/multi-select-filter';
 
 // Tab definitions for VercelTabs
 const tabs = [
-  { id: "all", label: "All Models" },
-  { id: "text", label: "Text" },
-  { id: "embedding", label: "Embedding" },
-  { id: "audio", label: "Audio" },
-  { id: "vision", label: "Vision" },
-]
+  { id: 'all', label: 'All Models' },
+  { id: 'text', label: 'Text' },
+  { id: 'embedding', label: 'Embedding' },
+  { id: 'audio', label: 'Audio' },
+  { id: 'vision', label: 'Vision' },
+];
+
+// Model data structure
+interface ModelData {
+  id: string;
+  name: string;
+  provider: string;
+  description: string;
+  inputPrice: string;
+  outputPrice: string;
+  inputPriceNumeric: number; // Numeric price for sorting (in rupees per 1M tokens)
+  outputPriceNumeric: number; // Numeric price for sorting (in rupees per 1M tokens)
+  throughput: string; // Throughput display value (e.g., "5,000 tokens/sec")
+  tags: string[];
+  category: string;
+  modelType: string; // text-gen, text-to-speech, text-to-image, embedding, audio, vision
+  modelSize: string;
+  modelSizeCategory: string; // For text models: small (<10B), medium (10B-70B), large (>70B)
+  contextLength: string;
+  contextLengthCategory: string; // For text models: small (<=8k), medium (8k<X<=32k), large (32k<X<=128k), extended (>128k)
+  pricingTier: string;
+  addedDate: string;
+  logo: React.ReactNode;
+  gradient: string;
+  playgroundUrl: string;
+}
+
+// Mock data for models
+const modelsData: ModelData[] = [
+  {
+    id: 'openai/gpt-oss-20b',
+    name: 'openai/gpt-oss-20b',
+    provider: 'openai',
+    description: 'Large-scale GPT model with 20B parameters',
+    inputPrice: '₹4.2',
+    outputPrice: '₹16.7',
+    inputPriceNumeric: 4.2,
+    outputPriceNumeric: 16.7,
+    throughput: '8,500 tokens/sec',
+    tags: ['120B', '128K', 'Reasoning'],
+    category: 'text',
+    modelType: 'text-gen',
+    modelSize: 'xlarge',
+    modelSizeCategory: 'large',
+    contextLength: '128k',
+    contextLengthCategory: 'extended',
+    pricingTier: 'low',
+    addedDate: '2024-10-01',
+    gradient: 'from-slate-100/50 via-white/80 to-white',
+    playgroundUrl: '/playground/gpt-oss-20b',
+    logo: (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="32" height="32" className="w-8 h-8 text-gray-700" aria-hidden="true">
+        <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08-4.778 2.758a.795.795 0 0 0-.393.681zm1.097-2.365 2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5Z"></path>
+      </svg>
+    ),
+  },
+  {
+    id: 'moonshotai/Kimi-K2-Instruct-0905',
+    name: 'moonshotai/Kimi-K2-Instruct-0905',
+    provider: 'moonshot',
+    description: 'Advanced instruction-following model for conversations',
+    inputPrice: '₹83.5',
+    outputPrice: '₹250.5',
+    inputPriceNumeric: 83.5,
+    outputPriceNumeric: 250.5,
+    throughput: '6,200 tokens/sec',
+    tags: ['32K', 'Chat', 'Instruct'],
+    category: 'text',
+    modelType: 'text-gen',
+    modelSize: 'medium',
+    modelSizeCategory: 'medium',
+    contextLength: '32k',
+    contextLengthCategory: 'medium',
+    pricingTier: 'high',
+    addedDate: '2024-09-15',
+    gradient: 'from-slate-100/50 via-white/80 to-white',
+    playgroundUrl: '/playground/kimi-k2-instruct',
+    logo: (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" fillRule="evenodd" height="32" viewBox="0 0 24 24" width="32" className="w-8 h-8 text-gray-700" aria-hidden="true">
+        <title>MoonshotAI</title>
+        <path d="M1.052 16.916l9.539 2.552a21.007 21.007 0 00.06 2.033l5.956 1.593a11.997 11.997 0 01-5.586.865l-.18-.016-.044-.004-.084-.009-.094-.01a11.605 11.605 0 01-.157-.02l-.107-.014-.11-.016a11.962 11.962 0 01-.32-.051l-.042-.008-.075-.013-.107-.02-.07-.015-.093-.019-.075-.016-.095-.02-.097-.023-.094-.022-.068-.017-.088-.022-.09-.024-.095-.025-.082-.023-.109-.03-.062-.02-.084-.025-.093-.028-.105-.034-.058-.019-.08-.026-.09-.031-.066-.024a6.293 6.293 0 01-.044-.015l-.068-.025-.101-.037-.057-.022-.08-.03-.087-.035-.088-.035-.079-.032-.095-.04-.063-.028-.063-.027a5.655 5.655 0 01-.041-.018l-.066-.03-.103-.047-.052-.024-.096-.046-.062-.03-.084-.04-.086-.044-.093-.047-.052-.027-.103-.055-.057-.03-.058-.032a6.49 6.49 0 01-.046-.026l-.094-.053-.06-.034-.051-.03-.072-.041-.082-.05-.093-.056-.052-.032-.084-.053-.061-.039-.079-.05-.07-.047-.053-.035a7.785 7.785 0 01-.054-.036l-.044-.03-.044-.03a6.066 6.066 0 01-.04-.028l-.057-.04-.076-.054-.069-.05-.074-.054-.056-.042-.076-.057-.076-.059-.086-.067-.045-.035-.064-.052-.074-.06-.089-.073-.046-.039-.046-.039a7.516 7.516 0 01-.043-.037l-.045-.04-.061-.053-.07-.062-.068-.06-.062-.058-.067-.062-.053-.05-.088-.084a13.28 13.28 0 01-.099-.097l-.029-.028-.041-.042-.069-.07-.05-.051-.05-.053a6.457 6.457 0 01-.168-.179l-.08-.088-.062-.07-.071-.08-.042-.049-.053-.062-.058-.068-.046-.056a7.175 7.175 0 01-.027-.033l-.045-.055-.066-.082-.041-.052-.05-.064-.02-.025a11.99 11.99 0 01-1.44-2.402zm-1.02-5.794l11.353 3.037a20.468 20.468 0 00-.469 2.011l10.817 2.894a12.076 12.076 0 01-1.845 2.005L.657 15.923l-.016-.046-.035-.104a11.965 11.965 0 01-.05-.153l-.007-.023a11.896 11.896 0 01-.207-.741l-.03-.126-.018-.08-.021-.097-.018-.081-.018-.09-.017-.084-.018-.094c-.026-.141-.05-.283-.071-.426l-.017-.118-.011-.083-.013-.102a12.01 12.01 0 01-.019-.161l-.005-.047a12.12 12.12 0 01-.034-2.145zm1.593-5.15l11.948 3.196c-.368.605-.705 1.231-1.01 1.875l11.295 3.022c-.142.82-.368 1.612-.668 2.365l-11.55-3.09L.124 10.26l.015-.1.008-.049.01-.067.015-.087.018-.098c.026-.148.056-.295.088-.442l.028-.124.02-.085.024-.097c.022-.09.045-.18.07-.268l.028-.102.023-.083.03-.1.025-.082.03-.096.026-.082.031-.095a11.896 11.896 0 011.01-2.232zm4.442-4.4L17.352 4.59a20.77 20.77 0 00-1.688 1.721l7.823 2.093c.267.852.442 1.744.513 2.665L2.106 5.213l.045-.065.027-.04.04-.055.046-.065.055-.076.054-.072.064-.086.05-.065.057-.073.055-.070.060-.074.055-.069.065-.077.054-.066.066-.077.053-.060.072-.082.053-.060.067-.074.054-.058.073-.078.058-.060.063-.067.168-.17.1-.098.059-.056.076-.071a12.084 12.084 0 012.272-1.677zM12.017 0h.097l.082.001.069.001.054.002.068.002.046.001.076.003.047.002.060.003.054.002.087.005.105.007.144.011.088.007.044.004.077.008.082.008.047.005.102.012.050.006.108.014.081.01.042.006.065.01.207.032.070.012.065.011.14.026.092.018.11.022.046.01.075.016.041.01L14.7.3l.042.01.065.015.049.012.071.017.096.024.112.03.113.03.113.032.050.015.070.02.078.024.073.023.050.016.050.016.076.025.099.033.102.036.048.017.064.023.093.034.11.041.116.045.1.04.047.02.060.024.041.018.063.026.040.018.057.025.11.048.1.046.074.035.075.036.060.028.092.046.091.045.102.052.053.028.049.026.046.024.060.033.041.022.052.029.088.05.106.06.087.051.057.034.053.032.096.059.088.055.098.062.036.024.064.041.084.056.040.027.062.042.062.043.023.017c.054.037.108.075.161.114l.083.060.065.048.056.043.086.065.082.064.040.030.050.041.086.069.079.065.085.071c.712.6 1.353 1.283 1.909 2.031L7.222.994l.062-.027.065-.028.081-.034.086-.035c.113-.045.227-.090.341-.131l.096-.035.093-.033.084-.030.096-.031c.087-.030.176-.058.264-.085l.091-.027.086-.025.102-.030.085-.023.100-.026L9.04.370l.090-.023.091-.022.095-.022.090-.020.098-.021.091-.020.095-.018.092-.018.100-.018.091-.016.098-.017.092-.014.097-.015.092-.013.102-.013.091-.012.105-.012.090-.010.105-.010c.093-.010.186-.018.280-.024l.106-.008.090-.005.110-.006.093-.004.100-.004.097-.002.099-.002.197-.002z"></path>
+      </svg>
+    ),
+  },
+  {
+    id: 'Qwen/Qwen3-Next-80B-A3B-Instruct',
+    name: 'Qwen/Qwen3-Next-80B-A3B-Instruct',
+    provider: 'qwen',
+    description: 'Next-generation 80B model with enhanced reasoning',
+    inputPrice: '₹12.5',
+    outputPrice: '₹125.3',
+    inputPriceNumeric: 12.5,
+    outputPriceNumeric: 125.3,
+    throughput: '7,800 tokens/sec',
+    tags: ['80B', '32K', 'Instruct'],
+    category: 'text',
+    modelType: 'text-gen',
+    modelSize: 'large',
+    modelSizeCategory: 'large',
+    contextLength: '32k',
+    contextLengthCategory: 'medium',
+    pricingTier: 'medium',
+    addedDate: '2024-09-20',
+    gradient: 'from-indigo-100/50 via-purple-50/30 to-white',
+    playgroundUrl: '/playground/qwen3-coder-480b',
+    logo: (
+      <svg width="32" height="32" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" aria-hidden="true">
+        <path d="M8.43952 0.247391C8.72534 0.749204 9.0097 1.25247 9.29333 1.75647C9.30479 1.77662 9.32141 1.79337 9.34147 1.805C9.36153 1.81663 9.38432 1.82272 9.40751 1.82265H13.4453C13.5718 1.82265 13.6795 1.90265 13.7696 2.06046L14.8271 3.92954C14.9653 4.17463 15.0016 4.27717 14.8445 4.53826C14.6554 4.85098 14.4714 5.16662 14.2918 5.48371L14.0249 5.96225C13.9478 6.10479 13.8627 6.16588 13.9958 6.33461L15.9245 9.70694C16.0496 9.92585 16.0052 10.0662 15.8932 10.2669C15.5754 10.8378 15.2518 11.4044 14.9223 11.9687C14.8067 12.1666 14.6663 12.2415 14.4278 12.2378C13.8627 12.2262 13.2991 12.2306 12.7355 12.2495C12.7234 12.2501 12.7116 12.2537 12.7014 12.2601C12.6911 12.2665 12.6825 12.2753 12.6766 12.2858C12.0263 13.438 11.3705 14.5871 10.7093 15.7331C10.5864 15.9462 10.4329 15.9971 10.182 15.9978C9.45696 16 8.72606 16.0007 7.98789 15.9992C7.91916 15.9991 7.85171 15.9807 7.79233 15.9461C7.73295 15.9115 7.68375 15.8619 7.64971 15.8022L6.67881 14.1127C6.67317 14.1017 6.66449 14.0924 6.65381 14.0861C6.64312 14.0798 6.63086 14.0767 6.61845 14.0771H2.89632C2.68905 14.0989 2.49414 14.0764 2.31087 14.0102L1.14507 11.9956C1.11059 11.936 1.09232 11.8684 1.09206 11.7995C1.09181 11.7306 1.10958 11.6628 1.14361 11.6029L2.02142 10.0611C2.03392 10.0393 2.0405 10.0146 2.0405 9.98948C2.0405 9.96435 2.03392 9.93965 2.02142 9.91784C1.56417 9.1262 1.10962 8.33299 0.657801 7.53823L0.0832629 6.5237C-0.0330993 6.29824 -0.0425537 6.16297 0.152353 5.82188C0.49053 5.23062 0.826526 4.64008 1.16107 4.05026C1.25707 3.88008 1.38216 3.80736 1.58579 3.80663C2.21341 3.80399 2.84105 3.80374 3.46867 3.8059C3.48453 3.80578 3.50007 3.80148 3.51373 3.79344C3.52739 3.78539 3.53869 3.77389 3.54649 3.76009L5.58719 0.200118C5.61812 0.145961 5.66277 0.10091 5.71665 0.0695016C5.77053 0.0380933 5.83173 0.0214373 5.8941 0.021211C6.27518 0.0204837 6.65991 0.0212109 7.04536 0.0168473L7.78498 0.00012023C8.03298 -0.00206157 8.31152 0.0233928 8.43952 0.247391ZM5.94355 0.540479C5.93589 0.540474 5.92836 0.542488 5.92172 0.546318C5.91508 0.550148 5.90957 0.555659 5.90573 0.562297L3.8214 4.20954C3.81139 4.22672 3.79707 4.241 3.77985 4.25095C3.76263 4.2609 3.7431 4.26618 3.72322 4.26626H1.63888C1.59815 4.26626 1.58797 4.28444 1.60906 4.32008L5.83446 11.7062C5.85264 11.7367 5.84392 11.7513 5.80974 11.752L3.77703 11.7629C3.74732 11.7619 3.71792 11.7693 3.6922 11.7842C3.66648 11.7991 3.64548 11.821 3.63158 11.8473L2.67159 13.5273C2.63959 13.584 2.65632 13.6131 2.72105 13.6131L6.87809 13.6189C6.91154 13.6189 6.93627 13.6334 6.95372 13.6633L7.97407 15.448C8.00753 15.5069 8.04098 15.5076 8.07516 15.448L11.7158 9.07713L12.2853 8.07204C12.2888 8.06584 12.2938 8.06067 12.3 8.05707C12.3061 8.05347 12.3131 8.05157 12.3202 8.05157C12.3273 8.05157 12.3343 8.05347 12.3404 8.05707C12.3466 8.06067 12.3516 8.06584 12.3551 8.07204L13.3907 9.91203C13.3985 9.92579 13.4098 9.93723 13.4235 9.94516C13.4372 9.95309 13.4527 9.95722 13.4685 9.95712L15.478 9.94257C15.4831 9.94262 15.4882 9.9413 15.4927 9.93874C15.4971 9.93618 15.5009 9.93249 15.5034 9.92803C15.5059 9.92358 15.5072 9.91857 15.5072 9.91348C15.5072 9.90839 15.5059 9.90338 15.5034 9.89894L13.3944 6.20006C13.3868 6.1877 13.3828 6.17348 13.3828 6.15897C13.3828 6.14447 13.3868 6.13024 13.3944 6.11788L13.6075 5.74916L14.422 4.31135C14.4394 4.28153 14.4307 4.26626 14.3965 4.26626H5.96392C5.92101 4.26626 5.91082 4.24735 5.93264 4.21026L6.97554 2.38846C6.98335 2.37605 6.9875 2.36168 6.9875 2.34701C6.9875 2.33234 6.98335 2.31797 6.97554 2.30555L5.9821 0.563024C5.9783 0.556143 5.97271 0.550416 5.96593 0.546447C5.95914 0.542479 5.95141 0.540417 5.94355 0.540479ZM10.518 6.37315C10.5515 6.37315 10.5602 6.3877 10.5428 6.41679L9.93768 7.48223L8.03734 10.8167C8.03377 10.8232 8.0285 10.8286 8.02209 10.8323C8.01569 10.8361 8.00839 10.838 8.00098 10.8378C7.9936 10.8378 7.98636 10.8358 7.97998 10.8321C7.9736 10.8284 7.96831 10.8231 7.96462 10.8167L5.45338 6.42988C5.43883 6.40515 5.4461 6.39206 5.47374 6.3906L5.63083 6.38188L10.5195 6.37315H10.518Z" fill="url(#prefix__paint0_linear_16251_34570)"></path>
+        <defs>
+          <linearGradient id="prefix__paint0_linear_16251_34570" x1="0" y1="0" x2="1600" y2="0" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#00055F" stopOpacity="0.84"></stop>
+            <stop offset="1" stopColor="#6F69F7" stopOpacity="0.84"></stop>
+          </linearGradient>
+        </defs>
+      </svg>
+    ),
+  },
+  {
+    id: 'Krutrim/Krutrim-Dhwani',
+    name: 'Krutrim/Krutrim-Dhwani',
+    provider: 'krutrim',
+    description: 'Speech-to-text model for audio transcription',
+    inputPrice: '₹24',
+    outputPrice: '—',
+    inputPriceNumeric: 24,
+    outputPriceNumeric: 0,
+    throughput: '120 min/hour',
+    tags: ['Speech-to-Text', 'Audio', 'Transcription'],
+    category: 'audio',
+    modelType: 'audio',
+    modelSize: 'small',
+    modelSizeCategory: 'small',
+    contextLength: '4k',
+    contextLengthCategory: 'small',
+    pricingTier: 'medium',
+    addedDate: '2024-10-05',
+    gradient: 'from-green-100/50 via-emerald-50/30 to-white',
+    playgroundUrl: '/playground/krutrim-dhwani',
+    logo: (
+      <svg width="32" height="32" viewBox="0 0 385 385" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" aria-hidden="true">
+        <rect x="0.166992" y="0.33313" width="384.002" height="384.002" rx="192.001" fill="#10A554"/>
+        <path d="M281.913 134.663H206.35V167.282C213.859 162.901 222.463 160.711 232.163 160.711C243.271 160.711 252.344 164.153 259.385 171.036C266.581 177.92 270.179 187.463 270.179 199.666C270.179 206.549 268.849 214.215 266.19 222.663C263.687 231.111 259.541 239.716 253.752 248.477L226.296 233.223C229.895 228.374 232.867 223.367 235.214 218.205C237.56 213.042 238.734 207.723 238.734 202.247C238.734 196.459 237.482 192.391 234.979 190.044C232.632 187.698 229.503 186.524 225.592 186.524C221.994 186.524 215.032 189.81 215.032 189.81C215.032 189.81 204.053 194.347 201.55 196.85V254.813H174.904V225.01C169.741 227.982 164.5 230.251 159.181 231.815C154.019 233.38 147.995 234.162 141.112 234.162C132.507 234.162 124.607 232.598 117.41 229.469C110.37 226.183 104.738 221.412 100.514 215.154C96.2903 208.896 94.1783 201.074 94.1783 191.687C94.1783 182.926 96.2903 175.417 100.514 169.159C104.738 162.745 110.605 157.817 118.114 154.375C125.624 150.777 134.307 148.978 144.163 148.978C148.543 148.978 152.924 149.134 157.304 149.447C161.841 149.76 165.361 150.307 167.864 151.09L165.517 177.138C160.511 175.886 154.957 175.26 148.856 175.26C141.503 175.26 135.793 176.747 131.725 179.719C127.658 182.535 125.624 186.524 125.624 191.687C125.624 197.945 127.579 202.247 131.491 204.594C135.402 206.941 139.626 208.114 144.163 208.114C150.733 208.114 156.522 206.628 161.528 203.655C166.691 200.683 171.149 197.241 174.904 193.33V134.663H85.4956V108.849H281.913V134.663Z" fill="white"/>
+        <path d="M235.619 309.49C231.551 311.524 226.702 313.401 221.069 315.122C215.281 316.843 208.397 317.704 200.419 317.704C192.596 317.704 185.635 316.218 179.533 313.245C173.432 310.429 168.66 306.44 165.219 301.277C161.62 296.271 159.821 290.404 159.821 283.677C159.821 272.413 163.811 263.417 171.789 256.69C179.611 250.119 186.076 246.365 200.781 245.426L203.597 269.597C195.619 270.066 194.943 271.552 191.971 274.056C188.998 276.715 187.512 279.766 187.512 283.208C187.512 290.404 192.284 294.002 201.827 294.002C205.425 294.002 209.101 293.455 212.856 292.36C216.611 291.264 221.148 289.387 226.467 286.728L235.619 309.49Z" fill="white"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'openai/text-embedding-3-small',
+    name: 'openai/text-embedding-3-small',
+    provider: 'openai',
+    description: 'Efficient embedding model for semantic search and similarity',
+    inputPrice: '₹0.17',
+    outputPrice: '—',
+    inputPriceNumeric: 0.17,
+    outputPriceNumeric: 0,
+    throughput: '15,000 tokens/sec',
+    tags: ['Embedding', 'Semantic Search', '8K'],
+    category: 'embedding',
+    modelType: 'embedding',
+    modelSize: 'small',
+    modelSizeCategory: 'small',
+    contextLength: '8k',
+    contextLengthCategory: 'small',
+    pricingTier: 'free',
+    addedDate: '2024-09-25',
+    gradient: 'from-slate-100/50 via-white/80 to-white',
+    playgroundUrl: '/playground/text-embedding-3-small',
+    logo: (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="32" height="32" className="w-8 h-8 text-gray-700" aria-hidden="true">
+        <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08-4.778 2.758a.795.795 0 0 0-.393.681zm1.097-2.365 2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5Z"></path>
+      </svg>
+    ),
+  },
+  {
+    id: 'anthropic/claude-3-opus',
+    name: 'anthropic/claude-3-opus',
+    provider: 'anthropic',
+    description: 'Most capable Claude model for complex tasks and analysis',
+    inputPrice: '₹125',
+    outputPrice: '₹625',
+    inputPriceNumeric: 125,
+    outputPriceNumeric: 625,
+    throughput: '5,000 tokens/sec',
+    tags: ['200K', 'Reasoning', 'Analysis'],
+    category: 'text',
+    modelType: 'text-gen',
+    modelSize: 'xlarge',
+    modelSizeCategory: 'large',
+    contextLength: '128k',
+    contextLengthCategory: 'extended',
+    pricingTier: 'premium',
+    addedDate: '2024-08-15',
+    gradient: 'from-orange-100/50 via-amber-50/30 to-white',
+    playgroundUrl: '/playground/claude-3-opus',
+    logo: (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="32" height="32" className="w-8 h-8 text-gray-700" aria-hidden="true">
+        <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08-4.778 2.758a.795.795 0 0 0-.393.681zm1.097-2.365 2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5Z"></path>
+      </svg>
+    ),
+  },
+  {
+    id: 'meta/llama-3-70b',
+    name: 'meta/llama-3-70b',
+    provider: 'meta',
+    description: 'Open-source model with strong performance across tasks',
+    inputPrice: '₹5.5',
+    outputPrice: '₹16.5',
+    inputPriceNumeric: 5.5,
+    outputPriceNumeric: 16.5,
+    throughput: '7,200 tokens/sec',
+    tags: ['70B', '8K', 'Open Source'],
+    category: 'text',
+    modelType: 'text-gen',
+    modelSize: 'large',
+    modelSizeCategory: 'medium',
+    contextLength: '8k',
+    contextLengthCategory: 'small',
+    pricingTier: 'low',
+    addedDate: '2024-09-10',
+    gradient: 'from-blue-100/50 via-cyan-50/30 to-white',
+    playgroundUrl: '/playground/llama-3-70b',
+    logo: (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="32" height="32" className="w-8 h-8 text-gray-700" aria-hidden="true">
+        <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08-4.778 2.758a.795.795 0 0 0-.393.681zm1.097-2.365 2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5Z"></path>
+      </svg>
+    ),
+  },
+  {
+    id: 'openai/gpt-4-vision',
+    name: 'openai/gpt-4-vision',
+    provider: 'openai',
+    description: 'Advanced vision model for image understanding and analysis',
+    inputPrice: '₹83.5',
+    outputPrice: '₹167',
+    inputPriceNumeric: 83.5,
+    outputPriceNumeric: 167,
+    throughput: '4,500 tokens/sec',
+    tags: ['Vision', 'Multimodal', '128K'],
+    category: 'vision',
+    modelType: 'vision',
+    modelSize: 'xlarge',
+    modelSizeCategory: 'large',
+    contextLength: '128k',
+    contextLengthCategory: 'extended',
+    pricingTier: 'high',
+    addedDate: '2024-09-28',
+    gradient: 'from-purple-100/50 via-pink-50/30 to-white',
+    playgroundUrl: '/playground/gpt-4-vision',
+    logo: (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="32" height="32" className="w-8 h-8 text-gray-700" aria-hidden="true">
+        <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08-4.778 2.758a.795.795 0 0 0-.393.681zm1.097-2.365 2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5Z"></path>
+      </svg>
+    ),
+  },
+  {
+    id: 'Qwen/Qwen3-Image',
+    name: 'Qwen/Qwen3-Image',
+    provider: 'qwen',
+    description: 'Advanced text-to-image generation model creating high-quality images from text prompts',
+    inputPrice: '₹8',
+    outputPrice: '—',
+    inputPriceNumeric: 8,
+    outputPriceNumeric: 0,
+    throughput: '25 images/min',
+    tags: ['Text-to-Image', 'Image Generation', 'AI Art'],
+    category: 'vision',
+    modelType: 'text-to-image',
+    modelSize: 'large',
+    modelSizeCategory: 'medium',
+    contextLength: '4k',
+    contextLengthCategory: 'small',
+    pricingTier: 'low',
+    addedDate: '2024-10-08',
+    gradient: 'from-indigo-100/50 via-purple-50/30 to-white',
+    playgroundUrl: '/playground/qwen3-image',
+    logo: (
+      <svg width="32" height="32" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" aria-hidden="true">
+        <path d="M8.43952 0.247391C8.72534 0.749204 9.0097 1.25247 9.29333 1.75647C9.30479 1.77662 9.32141 1.79337 9.34147 1.805C9.36153 1.81663 9.38432 1.82272 9.40751 1.82265H13.4453C13.5718 1.82265 13.6795 1.90265 13.7696 2.06046L14.8271 3.92954C14.9653 4.17463 15.0016 4.27717 14.8445 4.53826C14.6554 4.85098 14.4714 5.16662 14.2918 5.48371L14.0249 5.96225C13.9478 6.10479 13.8627 6.16588 13.9958 6.33461L15.9245 9.70694C16.0496 9.92585 16.0052 10.0662 15.8932 10.2669C15.5754 10.8378 15.2518 11.4044 14.9223 11.9687C14.8067 12.1666 14.6663 12.2415 14.4278 12.2378C13.8627 12.2262 13.2991 12.2306 12.7355 12.2495C12.7234 12.2501 12.7116 12.2537 12.7014 12.2601C12.6911 12.2665 12.6825 12.2753 12.6766 12.2858C12.0263 13.438 11.3705 14.5871 10.7093 15.7331C10.5864 15.9462 10.4329 15.9971 10.182 15.9978C9.45696 16 8.72606 16.0007 7.98789 15.9992C7.91916 15.9991 7.85171 15.9807 7.79233 15.9461C7.73295 15.9115 7.68375 15.8619 7.64971 15.8022L6.67881 14.1127C6.67317 14.1017 6.66449 14.0924 6.65381 14.0861C6.64312 14.0798 6.63086 14.0767 6.61845 14.0771H2.89632C2.68905 14.0989 2.49414 14.0764 2.31087 14.0102L1.14507 11.9956C1.11059 11.936 1.09232 11.8684 1.09206 11.7995C1.09181 11.7306 1.10958 11.6628 1.14361 11.6029L2.02142 10.0611C2.03392 10.0393 2.0405 10.0146 2.0405 9.98948C2.0405 9.96435 2.03392 9.93965 2.02142 9.91784C1.56417 9.1262 1.10962 8.33299 0.657801 7.53823L0.0832629 6.5237C-0.0330993 6.29824 -0.0425537 6.16297 0.152353 5.82188C0.49053 5.23062 0.826526 4.64008 1.16107 4.05026C1.25707 3.88008 1.38216 3.80736 1.58579 3.80663C2.21341 3.80399 2.84105 3.80374 3.46867 3.8059C3.48453 3.80578 3.50007 3.80148 3.51373 3.79344C3.52739 3.78539 3.53869 3.77389 3.54649 3.76009L5.58719 0.200118C5.61812 0.145961 5.66277 0.10091 5.71665 0.0695016C5.77053 0.0380933 5.83173 0.0214373 5.8941 0.021211C6.27518 0.0204837 6.65991 0.0212109 7.04536 0.0168473L7.78498 0.00012023C8.03298 -0.00206157 8.31152 0.0233928 8.43952 0.247391ZM5.94355 0.540479C5.93589 0.540474 5.92836 0.542488 5.92172 0.546318C5.91508 0.550148 5.90957 0.555659 5.90573 0.562297L3.8214 4.20954C3.81139 4.22672 3.79707 4.241 3.77985 4.25095C3.76263 4.2609 3.7431 4.26618 3.72322 4.26626H1.63888C1.59815 4.26626 1.58797 4.28444 1.60906 4.32008L5.83446 11.7062C5.85264 11.7367 5.84392 11.7513 5.80974 11.752L3.77703 11.7629C3.74732 11.7619 3.71792 11.7693 3.6922 11.7842C3.66648 11.7991 3.64548 11.821 3.63158 11.8473L2.67159 13.5273C2.63959 13.584 2.65632 13.6131 2.72105 13.6131L6.87809 13.6189C6.91154 13.6189 6.93627 13.6334 6.95372 13.6633L7.97407 15.448C8.00753 15.5069 8.04098 15.5076 8.07516 15.448L11.7158 9.07713L12.2853 8.07204C12.2888 8.06584 12.2938 8.06067 12.3 8.05707C12.3061 8.05347 12.3131 8.05157 12.3202 8.05157C12.3273 8.05157 12.3343 8.05347 12.3404 8.05707C12.3466 8.06067 12.3516 8.06584 12.3551 8.07204L13.3907 9.91203C13.3985 9.92579 13.4098 9.93723 13.4235 9.94516C13.4372 9.95309 13.4527 9.95722 13.4685 9.95712L15.478 9.94257C15.4831 9.94262 15.4882 9.9413 15.4927 9.93874C15.4971 9.93618 15.5009 9.93249 15.5034 9.92803C15.5059 9.92358 15.5072 9.91857 15.5072 9.91348C15.5072 9.90839 15.5059 9.90338 15.5034 9.89894L13.3944 6.20006C13.3868 6.1877 13.3828 6.17348 13.3828 6.15897C13.3828 6.14447 13.3868 6.13024 13.3944 6.11788L13.6075 5.74916L14.422 4.31135C14.4394 4.28153 14.4307 4.26626 14.3965 4.26626H5.96392C5.92101 4.26626 5.91082 4.24735 5.93264 4.21026L6.97554 2.38846C6.98335 2.37605 6.9875 2.36168 6.9875 2.34701C6.9875 2.33234 6.98335 2.31797 6.97554 2.30555L5.9821 0.563024C5.9783 0.556143 5.97271 0.550416 5.96593 0.546447C5.95914 0.542479 5.95141 0.540417 5.94355 0.540479ZM10.518 6.37315C10.5515 6.37315 10.5602 6.3877 10.5428 6.41679L9.93768 7.48223L8.03734 10.8167C8.03377 10.8232 8.0285 10.8286 8.02209 10.8323C8.01569 10.8361 8.00839 10.838 8.00098 10.8378C7.9936 10.8378 7.98636 10.8358 7.97998 10.8321C7.9736 10.8284 7.96831 10.8231 7.96462 10.8167L5.45338 6.42988C5.43883 6.40515 5.4461 6.39206 5.47374 6.3906L5.63083 6.38188L10.5195 6.37315H10.518Z" fill="url(#prefix__paint0_linear_16251_34570)"></path>
+        <defs>
+          <linearGradient id="prefix__paint0_linear_16251_34570" x1="0" y1="0" x2="1600" y2="0" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#00055F" stopOpacity="0.84"></stop>
+            <stop offset="1" stopColor="#6F69F7" stopOpacity="0.84"></stop>
+          </linearGradient>
+        </defs>
+      </svg>
+    ),
+  },
+];
+
+// Models icon for empty state
+const modelsIcon = (
+  <svg
+    width='120'
+    height='120'
+    viewBox='0 0 120 120'
+    fill='none'
+    xmlns='http://www.w3.org/2000/svg'
+  >
+    <rect width='120' height='120' fill='white' />
+    <circle cx='60' cy='60' r='40' fill='#F5F5F5' stroke='#E5E5E5' strokeWidth='2' />
+    <path
+      d='M60 35L75 45V65L60 75L45 65V45L60 35Z'
+      fill='white'
+      stroke='#52B54A'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+    />
+    <circle cx='60' cy='35' r='4' fill='#52B54A' />
+    <circle cx='75' cy='45' r='4' fill='#52B54A' />
+    <circle cx='75' cy='65' r='4' fill='#52B54A' />
+    <circle cx='60' cy='75' r='4' fill='#52B54A' />
+    <circle cx='45' cy='65' r='4' fill='#52B54A' />
+    <circle cx='45' cy='45' r='4' fill='#52B54A' />
+    <circle cx='60' cy='55' r='6' fill='#52B54A' />
+  </svg>
+);
 
 export default function ModelCatalogPage() {
-  const [activeTab, setActiveTab] = useState("all")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCapabilities, setSelectedCapabilities] = useState<string[]>([])
+  const [activeTab, setActiveTab] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const { toast } = useToast();
+  const [isSetupCodeModalOpen, setIsSetupCodeModalOpen] = useState(false);
+  const [isCreateApiKeyModalOpen, setIsCreateApiKeyModalOpen] = useState(false);
+  const [isRequestModelModalOpen, setIsRequestModelModalOpen] = useState(false);
+  const [selectedModelId, setSelectedModelId] = useState('');
+  
+  // Filter states - reset when tab changes
+  const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [modelSizeCategory, setModelSizeCategory] = useState('all');
+  const [contextLengthCategory, setContextLengthCategory] = useState('all');
+  const [sortBy, setSortBy] = useState('newest'); // newest, oldest, price-asc, price-desc
 
-  // Filter models based on active tab, search, and capabilities
+  // Reset filters when tab changes
+  useEffect(() => {
+    setSelectedProviders([]);
+    setSelectedTypes([]);
+    setModelSizeCategory('all');
+    setContextLengthCategory('all');
+    setSortBy('newest');
+    setSearchQuery('');
+  }, [activeTab]);
+
+  // Calculate blended price (3:1 I/O ratio)
+  const calculateBlendedPrice = (model: ModelData): number => {
+    // Blended = (3 * inputPrice + 1 * outputPrice) / 4
+    return (3 * model.inputPriceNumeric + model.outputPriceNumeric) / 4;
+  };
+
+  // Filter and search logic
   const filteredModels = useMemo(() => {
-    let filtered: Model[]
-    
-    // Get models based on active tab
-    if (activeTab === "all") {
-      filtered = getAllModels()
-    } else {
-      filtered = getModelsByType(activeTab as "text" | "embedding" | "audio" | "vision")
-    }
-    
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const searchResults = searchModels(searchQuery)
-      if (activeTab === "all") {
-        filtered = searchResults
-      } else {
-        filtered = searchResults.filter(model => model.type === activeTab)
-      }
-    }
-    
-    // Apply capability filters
-    if (selectedCapabilities.length > 0) {
-      filtered = filtered.filter(model =>
-        selectedCapabilities.some(capability =>
-          model.capabilities.includes(capability)
-        )
-      )
-    }
-    
-    return filtered
-  }, [activeTab, searchQuery, selectedCapabilities])
+    let filtered = modelsData;
 
-  const toggleCapability = (capabilityId: string) => {
-    setSelectedCapabilities(prev =>
-      prev.includes(capabilityId)
-        ? prev.filter(id => id !== capabilityId)
-        : [...prev, capabilityId]
-    )
-  }
+    // Filter by active tab (category)
+    if (activeTab !== 'all') {
+      filtered = filtered.filter(model => model.category === activeTab);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(model =>
+        model.name.toLowerCase().includes(query) ||
+        model.provider.toLowerCase().includes(query) ||
+        model.tags.some(tag => tag.toLowerCase().includes(query)) ||
+        model.description.toLowerCase().includes(query)
+      );
+    }
+
+    // Filter by providers (multiselect)
+    if (selectedProviders.length > 0) {
+      filtered = filtered.filter(model => selectedProviders.includes(model.provider));
+    }
+
+    // Filter by types (multiselect) - only for "All Models" tab
+    if (activeTab === 'all' && selectedTypes.length > 0) {
+      filtered = filtered.filter(model => selectedTypes.includes(model.modelType));
+    }
+
+    // Filter by model size category - only for "Text" tab
+    if (activeTab === 'text' && modelSizeCategory !== 'all') {
+      filtered = filtered.filter(model => model.modelSizeCategory === modelSizeCategory);
+    }
+
+    // Filter by context length category - only for "Text" tab
+    if (activeTab === 'text' && contextLengthCategory !== 'all') {
+      filtered = filtered.filter(model => model.contextLengthCategory === contextLengthCategory);
+    }
+
+    // Sort results
+    if (sortBy === 'newest') {
+      // Sort by most recent first (newest)
+      filtered = filtered.sort((a, b) => new Date(b.addedDate).getTime() - new Date(a.addedDate).getTime());
+    } else if (sortBy === 'oldest') {
+      // Sort by oldest first
+      filtered = filtered.sort((a, b) => new Date(a.addedDate).getTime() - new Date(b.addedDate).getTime());
+    } else if (sortBy === 'price-asc') {
+      // Sort by blended price ascending
+      filtered = filtered.sort((a, b) => calculateBlendedPrice(a) - calculateBlendedPrice(b));
+    } else if (sortBy === 'price-desc') {
+      // Sort by blended price descending
+      filtered = filtered.sort((a, b) => calculateBlendedPrice(b) - calculateBlendedPrice(a));
+    }
+
+    return filtered;
+  }, [activeTab, searchQuery, selectedProviders, selectedTypes, modelSizeCategory, contextLengthCategory, sortBy]);
+
+  const handleCopyModelId = async (modelId: string) => {
+    try {
+      await navigator.clipboard.writeText(modelId);
+      toast({
+        title: "Model ID copied",
+        description: `${modelId} has been copied to your clipboard.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to copy",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId)
-  }
+    setActiveTab(tabId);
+  };
+
+  const handleOpenCreateApiKeyFromSetup = () => {
+    // Open the Create API Key Modal on top of Setup Code Modal
+    // Don't close the Setup Code Modal
+    setIsCreateApiKeyModalOpen(true);
+  };
+
+  // Render a model card
+  const renderModelCard = (model: ModelData) => (
+    <div key={model.id} className={`bg-gradient-to-bl ${model.gradient} rounded-xl border ${model.gradient.includes('indigo') ? 'border-indigo-200/60' : model.gradient.includes('green') ? 'border-green-200/60' : 'border-slate-200'} p-6 flex flex-col h-full`}>
+      {/* Top Content - Flexible */}
+      <div className='flex-1 flex flex-col'>
+        {/* Provider Logo */}
+        <div className='flex justify-start mb-4'>
+          <div className='w-8 h-8 flex items-center justify-center'>
+            {model.logo}
+          </div>
+        </div>
+
+        {/* Model ID with Copy */}
+        <div className='space-y-1 mb-10'>
+          <div className='flex items-center gap-2'>
+            <h3 className='text-lg font-semibold text-gray-900'>{model.name}</h3>
+            <TooltipWrapper content="Copy model ID">
+              <button 
+                onClick={() => handleCopyModelId(model.id)}
+                className='p-1 hover:bg-gray-100 rounded transition-colors'
+              >
+                <svg className='w-4 h-4 text-gray-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z' />
+                </svg>
+              </button>
+            </TooltipWrapper>
+          </div>
+          <p className='text-sm text-gray-600'>{model.description}</p>
+        </div>
+      </div>
+
+      {/* Bottom Content - Fixed to bottom */}
+      <div className='mt-auto space-y-4'>
+        {/* Pricing */}
+        <div className='space-y-1'>
+          <div className='flex items-center justify-between'>
+            <span className='text-lg font-semibold text-gray-900'>{model.inputPrice}</span>
+            <span className={`text-lg font-semibold ${model.outputPrice === '—' ? 'text-gray-400' : 'text-gray-900'}`}>{model.outputPrice}</span>
+          </div>
+          <div className='flex items-center justify-between text-xs text-gray-500'>
+            <span>{model.category === 'audio' ? 'Per Hour of Input Audio' : 'Per 1M Input Tokens'}</span>
+            <span>{model.category === 'audio' ? 'Output' : 'Per 1M Output Tokens'}</span>
+          </div>
+        </div>
+
+        {/* Throughput */}
+        <div className='flex items-center gap-2 py-2'>
+          <span className='text-xs text-gray-500'>Throughput</span>
+          <div className='flex-1 border-b border-dotted border-gray-300'></div>
+          <span className='text-sm font-semibold text-gray-900'>{model.throughput}</span>
+        </div>
+
+        {/* Tags */}
+        <div className='flex flex-wrap gap-2'>
+          {model.tags.map((tag, idx) => (
+            <span key={idx} className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        {/* Action Buttons */}
+        <div className='flex space-x-3'>
+          <Button className='flex-1' asChild>
+            <a href={model.playgroundUrl}>
+              Playground
+            </a>
+          </Button>
+          <TooltipWrapper content="View starter code">
+            <Button 
+              variant='outline' 
+              className='px-3 border-gray-500 text-gray-500 hover:bg-gray-900 hover:text-white hover:border-gray-900'
+              onClick={() => {
+                setSelectedModelId(model.id);
+                setIsSetupCodeModalOpen(true);
+              }}
+            >
+              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' />
+              </svg>
+            </Button>
+          </TooltipWrapper>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <PageShell
-      title="Models"
-      description="Explore our comprehensive library of AI models including text generation, embedding, audio processing, and computer vision models."
+      title='Models'
+      description='Explore our comprehensive library of AI models including text generation, embedding, audio processing, and computer vision models.'
       headerActions={
-        <Button variant="outline" size="sm">
-          <Key className="h-4 w-4 mr-2" />
-          Get API key
-        </Button>
+        <div className='flex items-center gap-2'>
+          <Button 
+            variant='outline' 
+            size='sm'
+            onClick={() => setIsRequestModelModalOpen(true)}
+          >
+            Request a model
+          </Button>
+          <Button 
+            variant='default' 
+            size='sm'
+            onClick={() => setIsCreateApiKeyModalOpen(true)}
+          >
+            Get API key
+          </Button>
+        </div>
       }
     >
-      <div className="space-y-6">
+      <div className='space-y-6'>
         {/* VercelTabs following Block Storage pattern */}
         <VercelTabs
           tabs={tabs}
           activeTab={activeTab}
           onTabChange={handleTabChange}
-          size="lg"
+          size='lg'
         />
 
         {/* Tab content - no sidebar, full width */}
-        <div className="space-y-6">
+        <div className='space-y-6'>
           {/* Search and filters */}
-          <div className="space-y-4">
-            {/* Search bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Name, provider or tag"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+          <div className='space-y-4'>
+            {/* Results count */}
+            <div className='text-sm text-gray-600'>
+              Showing <span className='font-semibold text-gray-900'>{filteredModels.length}</span> {filteredModels.length === 1 ? 'model' : 'models'}
+            </div>
+
+            {/* Search bar and filter dropdowns in same row */}
+            <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
+              {/* Search bar */}
+              <div className='relative w-full lg:w-96'>
+                <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                <Input
+                  placeholder='Name, provider or tag'
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className='pl-10 h-9'
+                />
+              </div>
+
+              {/* Filter dropdowns - conditional based on active tab */}
+              <div className='flex flex-wrap items-center gap-3'>
+                {/* All Models Tab Filters */}
+                {activeTab === 'all' && (
+                  <>
+                    {/* Provider Filter (Multiselect) */}
+                    <MultiSelectFilter
+                      options={[
+                        { label: 'OpenAI', value: 'openai' },
+                        { label: 'Krutrim', value: 'krutrim' },
+                        { label: 'MoonshotAI', value: 'moonshot' },
+                        { label: 'Qwen', value: 'qwen' },
+                        { label: 'Anthropic', value: 'anthropic' },
+                        { label: 'Meta', value: 'meta' },
+                      ]}
+                      selected={selectedProviders}
+                      onChange={setSelectedProviders}
+                      placeholder='Provider'
+                      className='w-[140px]'
+                    />
+
+                    {/* Type Filter (Multiselect) */}
+                    <MultiSelectFilter
+                      options={[
+                        { label: 'Text Generation', value: 'text-gen' },
+                        { label: 'Text-to-Speech', value: 'text-to-speech' },
+                        { label: 'Text-to-Image', value: 'text-to-image' },
+                        { label: 'Embedding', value: 'embedding' },
+                        { label: 'Audio', value: 'audio' },
+                        { label: 'Vision', value: 'vision' },
+                      ]}
+                      selected={selectedTypes}
+                      onChange={setSelectedTypes}
+                      placeholder='Type'
+                      className='w-[140px]'
+                    />
+                  </>
+                )}
+
+                {/* Text Tab Filters */}
+                {activeTab === 'text' && (
+                  <>
+                    {/* Provider Filter (Multiselect) */}
+                    <MultiSelectFilter
+                      options={[
+                        { label: 'OpenAI', value: 'openai' },
+                        { label: 'Krutrim', value: 'krutrim' },
+                        { label: 'MoonshotAI', value: 'moonshot' },
+                        { label: 'Qwen', value: 'qwen' },
+                        { label: 'Anthropic', value: 'anthropic' },
+                        { label: 'Meta', value: 'meta' },
+                      ]}
+                      selected={selectedProviders}
+                      onChange={setSelectedProviders}
+                      placeholder='Provider'
+                      className='w-[140px]'
+                    />
+
+                    {/* Size Filter (Dropdown) */}
+                    <Select value={modelSizeCategory} onValueChange={setModelSizeCategory}>
+                      <SelectTrigger className='w-[140px] h-9 rounded-md'>
+                        <SelectValue placeholder='Size' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='all'>All Sizes</SelectItem>
+                        <SelectItem value='small'>Small (&lt;10B)</SelectItem>
+                        <SelectItem value='medium'>Medium (10B-70B)</SelectItem>
+                        <SelectItem value='large'>Large (&gt;70B)</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {/* Context Length Filter (Dropdown) */}
+                    <Select value={contextLengthCategory} onValueChange={setContextLengthCategory}>
+                      <SelectTrigger className='w-[150px] h-9 rounded-md'>
+                        <SelectValue placeholder='Context Length' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='all'>All Context</SelectItem>
+                        <SelectItem value='small'>Small (≤8k)</SelectItem>
+                        <SelectItem value='medium'>Medium (8k-32k)</SelectItem>
+                        <SelectItem value='large'>Large (32k-128k)</SelectItem>
+                        <SelectItem value='extended'>Extended (&gt;128k)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
+
+                {/* Divider for visual separation between filters and sorting */}
+                {(activeTab === 'all' || activeTab === 'text') && (selectedProviders.length > 0 || selectedTypes.length > 0 || modelSizeCategory !== 'all' || contextLengthCategory !== 'all') && (
+                  <div className='h-6 w-px bg-border' />
+                )}
+
+                {/* Sort Section - Available on all tabs with distinct styling */}
+                <div className='flex items-center gap-2'>
+                  <span className='text-sm text-muted-foreground'>Sort by:</span>
+                  {activeTab === 'text' ? (
+                    <>
+                      <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger className='w-[180px] h-9 rounded-md bg-muted/50 border-muted-foreground/20'>
+                          <SelectValue placeholder='Sort by' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='newest'>Newest</SelectItem>
+                          <SelectItem value='oldest'>Oldest</SelectItem>
+                          <div className='my-1 h-px bg-border' />
+                          <div className='px-2 py-1.5 text-xs font-semibold text-muted-foreground'>Price</div>
+                          <SelectItem value='price-asc'>Low to High</SelectItem>
+                          <SelectItem value='price-desc'>High to Low</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {(sortBy === 'price-asc' || sortBy === 'price-desc') && (
+                        <TooltipWrapper content='Price is based on a blended 3:1 Input:Output token ratio'>
+                          <Info className='h-4 w-4 text-muted-foreground cursor-help' />
+                        </TooltipWrapper>
+                      )}
+                    </>
+                  ) : (
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className='w-[140px] h-9 rounded-md bg-muted/50 border-muted-foreground/20'>
+                        <SelectValue placeholder='Sort by' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='newest'>Newest</SelectItem>
+                        <SelectItem value='oldest'>Oldest</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Model Cards Grid */}
+          {filteredModels.length > 0 ? (
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+              {filteredModels.map(model => renderModelCard(model))}
+            </div>
+          ) : (
+            <div className='relative'>
+              <EmptyState
+                title='No models found'
+                description="We couldn't find any models matching your search criteria. Try adjusting your filters or request a specific model you'd like to see added."
+                actionText='Request Model'
+                onAction={() => setIsRequestModelModalOpen(true)}
+                icon={modelsIcon}
               />
-            </div>
-            
-            {/* Capability filters */}
-            <div className="flex flex-wrap gap-2">
-              {capabilityFilters.map((filter) => {
-                const Icon = filter.icon
-                const isSelected = selectedCapabilities.includes(filter.id)
-                
-                return (
-                  <Button
-                    key={filter.id}
-                    variant={isSelected ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => toggleCapability(filter.id)}
-                    className="h-8"
+              {(searchQuery || selectedProviders.length > 0 || selectedTypes.length > 0 || modelSizeCategory !== 'all' || contextLengthCategory !== 'all' || sortBy !== 'newest') && (
+                <div className='flex justify-center mt-4'>
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedProviders([]);
+                      setSelectedTypes([]);
+                      setModelSizeCategory('all');
+                      setContextLengthCategory('all');
+                      setSortBy('newest');
+                    }}
+                    className='text-sm text-gray-600 hover:text-gray-900 underline transition-colors'
                   >
-                    <Icon className="h-3 w-3 mr-1" />
-                    {filter.label}
-                  </Button>
-                )
-              })}
-            </div>
-          </div>
-          
-          {/* Models grid - full width, more models per row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredModels.map((model) => (
-              <ModelCard key={model.id} model={model} />
-            ))}
-          </div>
-          
-          {filteredModels.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No models found matching your criteria.</p>
+                    Clear all filters
+                  </button>
+                </div>
+              )}
             </div>
           )}
+          {/* OLD HARDCODED CARDS - TO BE REMOVED */}
+          <div className='hidden'>
+            {/* Card 1 - OpenAI GPT-OSS 20B */}
+            <div className='bg-gradient-to-bl from-slate-100/50 via-white/80 to-white rounded-xl border border-slate-200 p-6 flex flex-col h-full'>
+              {/* Top Content - Flexible */}
+              <div className='flex-1 flex flex-col'>
+                {/* Provider Logo */}
+                <div className='flex justify-start mb-4'>
+                  <div className='w-8 h-8 flex items-center justify-center'>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="32" height="32" className="w-8 h-8 text-gray-700" aria-hidden="true">
+                      <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08-4.778 2.758a.795.795 0 0 0-.393.681zm1.097-2.365 2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5Z"></path>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Model ID with Copy */}
+                <div className='space-y-1 mb-10'>
+                  <div className='flex items-center gap-2'>
+                    <h3 className='text-lg font-semibold text-gray-900'>openai/gpt-oss-20b</h3>
+                    <TooltipWrapper content="Copy model ID">
+                      <button 
+                        onClick={() => handleCopyModelId('openai/gpt-oss-20b')}
+                        className='p-1 hover:bg-gray-100 rounded transition-colors'
+                      >
+                        <svg className='w-4 h-4 text-gray-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z' />
+                        </svg>
+                      </button>
+                    </TooltipWrapper>
+                  </div>
+                  <p className='text-sm text-gray-600'>Large-scale GPT model with 20B parameters</p>
+                </div>
+              </div>
+
+              {/* Bottom Content - Fixed to bottom */}
+              <div className='mt-auto space-y-4'>
+                {/* Pricing */}
+                <div className='space-y-1'>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-lg font-semibold text-gray-900'>₹4.2</span>
+                    <span className='text-lg font-semibold text-gray-900'>₹16.7</span>
+                  </div>
+                  <div className='flex items-center justify-between text-xs text-gray-500'>
+                    <span>Per 1M Input Tokens</span>
+                    <span>Per 1M Output Tokens</span>
+                  </div>
+                </div>
+
+                {/* Tags */}
+                <div className='flex flex-wrap gap-2'>
+                  <span className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>120B</span>
+                  <span className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>128K</span>
+                  <span className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>Reasoning</span>
+                </div>
+
+                {/* Action Buttons */}
+                <div className='flex space-x-3'>
+                  <Button className='flex-1' asChild>
+                    <a href='/playground/gpt-oss-20b'>
+                      Playground
+                    </a>
+                  </Button>
+                  <TooltipWrapper content="View starter code">
+                    <Button 
+                      variant='outline' 
+                      className='px-3 border-gray-500 text-gray-500 hover:bg-gray-900 hover:text-white hover:border-gray-900'
+                      onClick={() => {
+                        setSelectedModelId('gpt-oss-20b');
+                        setIsSetupCodeModalOpen(true);
+                      }}
+                    >
+                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' />
+                      </svg>
+                    </Button>
+                  </TooltipWrapper>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2 - Kimi K2-Instruct */}
+            <div className='bg-gradient-to-bl from-slate-100/50 via-white/80 to-white rounded-xl border border-slate-200 p-6 flex flex-col h-full'>
+              {/* Top Content - Flexible */}
+              <div className='flex-1 flex flex-col'>
+                {/* Provider Logo */}
+                <div className='flex justify-start mb-4'>
+                <div className='w-8 h-8 flex items-center justify-center'>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" fillRule="evenodd" height="32" viewBox="0 0 24 24" width="32" className="w-8 h-8 text-gray-700" aria-hidden="true">
+                    <title>MoonshotAI</title>
+                    <path d="M1.052 16.916l9.539 2.552a21.007 21.007 0 00.06 2.033l5.956 1.593a11.997 11.997 0 01-5.586.865l-.18-.016-.044-.004-.084-.009-.094-.01a11.605 11.605 0 01-.157-.02l-.107-.014-.11-.016a11.962 11.962 0 01-.32-.051l-.042-.008-.075-.013-.107-.02-.07-.015-.093-.019-.075-.016-.095-.02-.097-.023-.094-.022-.068-.017-.088-.022-.09-.024-.095-.025-.082-.023-.109-.03-.062-.02-.084-.025-.093-.028-.105-.034-.058-.019-.08-.026-.09-.031-.066-.024a6.293 6.293 0 01-.044-.015l-.068-.025-.101-.037-.057-.022-.08-.03-.087-.035-.088-.035-.079-.032-.095-.04-.063-.028-.063-.027a5.655 5.655 0 01-.041-.018l-.066-.03-.103-.047-.052-.024-.096-.046-.062-.03-.084-.04-.086-.044-.093-.047-.052-.027-.103-.055-.057-.03-.058-.032a6.49 6.49 0 01-.046-.026l-.094-.053-.06-.034-.051-.03-.072-.041-.082-.05-.093-.056-.052-.032-.084-.053-.061-.039-.079-.05-.07-.047-.053-.035a7.785 7.785 0 01-.054-.036l-.044-.03-.044-.03a6.066 6.066 0 01-.04-.028l-.057-.04-.076-.054-.069-.05-.074-.054-.056-.042-.076-.057-.076-.059-.086-.067-.045-.035-.064-.052-.074-.06-.089-.073-.046-.039-.046-.039a7.516 7.516 0 01-.043-.037l-.045-.04-.061-.053-.07-.062-.068-.06-.062-.058-.067-.062-.053-.05-.088-.084a13.28 13.28 0 01-.099-.097l-.029-.028-.041-.042-.069-.07-.05-.051-.05-.053a6.457 6.457 0 01-.168-.179l-.08-.088-.062-.07-.071-.08-.042-.049-.053-.062-.058-.068-.046-.056a7.175 7.175 0 01-.027-.033l-.045-.055-.066-.082-.041-.052-.05-.064-.02-.025a11.99 11.99 0 01-1.44-2.402zm-1.02-5.794l11.353 3.037a20.468 20.468 0 00-.469 2.011l10.817 2.894a12.076 12.076 0 01-1.845 2.005L.657 15.923l-.016-.046-.035-.104a11.965 11.965 0 01-.05-.153l-.007-.023a11.896 11.896 0 01-.207-.741l-.03-.126-.018-.08-.021-.097-.018-.081-.018-.09-.017-.084-.018-.094c-.026-.141-.05-.283-.071-.426l-.017-.118-.011-.083-.013-.102a12.01 12.01 0 01-.019-.161l-.005-.047a12.12 12.12 0 01-.034-2.145zm1.593-5.15l11.948 3.196c-.368.605-.705 1.231-1.01 1.875l11.295 3.022c-.142.82-.368 1.612-.668 2.365l-11.55-3.09L.124 10.26l.015-.1.008-.049.01-.067.015-.087.018-.098c.026-.148.056-.295.088-.442l.028-.124.02-.085.024-.097c.022-.09.045-.18.07-.268l.028-.102.023-.083.03-.1.025-.082.03-.096.026-.082.031-.095a11.896 11.896 0 011.01-2.232zm4.442-4.4L17.352 4.59a20.77 20.77 0 00-1.688 1.721l7.823 2.093c.267.852.442 1.744.513 2.665L2.106 5.213l.045-.065.027-.04.04-.055.046-.065.055-.076.054-.072.064-.086.05-.065.057-.073.055-.070.060-.074.055-.069.065-.077.054-.066.066-.077.053-.06.072-.082.053-.060.067-.074.054-.058.073-.078.058-.060.063-.067.168-.17.1-.098.059-.056.076-.071a12.084 12.084 0 012.272-1.677zM12.017 0h.097l.082.001.069.001.054.002.068.002.046.001.076.003.047.002.060.003.054.002.087.005.105.007.144.011.088.007.044.004.077.008.082.008.047.005.102.012.05.006.108.014.081.01.042.006.065.01.207.032.07.012.065.011.14.026.092.018.11.022.046.01.075.016.041.01L14.7.3l.042.01.065.015.049.012.071.017.096.024.112.03.113.03.113.032.05.015.070.02.078.024.073.023.05.016.050.016.076.025.099.033.102.036.048.017.064.023.093.034.11.041.116.045.1.04.047.02.060.024.041.018.063.026.040.018.057.025.11.048.1.046.074.035.075.036.060.028.092.046.091.045.102.052.053.028.049.026.046.024.060.033.041.022.052.029.088.05.106.06.087.051.057.034.053.032.096.059.088.055.098.062.036.024.064.041.084.056.040.027.062.042.062.043.023.017c.054.037.108.075.161.114l.083.060.065.048.056.043.086.065.082.064.040.030.050.041.086.069.079.065.085.071c.712.6 1.353 1.283 1.909 2.031L7.222.994l.062-.027.065-.028.081-.034.086-.035c.113-.045.227-.090.341-.131l.096-.035.093-.033.084-.030.096-.031c.087-.030.176-.058.264-.085l.091-.027.086-.025.102-.030.085-.023.100-.026L9.04.37l.090-.023.091-.022.095-.022.090-.020.098-.021.091-.020.095-.018.092-.018.100-.018.091-.016.098-.017.092-.014.097-.015.092-.013.102-.013.091-.012.105-.012.090-.010.105-.010c.093-.010.186-.018.280-.024l.106-.008.090-.005.110-.006.093-.004.100-.004.097-.002.099-.002.197-.002z"></path>
+                  </svg>
+                </div>
+              </div>
+
+                {/* Model ID with Copy */}
+                <div className='space-y-1 mb-10'>
+                <div className='flex items-center gap-2'>
+                  <h3 className='text-lg font-semibold text-gray-900'>moonshotai/Kimi-K2-Instruct-0905</h3>
+                  <TooltipWrapper content="Copy model ID">
+                    <button 
+                      onClick={() => handleCopyModelId('moonshotai/Kimi-K2-Instruct-0905')}
+                      className='p-1 hover:bg-gray-100 rounded transition-colors'
+                    >
+                      <svg className='w-4 h-4 text-gray-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z' />
+                      </svg>
+                    </button>
+                  </TooltipWrapper>
+                </div>
+                <p className='text-sm text-gray-600'>Advanced instruction-following model for conversations</p>
+              </div>
+
+              </div>
+
+              {/* Bottom Content - Fixed to bottom */}
+              <div className='mt-auto space-y-4'>
+                {/* Pricing */}
+              <div className='space-y-1'>
+                <div className='flex items-center justify-between'>
+                  <span className='text-lg font-semibold text-gray-900'>₹83.5</span>
+                  <span className='text-lg font-semibold text-gray-900'>₹250.5</span>
+                </div>
+                <div className='flex items-center justify-between text-xs text-gray-500'>
+                  <span>Per 1M Input Tokens</span>
+                  <span>Per 1M Output Tokens</span>
+                </div>
+              </div>
+
+                {/* Tags */}
+                <div className='flex flex-wrap gap-2'>
+                <span className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>32K</span>
+                <span className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>Chat</span>
+                <span className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>Instruct</span>
+              </div>
+
+                {/* Action Buttons */}
+                <div className='flex space-x-3'>
+                <Button className='flex-1' asChild>
+                  <a href='/playground/kimi-k2-instruct'>
+                    Playground
+                  </a>
+                </Button>
+                <TooltipWrapper content="View starter code">
+                  <Button 
+                    variant='outline' 
+                    className='px-3 border-gray-500 text-gray-500 hover:bg-gray-900 hover:text-white hover:border-gray-900'
+                    onClick={() => {
+                      setSelectedModelId('gpt-oss-20b');
+                      setIsSetupCodeModalOpen(true);
+                    }}
+                  >
+                    <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' />
+                    </svg>
+                  </Button>
+                </TooltipWrapper>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3 - Qwen3 Next */}
+            <div className='bg-gradient-to-bl from-indigo-100/50 via-purple-50/30 to-white rounded-xl border border-indigo-200/60 p-6 flex flex-col h-full'>
+              {/* Top Content - Flexible */}
+              <div className='flex-1 flex flex-col'>
+                {/* Provider Logo */}
+                <div className='flex justify-start mb-4'>
+                <div className='w-8 h-8 flex items-center justify-center'>
+                  <svg width="32" height="32" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" aria-hidden="true">
+                    <path d="M8.43952 0.247391C8.72534 0.749204 9.0097 1.25247 9.29333 1.75647C9.30479 1.77662 9.32141 1.79337 9.34147 1.805C9.36153 1.81663 9.38432 1.82272 9.40751 1.82265H13.4453C13.5718 1.82265 13.6795 1.90265 13.7696 2.06046L14.8271 3.92954C14.9653 4.17463 15.0016 4.27717 14.8445 4.53826C14.6554 4.85098 14.4714 5.16662 14.2918 5.48371L14.0249 5.96225C13.9478 6.10479 13.8627 6.16588 13.9958 6.33461L15.9245 9.70694C16.0496 9.92585 16.0052 10.0662 15.8932 10.2669C15.5754 10.8378 15.2518 11.4044 14.9223 11.9687C14.8067 12.1666 14.6663 12.2415 14.4278 12.2378C13.8627 12.2262 13.2991 12.2306 12.7355 12.2495C12.7234 12.2501 12.7116 12.2537 12.7014 12.2601C12.6911 12.2665 12.6825 12.2753 12.6766 12.2858C12.0263 13.438 11.3705 14.5871 10.7093 15.7331C10.5864 15.9462 10.4329 15.9971 10.182 15.9978C9.45696 16 8.72606 16.0007 7.98789 15.9992C7.91916 15.9991 7.85171 15.9807 7.79233 15.9461C7.73295 15.9115 7.68375 15.8619 7.64971 15.8022L6.67881 14.1127C6.67317 14.1017 6.66449 14.0924 6.65381 14.0861C6.64312 14.0798 6.63086 14.0767 6.61845 14.0771H2.89632C2.68905 14.0989 2.49414 14.0764 2.31087 14.0102L1.14507 11.9956C1.11059 11.936 1.09232 11.8684 1.09206 11.7995C1.09181 11.7306 1.10958 11.6628 1.14361 11.6029L2.02142 10.0611C2.03392 10.0393 2.0405 10.0146 2.0405 9.98948C2.0405 9.96435 2.03392 9.93965 2.02142 9.91784C1.56417 9.1262 1.10962 8.33299 0.657801 7.53823L0.0832629 6.5237C-0.0330993 6.29824 -0.0425537 6.16297 0.152353 5.82188C0.49053 5.23062 0.826526 4.64008 1.16107 4.05026C1.25707 3.88008 1.38216 3.80736 1.58579 3.80663C2.21341 3.80399 2.84105 3.80374 3.46867 3.8059C3.48453 3.80578 3.50007 3.80148 3.51373 3.79344C3.52739 3.78539 3.53869 3.77389 3.54649 3.76009L5.58719 0.200118C5.61812 0.145961 5.66277 0.10091 5.71665 0.0695016C5.77053 0.0380933 5.83173 0.0214373 5.8941 0.021211C6.27518 0.0204837 6.65991 0.0212109 7.04536 0.0168473L7.78498 0.00012023C8.03298 -0.00206157 8.31152 0.0233928 8.43952 0.247391ZM5.94355 0.540479C5.93589 0.540474 5.92836 0.542488 5.92172 0.546318C5.91508 0.550148 5.90957 0.555659 5.90573 0.562297L3.8214 4.20954C3.81139 4.22672 3.79707 4.241 3.77985 4.25095C3.76263 4.2609 3.7431 4.26618 3.72322 4.26626H1.63888C1.59815 4.26626 1.58797 4.28444 1.60906 4.32008L5.83446 11.7062C5.85264 11.7367 5.84392 11.7513 5.80974 11.752L3.77703 11.7629C3.74732 11.7619 3.71792 11.7693 3.6922 11.7842C3.66648 11.7991 3.64548 11.821 3.63158 11.8473L2.67159 13.5273C2.63959 13.584 2.65632 13.6131 2.72105 13.6131L6.87809 13.6189C6.91154 13.6189 6.93627 13.6334 6.95372 13.6633L7.97407 15.448C8.00753 15.5069 8.04098 15.5076 8.07516 15.448L11.7158 9.07713L12.2853 8.07204C12.2888 8.06584 12.2938 8.06067 12.3 8.05707C12.3061 8.05347 12.3131 8.05157 12.3202 8.05157C12.3273 8.05157 12.3343 8.05347 12.3404 8.05707C12.3466 8.06067 12.3516 8.06584 12.3551 8.07204L13.3907 9.91203C13.3985 9.92579 13.4098 9.93723 13.4235 9.94516C13.4372 9.95309 13.4527 9.95722 13.4685 9.95712L15.478 9.94257C15.4831 9.94262 15.4882 9.9413 15.4927 9.93874C15.4971 9.93618 15.5009 9.93249 15.5034 9.92803C15.5059 9.92358 15.5072 9.91857 15.5072 9.91348C15.5072 9.90839 15.5059 9.90338 15.5034 9.89894L13.3944 6.20006C13.3868 6.1877 13.3828 6.17348 13.3828 6.15897C13.3828 6.14447 13.3868 6.13024 13.3944 6.11788L13.6075 5.74916L14.422 4.31135C14.4394 4.28153 14.4307 4.26626 14.3965 4.26626H5.96392C5.92101 4.26626 5.91082 4.24735 5.93264 4.21026L6.97554 2.38846C6.98335 2.37605 6.9875 2.36168 6.9875 2.34701C6.9875 2.33234 6.98335 2.31797 6.97554 2.30555L5.9821 0.563024C5.9783 0.556143 5.97271 0.550416 5.96593 0.546447C5.95914 0.542479 5.95141 0.540417 5.94355 0.540479ZM10.518 6.37315C10.5515 6.37315 10.5602 6.3877 10.5428 6.41679L9.93768 7.48223L8.03734 10.8167C8.03377 10.8232 8.0285 10.8286 8.02209 10.8323C8.01569 10.8361 8.00839 10.838 8.00098 10.8378C7.9936 10.8378 7.98636 10.8358 7.97998 10.8321C7.9736 10.8284 7.96831 10.8231 7.96462 10.8167L5.45338 6.42988C5.43883 6.40515 5.4461 6.39206 5.47374 6.3906L5.63083 6.38188L10.5195 6.37315H10.518Z" fill="url(#prefix__paint0_linear_16251_34570)"></path>
+                    <defs>
+                      <linearGradient id="prefix__paint0_linear_16251_34570" x1="0" y1="0" x2="1600" y2="0" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#00055F" stopOpacity="0.84"></stop>
+                        <stop offset="1" stopColor="#6F69F7" stopOpacity="0.84"></stop>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+              </div>
+
+                {/* Model ID with Copy */}
+                <div className='space-y-1 mb-10'>
+                <div className='flex items-center gap-2'>
+                  <h3 className='text-lg font-semibold text-gray-900'>Qwen/Qwen3-Next-80B-A3B-Instruct</h3>
+                  <TooltipWrapper content="Copy model ID">
+                    <button 
+                      onClick={() => handleCopyModelId('Qwen/Qwen3-Next-80B-A3B-Instruct')}
+                      className='p-1 hover:bg-gray-100 rounded transition-colors'
+                    >
+                      <svg className='w-4 h-4 text-gray-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z' />
+                      </svg>
+                    </button>
+                  </TooltipWrapper>
+                </div>
+                <p className='text-sm text-gray-600'>Next-generation 80B model with enhanced reasoning</p>
+              </div>
+
+              </div>
+
+              {/* Bottom Content - Fixed to bottom */}
+              <div className='mt-auto space-y-4'>
+                {/* Pricing */}
+              <div className='space-y-1'>
+                <div className='flex items-center justify-between'>
+                  <span className='text-lg font-semibold text-gray-900'>₹12.5</span>
+                  <span className='text-lg font-semibold text-gray-900'>₹125.3</span>
+                </div>
+                <div className='flex items-center justify-between text-xs text-gray-500'>
+                  <span>Per 1M Input Tokens</span>
+                  <span>Per 1M Output Tokens</span>
+                </div>
+              </div>
+
+                {/* Tags */}
+                <div className='flex flex-wrap gap-2'>
+                <span className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>80B</span>
+                <span className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>32K</span>
+                <span className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>Instruct</span>
+              </div>
+
+                {/* Action Buttons */}
+                <div className='flex space-x-3'>
+                <Button className='flex-1' asChild>
+                  <a href='/playground/qwen3-coder-480b'>
+                    Playground
+                  </a>
+                </Button>
+                <TooltipWrapper content="View starter code">
+                  <Button 
+                    variant='outline' 
+                    className='px-3 border-gray-500 text-gray-500 hover:bg-gray-900 hover:text-white hover:border-gray-900'
+                    onClick={() => {
+                      setSelectedModelId('gpt-oss-20b');
+                      setIsSetupCodeModalOpen(true);
+                    }}
+                  >
+                    <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' />
+                    </svg>
+                  </Button>
+                </TooltipWrapper>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4 - Krutrim Dhwani */}
+            <div className='bg-gradient-to-bl from-green-100/50 via-emerald-50/30 to-white rounded-xl border border-green-200/60 p-6 flex flex-col h-full'>
+              {/* Top Content - Flexible */}
+              <div className='flex-1 flex flex-col'>
+                {/* Provider Logo */}
+                <div className='flex justify-start mb-4'>
+                  <div className='w-8 h-8 flex items-center justify-center'>
+                    <svg width="32" height="32" viewBox="0 0 385 385" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" aria-hidden="true">
+                      <rect x="0.166992" y="0.33313" width="384.002" height="384.002" rx="192.001" fill="#10A554"/>
+                      <path d="M281.913 134.663H206.35V167.282C213.859 162.901 222.463 160.711 232.163 160.711C243.271 160.711 252.344 164.153 259.385 171.036C266.581 177.92 270.179 187.463 270.179 199.666C270.179 206.549 268.849 214.215 266.19 222.663C263.687 231.111 259.541 239.716 253.752 248.477L226.296 233.223C229.895 228.374 232.867 223.367 235.214 218.205C237.56 213.042 238.734 207.723 238.734 202.247C238.734 196.459 237.482 192.391 234.979 190.044C232.632 187.698 229.503 186.524 225.592 186.524C221.994 186.524 215.032 189.81 215.032 189.81C215.032 189.81 204.053 194.347 201.55 196.85V254.813H174.904V225.01C169.741 227.982 164.5 230.251 159.181 231.815C154.019 233.38 147.995 234.162 141.112 234.162C132.507 234.162 124.607 232.598 117.41 229.469C110.37 226.183 104.738 221.412 100.514 215.154C96.2903 208.896 94.1783 201.074 94.1783 191.687C94.1783 182.926 96.2903 175.417 100.514 169.159C104.738 162.745 110.605 157.817 118.114 154.375C125.624 150.777 134.307 148.978 144.163 148.978C148.543 148.978 152.924 149.134 157.304 149.447C161.841 149.76 165.361 150.307 167.864 151.09L165.517 177.138C160.511 175.886 154.957 175.26 148.856 175.26C141.503 175.26 135.793 176.747 131.725 179.719C127.658 182.535 125.624 186.524 125.624 191.687C125.624 197.945 127.579 202.247 131.491 204.594C135.402 206.941 139.626 208.114 144.163 208.114C150.733 208.114 156.522 206.628 161.528 203.655C166.691 200.683 171.149 197.241 174.904 193.33V134.663H85.4956V108.849H281.913V134.663Z" fill="white"/>
+                      <path d="M235.619 309.49C231.551 311.524 226.702 313.401 221.069 315.122C215.281 316.843 208.397 317.704 200.419 317.704C192.596 317.704 185.635 316.218 179.533 313.245C173.432 310.429 168.66 306.44 165.219 301.277C161.62 296.271 159.821 290.404 159.821 283.677C159.821 272.413 163.811 263.417 171.789 256.69C179.611 250.119 186.076 246.365 200.781 245.426L203.597 269.597C195.619 270.066 194.943 271.552 191.971 274.056C188.998 276.715 187.512 279.766 187.512 283.208C187.512 290.404 192.284 294.002 201.827 294.002C205.425 294.002 209.101 293.455 212.856 292.36C216.611 291.264 221.148 289.387 226.467 286.728L235.619 309.49Z" fill="white"/>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Model ID with Copy */}
+                <div className='space-y-1 mb-10'>
+                  <div className='flex items-center gap-2'>
+                    <h3 className='text-lg font-semibold text-gray-900'>Krutrim/Krutrim-Dhwani</h3>
+                    <TooltipWrapper content="Copy model ID">
+                      <button 
+                        onClick={() => handleCopyModelId('Krutrim/Krutrim-Dhwani')}
+                        className='p-1 hover:bg-gray-100 rounded transition-colors'
+                      >
+                        <svg className='w-4 h-4 text-gray-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z' />
+                        </svg>
+                      </button>
+                    </TooltipWrapper>
+                  </div>
+                  <p className='text-sm text-gray-600'>Speech-to-text model for audio transcription</p>
+                </div>
+              </div>
+
+              {/* Bottom Content - Fixed to bottom */}
+              <div className='mt-auto space-y-4'>
+                {/* Pricing */}
+                <div className='space-y-1'>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-lg font-semibold text-gray-900'>₹24</span>
+                    <span className='text-lg font-semibold text-gray-400'>—</span>
+                  </div>
+                  <div className='flex items-center justify-between text-xs text-gray-500'>
+                    <span>Per Hour of Input Audio</span>
+                    <span>Output</span>
+                  </div>
+                </div>
+
+                {/* Tags */}
+                <div className='flex flex-wrap gap-2'>
+                  <span className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>Speech-to-Text</span>
+                  <span className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>Audio</span>
+                  <span className='px-2 py-1 bg-white border border-gray-300 text-gray-700 text-xs rounded font-medium'>Transcription</span>
+                </div>
+
+                {/* Action Buttons */}
+                <div className='flex space-x-3'>
+                  <Button className='flex-1' asChild>
+                    <a href='/playground/krutrim-dhwani'>
+                      Playground
+                    </a>
+                  </Button>
+                  <TooltipWrapper content="View starter code">
+                    <Button 
+                      variant='outline' 
+                      className='px-3 border-gray-500 text-gray-500 hover:bg-gray-900 hover:text-white hover:border-gray-900'
+                      onClick={() => {
+                        setSelectedModelId('krutrim-dhwani');
+                        setIsSetupCodeModalOpen(true);
+                      }}
+                    >
+                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' />
+                      </svg>
+                    </Button>
+                  </TooltipWrapper>
+                </div>
+              </div>
+            </div>
+          </div> {/* End of hidden div */}
         </div>
       </div>
+
+      {/* Setup Code Modal */}
+      <SetupCodeModal
+        open={isSetupCodeModalOpen}
+        onClose={() => setIsSetupCodeModalOpen(false)}
+        modelId={selectedModelId}
+        onOpenCreateApiKey={handleOpenCreateApiKeyFromSetup}
+      />
+
+      {/* Create API Key Modal */}
+      <CreateApiKeyModal
+        open={isCreateApiKeyModalOpen}
+        onClose={() => setIsCreateApiKeyModalOpen(false)}
+      />
+
+      {/* Request New Model Modal */}
+      <RequestNewModelModal
+        open={isRequestModelModalOpen}
+        onClose={() => setIsRequestModelModalOpen(false)}
+      />
     </PageShell>
-  )
+  );
 }

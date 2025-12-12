@@ -1,956 +1,703 @@
-"use client"
+'use client';
 
-import { useParams, useRouter } from "next/navigation"
-import { useState } from "react"
-import { PageShell } from "@/components/page-shell"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Separator } from "@/components/ui/separator"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getClusterById, type MKSCluster, type MKSAddOn, type MKSNodePool, availableNodeFlavors, isK8sVersionDeprecated, getNextK8sVersion, getRegionDisplayName } from "@/lib/mks-data"
-import { ArrowLeft, Save, X, Edit, Plus, Trash2, AlertTriangle, Server, ArrowUpRight, Info } from "lucide-react"
-import Link from "next/link"
+import { useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { PageLayout } from '@/components/page-layout';
+import { DetailGrid } from '@/components/detail-grid';
+import { StatusBadge } from '@/components/status-badge';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  ArrowUpRight,
+  Trash2,
+  Settings,
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Globe,
+  Shield,
+  Database,
+  HardDrive,
+  Network,
+  Monitor,
+  Package,
+  GitBranch,
+  Download,
+  Key,
+  Edit,
+} from 'lucide-react';
+import {
+  getClusterById,
+  type MKSCluster,
+  isK8sVersionDeprecated,
+  getNextK8sVersion,
+  getRegionDisplayName,
+  availableNodeFlavors,
+} from '@/lib/mks-data';
+import { NodePoolsSection } from '@/components/mks/node-pools-section';
+import { AddOnsSection } from '@/components/mks/add-ons-section';
+import { ClusterUpgradeModal } from '@/components/mks/cluster-upgrade-modal';
+import { NodePoolEditModal } from '@/components/mks/node-pool-edit-modal';
+import { AddOnsEditModal } from '@/components/mks/add-ons-edit-modal';
 
 export default function EditClusterPage() {
-  const params = useParams()
-  const router = useRouter()
-  const clusterId = params.id as string
-  const [cluster, setCluster] = useState<MKSCluster | undefined>(getClusterById(clusterId))
-  
-  // Node Pools editing state
-  const [isNodePoolsEditing, setIsNodePoolsEditing] = useState(false)
-  const [nodePoolsChanges, setNodePoolsChanges] = useState<Record<string, { name: string; desiredCount: number; minCount: number; maxCount: number }>>({})
-  const [hasNodePoolsChanges, setHasNodePoolsChanges] = useState(false)
-  
-  // Add-ons editing state
-  const [isAddOnsEditing, setIsAddOnsEditing] = useState(false)
-  const [addOnsChanges, setAddOnsChanges] = useState<Record<string, boolean>>({})
-  const [hasAddOnsChanges, setHasAddOnsChanges] = useState(false)
-  
-  // Node Pool management state
-  const [isDeletePoolOpen, setIsDeletePoolOpen] = useState(false)
-  const [poolToDelete, setPoolToDelete] = useState<MKSNodePool | null>(null)
-  const [showAddPoolForm, setShowAddPoolForm] = useState(false)
-  const [newPool, setNewPool] = useState({
-    name: '',
-    flavor: '',
-    desiredCount: 1,
-    minCount: 1,
-    maxCount: 3,
-    diskSize: 100,
-    labels: {} as Record<string, string>
-  })
+  const params = useParams();
+  const router = useRouter();
+  const clusterId = params.id as string;
+  const [cluster, setCluster] = useState<MKSCluster | undefined>(
+    getClusterById(clusterId)
+  );
 
-  // Add-ons confirmation modal state
-  const [isAddOnsConfirmOpen, setIsAddOnsConfirmOpen] = useState(false)
-  const [pendingAddOnsChanges, setPendingAddOnsChanges] = useState<Record<string, boolean>>({})
+  // Modal states
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isNodePoolEditModalOpen, setIsNodePoolEditModalOpen] = useState(false);
+  const [isAddOnsEditModalOpen, setIsAddOnsEditModalOpen] = useState(false);
+  const [isKubeconfigModalOpen, setIsKubeconfigModalOpen] = useState(false);
+
+  const handleClusterUpdate = (updatedCluster: MKSCluster) => {
+    setCluster(updatedCluster);
+  };
 
   if (!cluster) {
     return (
-      <PageShell title="Cluster Not Found">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Cluster not found</h3>
-              <p className="text-sm text-gray-600 mb-6">The requested cluster could not be found.</p>
-              <Button asChild>
-                <Link href="/kubernetes">Back to Clusters</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </PageShell>
-    )
+      <PageLayout title='Cluster Not Found'>
+        <div className='text-center py-12'>
+          <h3 className='text-lg font-semibold text-gray-900 mb-2'>
+            Cluster not found
+          </h3>
+          <p className='text-sm text-gray-600 mb-6'>
+            The requested cluster could not be found.
+          </p>
+          <Button onClick={() => router.push('/kubernetes')}>
+            Back to Clusters
+          </Button>
+        </div>
+      </PageLayout>
+    );
   }
 
-  // Initialize node pools changes when editing starts
-  const startNodePoolsEditing = () => {
-    const initialChanges: Record<string, { name: string; desiredCount: number; minCount: number; maxCount: number }> = {}
-    cluster.nodePools.forEach(pool => {
-      initialChanges[pool.id] = {
-        name: pool.name,
-        desiredCount: pool.desiredCount,
-        minCount: pool.minCount,
-        maxCount: pool.maxCount
-      }
-    })
-    setNodePoolsChanges(initialChanges)
-    setIsNodePoolsEditing(true)
-  }
+  const nextVersion = getNextK8sVersion(cluster.k8sVersion);
+  const isUpgradeAvailable = nextVersion !== null;
+  const isDeprecated = isK8sVersionDeprecated(cluster.k8sVersion);
 
-  // Handle node pool changes
-  const handleNodePoolChange = (poolId: string, field: 'name' | 'desiredCount' | 'minCount' | 'maxCount', value: string | number) => {
-    setNodePoolsChanges(prev => ({
-      ...prev,
-      [poolId]: {
-        ...prev[poolId],
-        [field]: value
-      }
-    }))
-    setHasNodePoolsChanges(true)
-  }
+  const handleEdit = () => {
+    // This is already the edit page, so we can show different edit modals
+  };
 
-  // Save node pools changes
-  const saveNodePoolsChanges = () => {
-    const updatedPools = cluster.nodePools.map(pool => {
-      const changes = nodePoolsChanges[pool.id]
-      if (changes) {
-        return {
-          ...pool,
-          name: changes.name,
-          desiredCount: changes.desiredCount,
-          minCount: changes.minCount,
-          maxCount: changes.maxCount
-        }
-      }
-      return pool
-    })
+  const handleConfirmUpgrade = async (
+    clusterId: string,
+    newVersion: string
+  ) => {
+    // In a real implementation, this would call the API to upgrade the cluster
+    console.log('Upgrading cluster:', clusterId, 'to version:', newVersion);
 
-    const updatedCluster = {
-      ...cluster,
-      nodePools: updatedPools,
-      nodeCount: updatedPools.reduce((total, pool) => total + pool.desiredCount, 0)
-    }
+    // Update the cluster state to show it's updating
+    setCluster(prev =>
+      prev
+        ? { ...prev, k8sVersion: newVersion, status: 'updating' as const }
+        : prev
+    );
+    setIsUpgradeModalOpen(false);
+  };
 
-    setCluster(updatedCluster)
-    setHasNodePoolsChanges(false)
-    setIsNodePoolsEditing(false)
-  }
+  const handleDownloadKubeconfig = () => {
+    // In a real implementation, this would generate and download the kubeconfig file
+    console.log('Downloading kubeconfig for cluster:', cluster.id);
+    setIsKubeconfigModalOpen(false);
+  };
 
-  // Cancel node pools changes
-  const cancelNodePoolsChanges = () => {
-    setNodePoolsChanges({})
-    setHasNodePoolsChanges(false)
-    setIsNodePoolsEditing(false)
-  }
+  // Format created date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+  };
 
-  // Start add-ons editing
-  const startAddOnsEditing = () => {
-    const initialChanges: Record<string, boolean> = {}
-    cluster.addOns.forEach(addon => {
-      initialChanges[addon.id] = addon.isEnabled
-    })
-    setAddOnsChanges(initialChanges)
-    setIsAddOnsEditing(true)
-  }
+  const customBreadcrumbs = [
+    { href: '/dashboard', title: 'Home' },
+    { href: '/kubernetes', title: 'Kubernetes' },
+    { href: '/kubernetes/clusters', title: 'Clusters' },
+    { href: `/kubernetes/clusters/${cluster.id}`, title: cluster.name },
+    { href: `/kubernetes/clusters/${cluster.id}/edit`, title: 'Edit' },
+  ];
 
-
-
-  // Save add-ons changes
-  const saveAddOnsChanges = () => {
-    // Show confirmation modal for add-ons changes
-    const removedAddOns = cluster.addOns.filter(addon => 
-      addon.isEnabled && !addOnsChanges[addon.id]
-    )
-    const addedDefaultAddOns = cluster.addOns.filter(addon => 
-      !addon.isEnabled && addOnsChanges[addon.id] && addon.isDefault
-    )
-
-    if (removedAddOns.length > 0 || addedDefaultAddOns.length > 0) {
-      setPendingAddOnsChanges(addOnsChanges)
-      setIsAddOnsConfirmOpen(true)
-    } else {
-      // No conflicts, save directly
-      applyAddOnsChanges(addOnsChanges)
-    }
-  }
-
-  // Apply add-ons changes after confirmation
-  const applyAddOnsChanges = (changes: Record<string, boolean>) => {
-    const updatedAddOns = cluster.addOns.map(addon => ({
-      ...addon,
-      isEnabled: changes[addon.id] ?? addon.isEnabled
-    }))
-
-    const updatedCluster = {
-      ...cluster,
-      addOns: updatedAddOns
-    }
-
-    setCluster(updatedCluster)
-    setHasAddOnsChanges(false)
-    setIsAddOnsEditing(false)
-    setIsAddOnsConfirmOpen(false)
-  }
-
-  // Cancel add-ons changes
-  const cancelAddOnsChanges = () => {
-    setAddOnsChanges({})
-    setHasAddOnsChanges(false)
-    setIsAddOnsEditing(false)
-  }
-
-  // Handle add-on toggle
-  const handleAddOnToggle = (addonId: string, enabled: boolean) => {
-    setAddOnsChanges(prev => ({
-      ...prev,
-      [addonId]: enabled
-    }))
-    setHasAddOnsChanges(true)
-  }
-
-  // Add new node pool
-  const handleAddPool = () => {
-    if (!newPool.name || !newPool.flavor) return
-
-    const pool: MKSNodePool = {
-      id: `np-${Date.now()}`,
-      name: newPool.name,
-      flavor: newPool.flavor,
-      desiredCount: newPool.desiredCount,
-      minCount: newPool.minCount,
-      maxCount: newPool.maxCount,
-      diskSize: newPool.diskSize,
-      taints: [],
-      labels: newPool.labels,
-      status: 'creating',
-      createdAt: new Date().toISOString()
-    }
-
-    const updatedCluster = {
-      ...cluster,
-      nodePools: [...cluster.nodePools, pool],
-      nodeCount: cluster.nodeCount + pool.desiredCount
-    }
-
-    setCluster(updatedCluster)
-    setShowAddPoolForm(false)
-    setNewPool({
-      name: '',
-      flavor: '',
-      desiredCount: 1,
-      minCount: 1,
-      maxCount: 3,
-      diskSize: 100,
-      labels: {}
-    })
-  }
-
-  // Delete node pool
-  const handleDeletePool = () => {
-    if (!poolToDelete) return
-
-    const updatedPools = cluster.nodePools.filter(pool => pool.id !== poolToDelete.id)
-    const updatedCluster = {
-      ...cluster,
-      nodePools: updatedPools,
-      nodeCount: updatedPools.reduce((total, pool) => total + pool.desiredCount, 0)
-    }
-
-    setCluster(updatedCluster)
-    setIsDeletePoolOpen(false)
-    setPoolToDelete(null)
-  }
-
-  const validateNodeCounts = (min: number, desired: number, max: number) => {
-    return min > 0 && min <= desired && desired <= max
-  }
-
-  const validateNodePoolChanges = (changes: Record<string, { name: string; desiredCount: number; minCount: number; maxCount: number }>) => {
-    return Object.values(changes).every(change => 
-      change.name.trim() !== '' && 
-      validateNodeCounts(change.minCount, change.desiredCount, change.maxCount)
-    )
-  }
-
-
-
-  const getFlavorDetails = (flavorId: string) => {
-    return availableNodeFlavors.find(f => f.id === flavorId)
-  }
-
-  const isDeprecated = isK8sVersionDeprecated(cluster.k8sVersion)
-  const nextVersion = getNextK8sVersion(cluster.k8sVersion)
+  const headerActions = (
+    <Button
+      variant='outline'
+      onClick={() => setIsKubeconfigModalOpen(true)}
+      size='sm'
+    >
+      <Download className='h-4 w-4 mr-2' />
+      Download Kubeconfig
+    </Button>
+  );
 
   return (
-    <PageShell
-      title={`Edit Cluster: ${cluster.name}`}
-      description="Modify node pools and cluster configuration"
-      customBreadcrumbs={[
-        { title: 'Kubernetes', href: '/kubernetes' },
-        { title: 'Clusters', href: '/kubernetes/clusters' },
-        { title: cluster.name, href: `/kubernetes/clusters/${cluster.id}` },
-        { title: 'Edit', href: `/kubernetes/clusters/${cluster.id}/edit` }
-      ]}
+    <PageLayout
+      title={`Edit ${cluster.name}`}
+      customBreadcrumbs={customBreadcrumbs}
+      headerActions={headerActions}
+      hideViewDocs={true}
     >
-      <div className="space-y-6">
-        {/* Enhanced Cluster Information Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Info className="h-5 w-5" />
-              Cluster Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground mb-2">
-                  Cluster Name
-                </Label>
-                <div className="text-lg font-semibold">{cluster.name}</div>
+      {/* Cluster Basic Information */}
+      <div
+        className='mb-6 group relative'
+        style={{
+          borderRadius: '16px',
+          border: '4px solid #FFF',
+          background: 'linear-gradient(265deg, #FFF -13.17%, #F7F8FD 133.78%)',
+          boxShadow: '0px 8px 39.1px -9px rgba(0, 27, 135, 0.08)',
+          padding: '1.5rem',
+        }}
+      >
+        {/* Edit Mode Indicator */}
+        <div className='absolute top-4 right-4 flex items-center gap-2 z-10'>
+          <Badge
+            variant='secondary'
+            className='text-xs bg-blue-100 text-blue-800 border-blue-200'
+          >
+            Edit Mode
+          </Badge>
+        </div>
+
+        <DetailGrid>
+          {/* First row: Cluster ID, Region, Status, Created On */}
+          <div className='col-span-full grid grid-cols-4 gap-4 mt-2'>
+            <div className='space-y-1'>
+              <label
+                className='text-sm font-normal text-gray-700'
+                style={{ fontSize: '13px' }}
+              >
+                Cluster ID
+              </label>
+              <div className='font-medium' style={{ fontSize: '14px' }}>
+                {cluster.id}
               </div>
-              
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground mb-2">
-                  Region
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="font-mono">
-                    {cluster.region}
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">
-                    {getRegionDisplayName(cluster.region)}
-                  </span>
-                </div>
+            </div>
+            <div className='space-y-1'>
+              <label
+                className='text-sm font-normal text-gray-700'
+                style={{ fontSize: '13px' }}
+              >
+                Region
+              </label>
+              <div className='font-medium' style={{ fontSize: '14px' }}>
+                {getRegionDisplayName(cluster.region)}
               </div>
-              
+            </div>
+            <div className='space-y-1'>
+              <label
+                className='text-sm font-normal text-gray-700'
+                style={{ fontSize: '13px' }}
+              >
+                Status
+              </label>
               <div>
-                <Label className="text-sm font-medium text-muted-foreground mb-2">
-                  Status
-                </Label>
-                <Badge variant={cluster.status === 'active' ? 'default' : 'secondary'}>
-                  {cluster.status}
+                <StatusBadge status={cluster.status} />
+              </div>
+            </div>
+            <div className='space-y-1'>
+              <label
+                className='text-sm font-normal text-gray-700'
+                style={{ fontSize: '13px' }}
+              >
+                Created On
+              </label>
+              <div className='font-medium' style={{ fontSize: '14px' }}>
+                {formatDate(cluster.createdAt)}
+              </div>
+            </div>
+          </div>
+
+          {/* Second row: VPC, Node Pools, Cluster Version, Node Pool Version */}
+          <div className='col-span-full grid grid-cols-4 gap-4 mt-4'>
+            <div className='space-y-1'>
+              <label
+                className='text-sm font-normal text-gray-700'
+                style={{ fontSize: '13px' }}
+              >
+                VPC
+              </label>
+              <div
+                className='font-medium font-mono'
+                style={{ fontSize: '14px' }}
+              >
+                {cluster.vpcId}
+              </div>
+            </div>
+            <div className='space-y-1'>
+              <label
+                className='text-sm font-normal text-gray-700'
+                style={{ fontSize: '13px' }}
+              >
+                Node Pools
+              </label>
+              <div className='font-medium' style={{ fontSize: '14px' }}>
+                {cluster.nodePools.length}
+              </div>
+            </div>
+            <div className='space-y-1'>
+              <label
+                className='text-sm font-normal text-gray-700'
+                style={{ fontSize: '13px' }}
+              >
+                Cluster Version
+              </label>
+              <div className='flex items-center gap-2'>
+                <Badge variant='outline' className='font-mono'>
+                  {cluster.k8sVersion}
+                </Badge>
+                {isDeprecated && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant='destructive'
+                          className='text-xs cursor-help'
+                        >
+                          Unsupported
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          This version is deprecated. Please upgrade your
+                          cluster to a supported Kubernetes version.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {isUpgradeAvailable && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => setIsUpgradeModalOpen(true)}
+                          variant='outline'
+                          size='sm'
+                          className='h-6 w-6 p-0 text-blue-600 hover:text-blue-700 border-blue-200 hover:bg-blue-50'
+                        >
+                          <ArrowUpRight className='h-3 w-3' />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Upgrade to version {nextVersion}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+            </div>
+            <div className='space-y-1'>
+              <label
+                className='text-sm font-normal text-gray-700'
+                style={{ fontSize: '13px' }}
+              >
+                Node Pool Version
+              </label>
+              <div className='flex items-center gap-2'>
+                <Badge variant='outline' className='font-mono'>
+                  {cluster.nodePools.length > 0
+                    ? cluster.nodePools[0].k8sVersion
+                    : 'N/A'}
                 </Badge>
               </div>
-              
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground mb-2">
-                  Kubernetes Version
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Badge variant={isDeprecated ? 'destructive' : 'secondary'} className="font-mono">
-                    {cluster.k8sVersion}
-                  </Badge>
-                  {isDeprecated && nextVersion && (
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="h-7"
-                      onClick={() => router.push(`/kubernetes/clusters/${cluster.id}/upgrade`)}
-                    >
-                      <ArrowUpRight className="h-3 w-3 mr-1" />
-                      Upgrade to {nextVersion}
-                    </Button>
-                  )}
-                </div>
-                {isDeprecated && (
-                  <Alert className="mt-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      This Kubernetes version is no longer supported and will not receive security updates. 
-                      Please upgrade to {nextVersion} or later immediately.
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
-              
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground mb-2">
-                  Total Nodes
-                </Label>
-                <div className="text-lg font-semibold">{cluster.nodeCount}</div>
-              </div>
-              
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground mb-2">
-                  Created
-                </Label>
-                <div className="text-sm">{new Date(cluster.createdAt).toLocaleDateString()}</div>
-              </div>
-              
-              <div className="md:col-span-2 lg:col-span-3">
-                <Label className="text-sm font-medium text-muted-foreground mb-2">
-                  VPC & Networking
-                </Label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <span className="text-xs text-muted-foreground">VPC ID:</span>
-                    <div className="font-mono text-sm">{cluster.vpcId}</div>
-                  </div>
-                  <div>
-                    <span className="text-xs text-muted-foreground">Subnets:</span>
-                    <div className="font-mono text-sm">{cluster.subnetIds.join(', ')}</div>
-                  </div>
-                  <div>
-                    <span className="text-xs text-muted-foreground">Security Groups:</span>
-                    <div className="font-mono text-sm">{cluster.securityGroupIds.join(', ')}</div>
-                  </div>
-                </div>
-              </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Node Pools Section */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Server className="h-5 w-5" />
-                Node Pools
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                {isNodePoolsEditing ? (
-                  <>
-                    <Button variant="outline" size="sm" onClick={cancelNodePoolsChanges}>
-                      <X className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      onClick={saveNodePoolsChanges}
-                      disabled={!hasNodePoolsChanges || !validateNodePoolChanges(nodePoolsChanges)}
-                      className="bg-black text-white hover:bg-black/90"
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </Button>
-                  </>
-                ) : (
-                  <Button onClick={startNodePoolsEditing} variant="outline" size="sm">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Node Pools
-                  </Button>
-                )}
+          {/* Additional info row: Pod CIDR, Service CIDR, Subnets, API Endpoint */}
+          <div className='col-span-full grid grid-cols-4 gap-4 mt-4'>
+            <div className='space-y-1'>
+              <label
+                className='text-sm font-normal text-gray-700'
+                style={{ fontSize: '13px' }}
+              >
+                Pod CIDR
+              </label>
+              <div
+                className='font-medium font-mono'
+                style={{ fontSize: '14px' }}
+              >
+                {cluster.podCIDR}
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
+            <div className='space-y-1'>
+              <label
+                className='text-sm font-normal text-gray-700'
+                style={{ fontSize: '13px' }}
+              >
+                Service CIDR
+              </label>
+              <div
+                className='font-medium font-mono'
+                style={{ fontSize: '14px' }}
+              >
+                {cluster.serviceCIDR}
+              </div>
+            </div>
+            <div className='space-y-1'>
+              <label
+                className='text-sm font-normal text-gray-700'
+                style={{ fontSize: '13px' }}
+              >
+                Subnet
+              </label>
+              <div className='font-medium' style={{ fontSize: '14px' }}>
+                {cluster.subnetId || 'None'}
+              </div>
+            </div>
+            <div className='space-y-1'>
+              <label
+                className='text-sm font-normal text-gray-700'
+                style={{ fontSize: '13px' }}
+              >
+                API Endpoint
+              </label>
+              <div className='bg-muted/50 p-3 rounded-lg'>
+                <code className='text-sm font-mono break-all'>
+                  {cluster.kubeApiEndpoint}
+                </code>
+              </div>
+              <div className='flex items-center gap-2 text-xs text-muted-foreground mt-1'>
+                <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                <span>Public Access</span>
+              </div>
+            </div>
+          </div>
+        </DetailGrid>
+      </div>
+
+      {/* Node Pools Section with Edit Button */}
+      <div className='mb-8'>
+        <div className='bg-card text-card-foreground border-border border rounded-lg'>
+          <div className='p-6 pb-4'>
+            <div className='flex items-center justify-between'>
+              <div className='flex items-center gap-3'>
+                <h3 className='text-lg font-semibold'>Node Pools</h3>
+                <div className='bg-gray-800 text-white text-sm font-medium rounded-full w-6 h-6 flex items-center justify-center'>
+                  {cluster.nodePools.length}
+                </div>
+              </div>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => setIsNodePoolEditModalOpen(true)}
+                className='flex items-center gap-2'
+              >
+                Edit Node Pools
+              </Button>
+            </div>
+          </div>
+          <div className='px-6 pb-6'>
             {cluster.nodePools.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Server className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <div className='text-center py-8 text-muted-foreground'>
                 <p>No node pools configured yet.</p>
-                <p className="text-sm">Add your first node pool to get started.</p>
+                <p className='text-sm'>
+                  Node pools will appear here once configured.
+                </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {cluster.nodePools.map((pool) => {
-                  const flavorDetails = getFlavorDetails(pool.flavor)
-                  const isEditing = isNodePoolsEditing && nodePoolsChanges[pool.id]
-                  
+              <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                {cluster.nodePools.map(pool => {
+                  const flavorDetails = availableNodeFlavors.find(
+                    f => f.id === pool.flavor
+                  );
+                  const isOutdated =
+                    pool.k8sVersion !== cluster.k8sVersion &&
+                    pool.k8sVersion < cluster.k8sVersion;
+
                   return (
-                    <Card key={pool.id} className="border-2 hover:border-gray-300 transition-colors">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {isEditing ? (
-                              <div className="space-y-1">
-                                <Label htmlFor={`name-${pool.id}`} className="text-xs text-muted-foreground">Node Pool Name</Label>
-                                <Input
-                                  id={`name-${pool.id}`}
-                                  value={nodePoolsChanges[pool.id]?.name || pool.name}
-                                  onChange={(e) => handleNodePoolChange(pool.id, 'name', e.target.value)}
-                                  className={`h-8 text-sm w-48 ${(nodePoolsChanges[pool.id]?.name || pool.name).trim() === '' ? 'border-destructive focus:border-destructive' : ''}`}
-                                  placeholder="Enter pool name"
-                                />
-                                {(nodePoolsChanges[pool.id]?.name || pool.name).trim() === '' && (
-                                  <p className="text-xs text-red-500">Name is required</p>
-                                )}
-                              </div>
-                            ) : (
-                              <h4 className="font-semibold">{pool.name}</h4>
-                            )}
-                            <Badge variant={pool.status === 'active' ? 'default' : 'secondary'} className="text-xs">
-                              {pool.status}
-                            </Badge>
-                          </div>
-                          {isNodePoolsEditing && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setPoolToDelete(pool)
-                                setIsDeletePoolOpen(true)
-                              }}
-                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        {/* Instance Type */}
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Instance Type</Label>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="font-mono text-xs">
-                              {pool.flavor}
-                            </Badge>
-                            {flavorDetails && (
-                              <span className="text-xs text-muted-foreground">
-                                {flavorDetails.vcpus} vCPUs, {flavorDetails.memory}GB RAM
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Node Counts */}
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Node Counts</Label>
-                          {isEditing ? (
-                            <div className="grid grid-cols-3 gap-2 mt-1">
-                              <div>
-                                <Label htmlFor={`min-${pool.id}`} className="text-xs">Min</Label>
-                                <Input
-                                  id={`min-${pool.id}`}
-                                  type="number"
-                                  min="1"
-                                  value={nodePoolsChanges[pool.id]?.minCount || pool.minCount}
-                                  onChange={(e) => handleNodePoolChange(pool.id, 'minCount', parseInt(e.target.value) || 1)}
-                                  className="h-8 text-xs"
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor={`desired-${pool.id}`} className="text-xs">Desired</Label>
-                                <Input
-                                  id={`desired-${pool.id}`}
-                                  type="number"
-                                  min="1"
-                                  value={nodePoolsChanges[pool.id]?.desiredCount || pool.desiredCount}
-                                  onChange={(e) => handleNodePoolChange(pool.id, 'desiredCount', parseInt(e.target.value) || 1)}
-                                  className="h-8 text-xs"
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor={`max-${pool.id}`} className="text-xs">Max</Label>
-                                <Input
-                                  id={`max-${pool.id}`}
-                                  type="number"
-                                  min="1"
-                                  value={nodePoolsChanges[pool.id]?.maxCount || pool.maxCount}
-                                  onChange={(e) => handleNodePoolChange(pool.id, 'maxCount', parseInt(e.target.value) || 3)}
-                                  className="h-8 text-xs"
-                                />
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="mt-1 grid grid-cols-3 gap-3">
-                              <div className="text-center">
-                                <div className="text-xs text-muted-foreground mb-1">Min</div>
-                                <div className="font-semibold text-lg">{pool.minCount}</div>
-                              </div>
-                              <div className="text-center">
-                                <div className="text-xs text-muted-foreground mb-1">Desired</div>
-                                <div className="font-semibold text-lg text-blue-600">{pool.desiredCount}</div>
-                              </div>
-                              <div className="text-center">
-                                <div className="text-xs text-muted-foreground mb-1">Max</div>
-                                <div className="font-semibold text-lg">{pool.maxCount}</div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Disk Size */}
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Disk Size</Label>
-                          <div className="mt-1">{pool.diskSize} GB</div>
-                        </div>
-
-                        {/* Labels */}
-                        {Object.keys(pool.labels).length > 0 && (
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Labels</Label>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {Object.entries(pool.labels).map(([key, value]) => (
-                                <Badge key={key} variant="outline" className="text-xs">
-                                  {key}={value}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Taints */}
-                        {pool.taints.length > 0 && (
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Taints</Label>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {pool.taints.map((taint, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs">
-                                  {taint}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Created Date */}
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Created</Label>
-                          <div className="text-xs mt-1">
-                            {new Date(pool.createdAt).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-                
-                {/* Add Node Pool Button - Only shown in edit mode and below the last card */}
-                {isNodePoolsEditing && (
-                  <div className="pt-2">
-                    <Button 
-                      onClick={() => setShowAddPoolForm(!showAddPoolForm)} 
-                      size="sm" 
-                      className="bg-black text-white hover:bg-black/90 w-full"
+                    <div
+                      key={pool.id}
+                      className='border border-border hover:border-gray-300 transition-colors rounded-lg bg-card p-4 relative'
                     >
-                      <Plus className="h-4 w-4 mr-2" />
-                      {showAddPoolForm ? 'Cancel Add Node Pool' : 'Add Node Pool'}
-                    </Button>
-                  </div>
-                )}
+                      {/* Header with pool name and status badges */}
+                      <div className='flex items-start justify-between mb-4'>
+                        <div className='flex-1 min-w-0'>
+                          <h4 className='text-sm font-medium leading-none truncate'>
+                            {pool.name}
+                          </h4>
+                        </div>
 
-                {/* Inline Add Node Pool Form */}
-                {showAddPoolForm && isNodePoolsEditing && (
-                  <Card className="border-2 border-dashed border-blue-300 bg-blue-50/30">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg text-blue-700">Add New Node Pool</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="new-pool-name" className="text-sm font-medium">Node Pool Name</Label>
-                          <Input
-                            id="new-pool-name"
-                            value={newPool.name}
-                            onChange={(e) => setNewPool({ ...newPool, name: e.target.value })}
-                            placeholder="e.g., workers, database"
-                            className="h-9"
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor="new-pool-flavor" className="text-sm font-medium">Instance Type</Label>
-                          <Select value={newPool.flavor} onValueChange={(value) => setNewPool({ ...newPool, flavor: value })}>
-                            <SelectTrigger className="h-9">
-                              <SelectValue placeholder="Select instance type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableNodeFlavors.map((flavor) => (
-                                <SelectItem key={flavor.id} value={flavor.id}>
-                                  <div className="flex items-center justify-between w-full">
-                                    <span>{flavor.name}</span>
-                                    <span className="text-muted-foreground text-xs">
-                                      {flavor.vcpus}vCPU, {flavor.memory}GB
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                        <div className='flex items-center gap-2 flex-shrink-0'>
+                          <Badge
+                            variant='secondary'
+                            className={`text-xs h-5 cursor-default ${
+                              pool.status === 'active'
+                                ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100 hover:text-green-800'
+                                : 'hover:bg-secondary hover:text-secondary-foreground'
+                            }`}
+                          >
+                            {pool.status.charAt(0).toUpperCase() +
+                              pool.status.slice(1).toLowerCase()}
+                          </Badge>
                         </div>
                       </div>
-                      
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="new-pool-min-count" className="text-sm font-medium">Min Nodes</Label>
-                          <Input
-                            id="new-pool-min-count"
-                            type="number"
-                            min="1"
-                            value={newPool.minCount}
-                            onChange={(e) => setNewPool({ ...newPool, minCount: parseInt(e.target.value) || 1 })}
-                            className="h-9"
-                          />
+
+                      {/* Pool details */}
+                      <div className='space-y-3 text-xs'>
+                        <div>
+                          <Label className='text-xs text-muted-foreground'>
+                            Instance Flavour
+                          </Label>
+                          <div className='mt-1'>
+                            {flavorDetails ? (
+                              <span className='text-sm'>
+                                {pool.flavor} ({flavorDetails.vcpus} vCPUs,{' '}
+                                {flavorDetails.memory}GB RAM)
+                              </span>
+                            ) : (
+                              <span className='text-sm'>{pool.flavor}</span>
+                            )}
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="new-pool-desired-count" className="text-sm font-medium">Desired Nodes</Label>
-                          <Input
-                            id="new-pool-desired-count"
-                            type="number"
-                            min="1"
-                            value={newPool.desiredCount}
-                            onChange={(e) => setNewPool({ ...newPool, desiredCount: parseInt(e.target.value) || 1 })}
-                            className="h-9"
-                          />
+
+                        <div className='grid grid-cols-3 gap-6'>
+                          <div>
+                            <Label className='text-xs text-muted-foreground'>
+                              Disk Size
+                            </Label>
+                            <div className='mt-1'>{pool.diskSize} GB</div>
+                          </div>
+                          <div>
+                            <Label className='text-xs text-muted-foreground'>
+                              K8s Version
+                            </Label>
+                            <div className='flex items-center gap-2 mt-1'>
+                              <Badge
+                                variant='outline'
+                                className='text-xs font-mono'
+                              >
+                                v{pool.k8sVersion}
+                              </Badge>
+                              {isOutdated && (
+                                <Badge
+                                  variant='outline'
+                                  className='text-xs text-orange-600 border-orange-200'
+                                >
+                                  Outdated
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="new-pool-max-count" className="text-sm font-medium">Max Nodes</Label>
-                          <Input
-                            id="new-pool-max-count"
-                            type="number"
-                            min="1"
-                            value={newPool.maxCount}
-                            onChange={(e) => setNewPool({ ...newPool, maxCount: parseInt(e.target.value) || 3 })}
-                            className="h-9"
-                          />
+
+                        <div>
+                          <Label className='text-xs text-muted-foreground'>
+                            Node Counts
+                          </Label>
+                          <div className='flex items-center gap-8 mt-2'>
+                            <div className='text-center'>
+                              <div className='text-xs text-muted-foreground mb-1'>
+                                Min
+                              </div>
+                              <div className='font-semibold text-lg'>
+                                {pool.minCount}
+                              </div>
+                            </div>
+                            <div className='text-center'>
+                              <div className='text-xs text-muted-foreground mb-1'>
+                                Desired
+                              </div>
+                              <div className='font-semibold text-lg'>
+                                {pool.desiredCount}
+                              </div>
+                            </div>
+                            <div className='text-center'>
+                              <div className='text-xs text-muted-foreground mb-1'>
+                                Max
+                              </div>
+                              <div className='font-semibold text-lg'>
+                                {pool.maxCount}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="new-pool-disk-size" className="text-sm font-medium">Disk Size (GB)</Label>
-                        <Input
-                          id="new-pool-disk-size"
-                          type="number"
-                          min="20"
-                          value={newPool.diskSize}
-                          onChange={(e) => setNewPool({ ...newPool, diskSize: parseInt(e.target.value) || 100 })}
-                          className="h-9"
-                        />
-                      </div>
-                      
-                      {!validateNodeCounts(newPool.minCount, newPool.desiredCount, newPool.maxCount) && (
-                        <Alert>
-                          <AlertTriangle className="h-4 w-4" />
-                          <AlertDescription>
-                            Node counts must follow: 0 {'<'} min ≤ desired ≤ max
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                      
-                      <div className="flex items-center gap-3 pt-2">
-                        <Button 
-                          onClick={handleAddPool}
-                          disabled={!newPool.name || !newPool.flavor || !validateNodeCounts(newPool.minCount, newPool.desiredCount, newPool.maxCount)}
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Node Pool
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => {
-                            setShowAddPoolForm(false)
-                            setNewPool({
-                              name: '',
-                              flavor: '',
-                              desiredCount: 1,
-                              minCount: 1,
-                              maxCount: 3,
-                              diskSize: 100,
-                              labels: {}
-                            })
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                    </div>
+                  );
+                })}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      </div>
 
-        {/* Add-ons Section */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Add-ons Configuration</CardTitle>
-              <div className="flex items-center gap-2">
-                {isAddOnsEditing ? (
-                  <>
-                    <Button variant="outline" size="sm" onClick={cancelAddOnsChanges}>
-                      <X className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      onClick={saveAddOnsChanges}
-                      disabled={!hasAddOnsChanges}
-                      className="bg-black text-white hover:bg-black/90"
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </Button>
-                  </>
-                ) : (
-                  <Button onClick={startAddOnsEditing} variant="outline" size="sm">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Add-ons
-                  </Button>
-                )}
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Enable or disable add-ons for your cluster. Some add-ons are required for basic functionality.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {cluster.addOns.map((addon) => (
-                <div key={addon.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <h4 className="font-medium">{addon.displayName}</h4>
-                      <Badge variant="outline" className="text-xs">
-                        {addon.category}
-                      </Badge>
-                      {addon.isDefault && (
-                        <Badge variant="secondary" className="text-xs">
-                          Default
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">{addon.description}</p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                      <span>Version: {addon.version}</span>
-                      <span>Status: {addon.status}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Switch
-                      id={`addon-${addon.id}`}
-                      checked={isAddOnsEditing ? (addOnsChanges[addon.id] ?? addon.isEnabled) : addon.isEnabled}
-                      onCheckedChange={(checked) => {
-                        if (isAddOnsEditing) {
-                          handleAddOnToggle(addon.id, checked)
-                        }
-                      }}
-                      disabled={!isAddOnsEditing || !addon.isEditable}
-                    />
-                    <Label htmlFor={`addon-${addon.id}`} className="text-sm">
-                      {isAddOnsEditing ? (addOnsChanges[addon.id] ?? addon.isEnabled) ? 'Enabled' : 'Disabled' : addon.isEnabled ? 'Enabled' : 'Disabled'}
-                    </Label>
-                  </div>
+      {/* Add-ons Section with Edit Button */}
+      <div className='mb-8'>
+        <div className='bg-card text-card-foreground border-border border rounded-lg'>
+          <div className='p-6 pb-4'>
+            <div className='flex items-center justify-between'>
+              <div className='flex items-center gap-3'>
+                <h3 className='text-lg font-semibold'>Add-ons</h3>
+                <div className='bg-gray-800 text-white text-sm font-medium rounded-full w-6 h-6 flex items-center justify-center'>
+                  {cluster.addOns.filter(addon => addon.isEnabled).length}
                 </div>
-              ))}
+              </div>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => setIsAddOnsEditModalOpen(true)}
+                className='flex items-center gap-2'
+              >
+                Edit Add-ons
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className='px-6 pb-6'>
+            {cluster.addOns.length === 0 ? (
+              <div className='text-center py-8 text-muted-foreground'>
+                <p>No add-ons available for this cluster.</p>
+              </div>
+            ) : (
+              <div className='grid grid-cols-2 gap-4'>
+                {cluster.addOns.map(addon => (
+                  <div
+                    key={addon.id}
+                    className='p-4 border rounded-lg relative'
+                  >
+                    <Badge
+                      variant='outline'
+                      className='absolute top-3 right-3 text-xs font-medium'
+                    >
+                      {addon.version}
+                    </Badge>
+                    <div className='space-y-1 pr-16'>
+                      <div className='text-sm font-medium leading-none'>
+                        {addon.displayName}
+                      </div>
+                      <p className='text-sm text-muted-foreground'>
+                        {addon.description}
+                      </p>
+                      <div className='flex items-center gap-2 mt-2'>
+                        <Badge
+                          variant={addon.isEnabled ? 'default' : 'secondary'}
+                          className='text-xs'
+                        >
+                          {addon.isEnabled ? 'Enabled' : 'Disabled'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
+      {/* Download Kubeconfig Modal */}
+      <Dialog
+        open={isKubeconfigModalOpen}
+        onOpenChange={setIsKubeconfigModalOpen}
+      >
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle className='flex items-center gap-2'>
+              <Key className='h-5 w-5' />
+              Download Kubeconfig
+            </DialogTitle>
+            <DialogDescription>
+              Download the kubeconfig file to connect to your cluster using
+              kubectl or other Kubernetes tools.
+            </DialogDescription>
+          </DialogHeader>
 
-
-
-
-        {/* Delete Node Pool Dialog */}
-        <Dialog open={isDeletePoolOpen} onOpenChange={setIsDeletePoolOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-red-600">Delete Node Pool</DialogTitle>
-              <DialogDescription>
-                This will permanently delete the node pool "{poolToDelete?.name}". All nodes in this pool will be terminated.
-              </DialogDescription>
-            </DialogHeader>
-            
+          <div className='space-y-4'>
             <Alert>
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className='h-4 w-4' />
               <AlertDescription>
-                <strong>Warning:</strong> Deleting this node pool will terminate all nodes and may cause service disruption 
-                if workloads are running on them. Make sure to drain the nodes first.
+                <strong>Important:</strong> This kubeconfig file uses
+                token-based authentication. The authentication token will expire
+                in <strong>15 minutes</strong> for security reasons.
               </AlertDescription>
             </Alert>
-            
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Node Pool Details:</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Name:</span>
-                  <span className="font-medium">{poolToDelete?.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Current Nodes:</span>
-                  <span className="font-medium">{poolToDelete?.desiredCount}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Instance Type:</span>
-                  <span className="font-medium">{poolToDelete?.flavor}</span>
-                </div>
-              </div>
+
+            <div className='bg-muted/50 p-4 rounded-lg'>
+              <h4 className='font-medium mb-2'>What you'll get:</h4>
+              <ul className='text-sm space-y-1 text-muted-foreground'>
+                <li>• Cluster API endpoint configuration</li>
+                <li>• Authentication token (valid for 15 minutes)</li>
+                <li>• Cluster CA certificate</li>
+                <li>• Context configuration for kubectl</li>
+              </ul>
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDeletePoolOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                variant="destructive"
-                onClick={handleDeletePool}
-              >
-                Delete Node Pool
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Add-ons Confirmation Modal */}
-        <Dialog open={isAddOnsConfirmOpen} onOpenChange={setIsAddOnsConfirmOpen}>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Confirm Add-ons Changes</DialogTitle>
-              <DialogDescription>
-                Please review the following changes and confirm to proceed.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              {(() => {
-                const removedAddOns = cluster.addOns.filter(addon => 
-                  addon.isEnabled && !pendingAddOnsChanges[addon.id]
-                )
-                const addedDefaultAddOns = cluster.addOns.filter(addon => 
-                  !addon.isEnabled && pendingAddOnsChanges[addon.id] && addon.isDefault
-                )
-
-                return (
-                  <>
-                    {removedAddOns.length > 0 && (
-                      <Alert>
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>
-                          <strong>Removed Add-ons ({removedAddOns.length}):</strong>
-                          <ul className="mt-2 space-y-1">
-                            {removedAddOns.map(addon => (
-                              <li key={addon.id} className="text-sm">
-                                • {addon.displayName} - {addon.description}
-                              </li>
-                            ))}
-                          </ul>
-                          <p className="mt-2 text-sm">
-                            You will need to manually add analogous add-ons if you need similar functionality.
-                          </p>
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                    
-                    {addedDefaultAddOns.length > 0 && (
-                      <Alert>
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>
-                          <strong>Added Default Add-ons ({addedDefaultAddOns.length}):</strong>
-                          <ul className="mt-2 space-y-1">
-                            {addedDefaultAddOns.map(addon => (
-                              <li key={addon.id} className="text-sm">
-                                • {addon.displayName} - {addon.description}
-                              </li>
-                            ))}
-                          </ul>
-                          <p className="mt-2 text-sm">
-                            You may need to remove any conflicting add-ons you have manually declared in your cluster to avoid conflicts.
-                          </p>
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </>
-                )
-              })()}
+            <div className='bg-blue-50 p-4 rounded-lg border border-blue-200'>
+              <h4 className='font-medium text-blue-900 mb-2'>
+                Usage Instructions:
+              </h4>
+              <ol className='text-sm space-y-1 text-blue-800'>
+                <li>1. Download the kubeconfig file</li>
+                <li>
+                  2. Set KUBECONFIG environment variable or use --kubeconfig
+                  flag
+                </li>
+                <li>3. Run kubectl commands within 15 minutes</li>
+                <li>4. Re-download if token expires</li>
+              </ol>
             </div>
+          </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddOnsConfirmOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={() => applyAddOnsChanges(pendingAddOnsChanges)}
-                className="bg-black text-white hover:bg-black/90"
-              >
-                Confirm Changes
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </PageShell>
-  )
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setIsKubeconfigModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDownloadKubeconfig}
+              className='bg-blue-600 hover:bg-blue-700'
+            >
+              <Download className='h-4 w-4 mr-2' />
+              Download Kubeconfig
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upgrade Cluster Modal */}
+      <ClusterUpgradeModal
+        cluster={cluster}
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        onConfirm={handleConfirmUpgrade}
+      />
+
+      {/* Node Pool Edit Modal */}
+      <NodePoolEditModal
+        cluster={cluster}
+        isOpen={isNodePoolEditModalOpen}
+        onClose={() => setIsNodePoolEditModalOpen(false)}
+        onUpdate={handleClusterUpdate}
+      />
+
+      {/* Add-ons Edit Modal */}
+      <AddOnsEditModal
+        cluster={cluster}
+        isOpen={isAddOnsEditModalOpen}
+        onClose={() => setIsAddOnsEditModalOpen(false)}
+        onUpdate={handleClusterUpdate}
+      />
+    </PageLayout>
+  );
 }
-

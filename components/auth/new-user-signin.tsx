@@ -9,11 +9,13 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 export function NewUserSignIn() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [userType, setUserType] = useState<'root' | 'iam'>('root');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -124,10 +126,10 @@ export function NewUserSignIn() {
           <div className='bg-white rounded-lg'>
             {/* Title and Description */}
             <div className='text-left mb-6'>
-              <h2 className='text-2xl font-bold tracking-tight text-gray-900 mb-2'>
+              <h2 className='text-3xl font-semibold tracking-tight text-gray-900 mb-2'>
                 Login to your account
               </h2>
-              <p className='text-sm text-gray-600'>
+              <p className='text-md text-gray-500'>
                 Enter your credentials to access your account
               </p>
             </div>
@@ -136,15 +138,30 @@ export function NewUserSignIn() {
             <form className='space-y-5' onSubmit={handleSubmit}>
               {errors.general && (
                 <div className='rounded-md bg-red-50 p-4'>
-                  <p className='text-sm text-red-700'>{errors.general}</p>
+                  <p className='text-md text-red-700'>{errors.general}</p>
                 </div>
               )}
+
+              {/* User Type Toggle */}
+              <div>
+                <Switch name="userType" size="medium">
+                  <Switch.Control
+                    label="Root User"
+                    value="root"
+                    defaultChecked={true}
+                  />
+                  <Switch.Control
+                    label="IAM User"
+                    value="iam"
+                  />
+                </Switch>
+              </div>
 
               {/* Email Address */}
               <div>
                 <Label
                   htmlFor='email'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm text-gray-500 mb-2'
                 >
                   Email Address
                 </Label>
@@ -171,13 +188,13 @@ export function NewUserSignIn() {
                 <div className='flex items-center justify-between'>
                   <Label
                     htmlFor='password'
-                    className='block text-sm font-medium text-gray-700'
+                    className='block text-sm text-gray-500 mb-2'
                   >
                     Password
                   </Label>
                   <Link
                     href='/auth/forgot-password'
-                    className='text-sm font-medium text-gray-600 hover:text-gray-800'
+                    className='text-sm font-medium text-gray-600 hover:text-gray-800 mb-2'
                   >
                     Forgot password?
                   </Link>

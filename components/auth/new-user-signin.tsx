@@ -96,17 +96,14 @@ export function NewUserSignIn() {
   return (
     <div className='flex min-h-screen'>
       {/* Left side - 40% - Image */}
-      <div className='hidden lg:flex lg:w-[40%] relative bg-gradient-to-br from-green-50 to-green-100'>
-        <div className='absolute inset-0 flex items-center justify-center p-12'>
-          <Image
-            src='/register-krutrim-cloud.png'
-            alt='Krutrim Cloud Platform'
-            width={600}
-            height={600}
-            className='object-contain w-full h-auto'
-            priority
-          />
-        </div>
+      <div className='hidden lg:flex lg:w-[40%] relative bg-gradient-to-br from-green-50 to-green-100 overflow-hidden'>
+        <Image
+          src='/register-krutrim-cloud.png'
+          alt='Krutrim Cloud Platform'
+          fill
+          className='object-cover object-right'
+          priority
+        />
       </div>
 
       {/* Right side - 60% - Form Content */}

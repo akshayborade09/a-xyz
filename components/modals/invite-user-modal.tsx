@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -100,8 +101,8 @@ export function InviteUserModal({
       }
       setStep(2);
     } else if (step === 2) {
-      // Validate step 2 - at least one role or group must be selected
-      if (selectedRoles.length === 0 && selectedGroups.length === 0) {
+      // Validate step 2 - at least one role must be selected (groups not available)
+      if (selectedRoles.length === 0) {
         return;
       }
       handleInvite();
@@ -177,7 +178,7 @@ export function InviteUserModal({
   );
 
   const isValidStep1 = email && username && password && (consoleAccess || programmaticAccess);
-  const isValidStep2 = selectedRoles.length > 0 || selectedGroups.length > 0;
+  const isValidStep2 = selectedRoles.length > 0; // Groups not available, only roles required
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -337,7 +338,7 @@ export function InviteUserModal({
                 Assign Roles & Groups
               </Label>
               <p className='text-xs text-muted-foreground'>
-                Select at least one role or group to assign to this user
+                Select at least one role to assign to this user
               </p>
             </div>
 
@@ -411,49 +412,22 @@ export function InviteUserModal({
                 </div>
               </TabsContent>
 
-              <TabsContent value='groups' className='space-y-4 mt-4'>
-                <div className='relative'>
-                  <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                  <Input
-                    placeholder='Search groups...'
-                    value={groupSearch}
-                    onChange={e => setGroupSearch(e.target.value)}
-                    className='pl-9'
-                  />
-                </div>
-
-                <div className='max-h-[300px] overflow-y-auto border rounded-md'>
-                  {filteredGroups.length > 0 ? (
-                    filteredGroups.map((group, index) => (
-                      <div
-                        key={group.id}
-                        className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${
-                          selectedGroups.includes(group.id)
-                            ? 'bg-primary/5'
-                            : 'hover:bg-muted/50'
-                        } ${index !== filteredGroups.length - 1 ? 'border-b' : ''}`}
-                        onClick={() => toggleGroup(group.id)}
-                      >
-                        <Checkbox
-                          checked={selectedGroups.includes(group.id)}
-                          onCheckedChange={() => toggleGroup(group.id)}
-                          onClick={e => e.stopPropagation()}
-                        />
-                        <div className='flex-1 min-w-0'>
-                          <div className='font-medium text-sm truncate'>
-                            {group.name}
-                          </div>
-                          <div className='text-xs text-muted-foreground truncate'>
-                            {group.description}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className='text-center py-8 text-sm text-muted-foreground'>
-                      No groups found
-                    </div>
-                  )}
+              <TabsContent value='groups' className='mt-4'>
+                <div className='flex flex-col items-center justify-center p-4'>
+                  <div className='relative w-full max-w-[280px] h-[150px] mb-2'>
+                    <Image
+                      src='/empty-state-group.svg'
+                      alt='No groups available'
+                      fill
+                      className='object-contain'
+                    />
+                  </div>
+                  <h3 className='text-base font-medium text-gray-900 mb-1'>
+                    No groups available
+                  </h3>
+                  <p className='text-sm text-gray-500 text-center'>
+                    You&apos;ll need to create a group first.
+                  </p>
                 </div>
               </TabsContent>
             </Tabs>

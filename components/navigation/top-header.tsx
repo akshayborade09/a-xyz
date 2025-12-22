@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   BellIcon,
@@ -45,6 +46,25 @@ export function TopHeader({ onMenuClick, isMobile }: TopHeaderProps) {
     logout: () => void;
   };
 
+  const [organisationId, setOrganisationId] = useState<string>('');
+
+  // Get organization ID from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const userData = localStorage.getItem('user_data');
+        if (userData) {
+          const parsedData = JSON.parse(userData);
+          if (parsedData.organisationId) {
+            setOrganisationId(parsedData.organisationId);
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+  }, []);
+
   // Sample regions for the region selector
   const regions = [
     { id: 'in-blr', name: 'Bengaluru' },
@@ -67,11 +87,19 @@ export function TopHeader({ onMenuClick, isMobile }: TopHeaderProps) {
     <header className='sticky top-0 z-40 w-full'>
       <div className='flex h-[56px] items-center justify-between px-4'>
         {/* Left side - Logo, mobile menu button and search */}
-        <div className='flex items-center gap-4'>
+        <div className='flex items-center gap-3'>
           {/* Logo */}
           <Link href='/dashboard' className='flex items-center gap-2'>
             <KrutrimLogo width={120} height={40} href={null} />
           </Link>
+
+          {/* Organization ID - next to logo */}
+          {organisationId && (
+            <div className='inline-flex items-center gap-1 border border-gray-300 rounded-md px-2 py-1'>
+              <span className='text-[11px] font-medium text-gray-700'>Org ID:</span>
+              <span className='text-[11px] font-mono text-gray-900'>{organisationId}</span>
+            </div>
+          )}
 
           {isMobile && (
             <Button

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 
 export function NewUserSignIn() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [userType, setUserType] = useState<'root' | 'iam'>('root');
   const [organisationId, setOrganisationId] = useState('');
@@ -26,6 +27,14 @@ export function NewUserSignIn() {
     password?: string;
     general?: string;
   }>({});
+
+  // Check for userType in URL params and set it
+  useEffect(() => {
+    const userTypeParam = searchParams.get('userType');
+    if (userTypeParam === 'iam') {
+      setUserType('iam');
+    }
+  }, [searchParams]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -69,7 +78,24 @@ export function NewUserSignIn() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Set authentication data
+      // Check if IAM user - they should reset password on first login
+      // In production, this would be determined by API response (e.g., passwordResetRequired flag)
+      if (userType === 'iam') {
+        // Store temporary session data for password reset flow
+        const tempSession = {
+          email: email,
+          organisationId: organisationId,
+          userType: 'iam',
+          timestamp: Date.now(),
+        };
+        sessionStorage.setItem('temp_auth_session', JSON.stringify(tempSession));
+        
+        // Redirect to reset password page for IAM users
+        router.push('/auth/reset-password-iam');
+        return;
+      }
+
+      // Set authentication data for Root users
       const userInfo = {
         name: email.split('@')[0],
         email: email,
@@ -154,16 +180,18 @@ export function NewUserSignIn() {
                 <Switch 
                   name="userType" 
                   size="medium"
+                  value={userType}
                   onValueChange={(value) => setUserType(value as 'root' | 'iam')}
                 >
                   <Switch.Control
                     label="Root User"
                     value="root"
-                    defaultChecked={true}
+                    defaultChecked={userType === 'root'}
                   />
                   <Switch.Control
                     label="IAM User"
                     value="iam"
+                    defaultChecked={userType === 'iam'}
                   />
                 </Switch>
               </div>

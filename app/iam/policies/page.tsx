@@ -6,6 +6,7 @@ import { PageShell } from '@/components/page-shell';
 import { Button } from '@/components/ui/button';
 import { ShadcnDataTable, type Column } from '@/components/ui/shadcn-data-table';
 import { ActionMenu } from '@/components/action-menu';
+import { VercelTabs } from '@/components/ui/vercel-tabs';
 import {
   mockPolicies,
   type Policy,
@@ -21,12 +22,18 @@ import { useToast } from '@/hooks/use-toast';
 export default function PoliciesPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<'custom' | 'managed'>('custom');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [detachModalOpen, setDetachModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
   const [policies, setPolicies] = useState(mockPolicies);
+
+  // Filter policies based on active tab
+  const filteredPolicies = policies.filter(policy => 
+    activeTab === 'custom' ? policy.type === 'custom' : policy.type === 'managed'
+  );
 
   const handleCreateSuccess = () => {
     setCreateModalOpen(false);
@@ -151,8 +158,8 @@ export default function PoliciesPage() {
         <div className='flex justify-end'>
           <ActionMenu
             viewHref={`/iam/policies/${row.id}`}
-            onEdit={() => handleEditClick(row)}
-            onCustomDelete={() => handleDeleteClick(row)}
+            onEdit={row.type === 'custom' ? () => handleEditClick(row) : undefined}
+            onCustomDelete={row.type === 'custom' ? () => handleDeleteClick(row) : undefined}
             resourceName={row.name}
             resourceType='Policy'
           />
@@ -175,16 +182,28 @@ export default function PoliciesPage() {
           </Button>
         }
       >
-        <ShadcnDataTable
+        <div className='space-y-6'>
+          <VercelTabs
+            tabs={[
+              { id: 'custom', label: 'Custom Policies' },
+              { id: 'managed', label: 'Managed Policies' },
+            ]}
+            activeTab={activeTab}
+            onTabChange={(tabId) => setActiveTab(tabId as 'custom' | 'managed')}
+            size='lg'
+          />
+
+          <ShadcnDataTable
           columns={columns}
-          data={policies}
+          data={filteredPolicies}
           searchableColumns={['name', 'description']}
           defaultSort={{ column: 'name', direction: 'asc' }}
           pageSize={10}
           enableSearch={true}
           enablePagination={true}
-          searchPlaceholder='Search policies by name or description...'
-        />
+          searchPlaceholder={`Search ${activeTab} policies by name or description...`}
+          />
+        </div>
       </PageShell>
 
       <CreatePolicyModal

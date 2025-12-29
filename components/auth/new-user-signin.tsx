@@ -80,29 +80,32 @@ export function NewUserSignIn() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
 
+      // COMMENTED OUT: Reset password flow for IAM users
+      // TODO: Re-enable this when we're ready to implement forced password reset for IAM users
       // Check if IAM user - they should reset password on first login
       // In production, this would be determined by API response (e.g., passwordResetRequired flag)
-      if (userType === 'iam') {
-        // Store temporary session data for password reset flow
-        const tempSession = {
-          email: email,
-          organisationId: organisationId,
-          userType: 'iam',
-          timestamp: Date.now(),
-        };
-        sessionStorage.setItem('temp_auth_session', JSON.stringify(tempSession));
-        
-        // Redirect to reset password page for IAM users
-        router.push('/auth/reset-password-iam');
-        return;
-      }
+      // if (userType === 'iam') {
+      //   // Store temporary session data for password reset flow
+      //   const tempSession = {
+      //     email: email,
+      //     organisationId: organisationId,
+      //     userType: 'iam',
+      //     timestamp: Date.now(),
+      //   };
+      //   sessionStorage.setItem('temp_auth_session', JSON.stringify(tempSession));
+      //   
+      //   // Redirect to reset password page for IAM users
+      //   router.push('/auth/reset-password-iam');
+      //   return;
+      // }
 
-      // Set authentication data for Root users
+      // Set authentication data for both Root and IAM users
       const userInfo = {
         name: email.split('@')[0],
         email: email,
         mobile: '',
-        accountType: 'individual',
+        accountType: userType === 'iam' ? 'iam' : 'individual',
+        organisationId: userType === 'iam' ? organisationId : undefined,
         signinCompletedAt: new Date().toISOString(),
       };
 

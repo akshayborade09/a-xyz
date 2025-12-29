@@ -122,8 +122,8 @@ export default function UserDetailsPage() {
           </div>
 
           <DetailGrid>
-            {/* Row 1: Name, Email, Status, Access Type */}
-            <div className='col-span-full grid grid-cols-4 gap-4'>
+            {/* Row 1: Name, Email, Access Type */}
+            <div className='col-span-full grid grid-cols-3 gap-4'>
               <div className='space-y-1'>
                 <label className='text-sm font-normal text-gray-700' style={{ fontSize: '13px' }}>
                   Name
@@ -138,16 +138,6 @@ export default function UserDetailsPage() {
                 </label>
                 <div className='font-medium' style={{ fontSize: '14px' }}>
                   {user.email}
-                </div>
-              </div>
-              <div className='space-y-1'>
-                <label className='text-sm font-normal text-gray-700' style={{ fontSize: '13px' }}>
-                  Status
-                </label>
-                <div>
-                  <StatusBadge status={getStatusVariant(user.status)}>
-                    {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                  </StatusBadge>
                 </div>
               </div>
               <div className='space-y-1'>

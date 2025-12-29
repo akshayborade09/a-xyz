@@ -104,15 +104,22 @@ export function DetachRoleModal({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className='sm:max-w-3xl max-h-[90vh] overflow-y-auto'>
-        <DialogHeader>
-          <DialogTitle>Detach Role from Groups and Users</DialogTitle>
-          <DialogDescription>
-            Before deleting <strong>{role.name}</strong>, you need to detach it
-            from the following groups and users.
-          </DialogDescription>
+        <DialogHeader className='border-b pb-4'>
+          <DialogTitle className='text-2xl font-semibold'>
+            Detach Role from Groups and Users
+          </DialogTitle>
         </DialogHeader>
 
-        <div className='space-y-6 py-4'>
+        <div className='space-y-4 pt-6'>
+          <div className='space-y-2'>
+            <DialogDescription className='text-sm'>
+              Before deleting <strong>{role.name}</strong>, you need to detach it
+              from the following groups and users.
+            </DialogDescription>
+            <p className='text-sm text-muted-foreground'>
+              To detach, go to <strong>Groups</strong> or <strong>Users</strong>, select an item, click <strong>Edit</strong>, and remove this role.
+            </p>
+          </div>
           {/* Groups Section */}
           {groups.length > 0 && (
             <div className='space-y-3'>
@@ -123,6 +130,7 @@ export function DetachRoleModal({
                     Groups ({groups.length})
                   </Label>
                 </div>
+                {/* COMMENTED OUT: Bulk Detach button
                 <Button
                   type='button'
                   variant='outline'
@@ -132,17 +140,13 @@ export function DetachRoleModal({
                 >
                   Bulk Detach
                 </Button>
+                */}
               </div>
               <div className='max-h-[200px] overflow-y-auto space-y-2'>
                 {groups.map(group => (
                   <Card
                     key={group.id}
-                    className={`cursor-pointer transition-colors ${
-                      selectedGroups.includes(group.id)
-                        ? 'border-primary bg-primary/5'
-                        : 'hover:bg-muted/50'
-                    }`}
-                    onClick={() => toggleGroup(group.id)}
+                    className='transition-colors hover:bg-muted/50'
                   >
                     <CardContent className='p-3'>
                       <div className='flex items-center justify-between'>
@@ -152,11 +156,13 @@ export function DetachRoleModal({
                             {group.description}
                           </div>
                         </div>
+                        {/* COMMENTED OUT: Checkbox for selection
                         <Checkbox
                           checked={selectedGroups.includes(group.id)}
                           onCheckedChange={() => toggleGroup(group.id)}
                           onClick={e => e.stopPropagation()}
                         />
+                        */}
                       </div>
                     </CardContent>
                   </Card>
@@ -175,6 +181,7 @@ export function DetachRoleModal({
                     Users ({users.length})
                   </Label>
                 </div>
+                {/* COMMENTED OUT: Bulk Detach button
                 <Button
                   type='button'
                   variant='outline'
@@ -184,17 +191,13 @@ export function DetachRoleModal({
                 >
                   Bulk Detach
                 </Button>
+                */}
               </div>
               <div className='max-h-[200px] overflow-y-auto space-y-2'>
                 {users.map(user => (
                   <Card
                     key={user.id}
-                    className={`cursor-pointer transition-colors ${
-                      selectedUsers.includes(user.id)
-                        ? 'border-primary bg-primary/5'
-                        : 'hover:bg-muted/50'
-                    }`}
-                    onClick={() => toggleUser(user.id)}
+                    className='transition-colors hover:bg-muted/50'
                   >
                     <CardContent className='p-3'>
                       <div className='flex items-center justify-between'>
@@ -204,11 +207,13 @@ export function DetachRoleModal({
                             {user.email}
                           </div>
                         </div>
+                        {/* COMMENTED OUT: Checkbox for selection
                         <Checkbox
                           checked={selectedUsers.includes(user.id)}
                           onCheckedChange={() => toggleUser(user.id)}
                           onClick={e => e.stopPropagation()}
                         />
+                        */}
                       </div>
                     </CardContent>
                   </Card>
@@ -228,6 +233,7 @@ export function DetachRoleModal({
           <Button variant='outline' onClick={onClose} disabled={loading}>
             Cancel
           </Button>
+          {/* COMMENTED OUT: Detach CTA button
           <Button
             onClick={handleDetach}
             disabled={
@@ -240,6 +246,7 @@ export function DetachRoleModal({
               ? 'Detaching...'
               : `Detach (${selectedGroups.length + selectedUsers.length})`}
           </Button>
+          */}
         </DialogFooter>
       </DialogContent>
     </Dialog>

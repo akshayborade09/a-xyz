@@ -73,15 +73,22 @@ export function DetachGroupModal({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className='sm:max-w-3xl max-h-[90vh] overflow-y-auto'>
-        <DialogHeader>
-          <DialogTitle>Detach Group from Users</DialogTitle>
-          <DialogDescription>
-            Before deleting <strong>{group.name}</strong>, you need to detach it
-            from the following users.
-          </DialogDescription>
+        <DialogHeader className='border-b pb-4'>
+          <DialogTitle className='text-2xl font-semibold'>
+            Detach Group from Users
+          </DialogTitle>
         </DialogHeader>
 
-        <div className='space-y-6 py-4'>
+        <div className='space-y-4 pt-6'>
+          <div className='space-y-2'>
+            <DialogDescription className='text-sm'>
+              Before deleting <strong>{group.name}</strong>, you need to detach it
+              from the following users.
+            </DialogDescription>
+            <p className='text-sm text-muted-foreground'>
+              To detach, go to <strong>Users</strong>, select a user, click <strong>Edit</strong>, and remove this group.
+            </p>
+          </div>
           {/* Users Section */}
           {users.length > 0 && (
             <div className='space-y-3'>
@@ -92,6 +99,7 @@ export function DetachGroupModal({
                     Users ({users.length})
                   </Label>
                 </div>
+                {/* COMMENTED OUT: Bulk Detach button
                 <Button
                   type='button'
                   variant='outline'
@@ -101,17 +109,13 @@ export function DetachGroupModal({
                 >
                   Bulk Detach
                 </Button>
+                */}
               </div>
               <div className='max-h-[300px] overflow-y-auto space-y-2'>
                 {users.map(user => (
                   <Card
                     key={user.id}
-                    className={`cursor-pointer transition-colors ${
-                      selectedUsers.includes(user.id)
-                        ? 'border-primary bg-primary/5'
-                        : 'hover:bg-muted/50'
-                    }`}
-                    onClick={() => toggleUser(user.id)}
+                    className='transition-colors hover:bg-muted/50'
                   >
                     <CardContent className='p-3'>
                       <div className='flex items-center justify-between'>
@@ -121,11 +125,13 @@ export function DetachGroupModal({
                             {user.email}
                           </div>
                         </div>
+                        {/* COMMENTED OUT: Checkbox for selection
                         <Checkbox
                           checked={selectedUsers.includes(user.id)}
                           onCheckedChange={() => toggleUser(user.id)}
                           onClick={e => e.stopPropagation()}
                         />
+                        */}
                       </div>
                     </CardContent>
                   </Card>
@@ -145,6 +151,7 @@ export function DetachGroupModal({
           <Button variant='outline' onClick={onClose} disabled={loading}>
             Cancel
           </Button>
+          {/* COMMENTED OUT: Detach CTA button
           <Button
             onClick={handleDetach}
             disabled={loading || selectedUsers.length === 0}
@@ -154,6 +161,7 @@ export function DetachGroupModal({
               ? 'Detaching...'
               : `Detach (${selectedUsers.length})`}
           </Button>
+          */}
         </DialogFooter>
       </DialogContent>
     </Dialog>

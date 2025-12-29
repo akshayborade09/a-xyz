@@ -22,6 +22,7 @@ export interface Policy {
   id: string;
   name: string;
   description: string;
+  type: 'custom' | 'managed';
   creatorId: string;
   creatorName: string;
   creatorEmail: string;
@@ -127,6 +128,7 @@ export const mockPolicies: Policy[] = [
     id: 'policy-1',
     name: 'VM Full Access',
     description: 'Full access to all VM operations',
+    type: 'managed',
     creatorId: 'user-1',
     creatorName: 'John Doe',
     creatorEmail: 'john.doe@example.com',
@@ -166,6 +168,7 @@ export const mockPolicies: Policy[] = [
     id: 'policy-2',
     name: 'Storage Read Only',
     description: 'Read-only access to storage resources',
+    type: 'managed',
     creatorId: 'user-1',
     creatorName: 'John Doe',
     creatorEmail: 'john.doe@example.com',
@@ -184,6 +187,7 @@ export const mockPolicies: Policy[] = [
     id: 'policy-3',
     name: 'Network Management',
     description: 'Full network management capabilities',
+    type: 'custom',
     creatorId: 'user-2',
     creatorName: 'Jane Smith',
     creatorEmail: 'jane.smith@example.com',
@@ -223,6 +227,7 @@ export const mockPolicies: Policy[] = [
     id: 'policy-4',
     name: 'Kubernetes Cluster Access',
     description: 'Access to Kubernetes cluster operations',
+    type: 'managed',
     creatorId: 'user-1',
     creatorName: 'John Doe',
     creatorEmail: 'john.doe@example.com',
@@ -255,6 +260,7 @@ export const mockPolicies: Policy[] = [
     id: 'policy-5',
     name: 'Billing View Only',
     description: 'View billing information only',
+    type: 'custom',
     creatorId: 'user-2',
     creatorName: 'Jane Smith',
     creatorEmail: 'jane.smith@example.com',
@@ -278,7 +284,7 @@ export const mockRoles: Role[] = [
     name: 'Super Admin',
     description: 'Full system access and control',
     type: 'preset',
-    policyIds: ['policy-1', 'policy-3', 'policy-4'],
+    policyIds: ['policy-1', 'policy-4'],
     createdAt: '2024-01-15T10:00:00Z',
     createdBy: 'user-1',
   },
@@ -305,7 +311,7 @@ export const mockRoles: Role[] = [
     name: 'Network Admin',
     description: 'Network infrastructure management',
     type: 'custom',
-    policyIds: ['policy-3'],
+    policyIds: [],
     createdAt: '2024-02-05T11:00:00Z',
     createdBy: 'user-1',
   },
@@ -333,7 +339,7 @@ export const mockGroups: Group[] = [
     id: 'group-3',
     name: 'Read-Only Users',
     description: 'Users with read-only access',
-    roleIds: ['role-3'],
+    roleIds: [],
     createdAt: '2024-02-15T09:00:00Z',
     createdBy: 'user-2',
   },

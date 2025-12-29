@@ -87,15 +87,22 @@ export function DetachPolicyModal({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className='sm:max-w-2xl max-h-[90vh] overflow-y-auto'>
-        <DialogHeader>
-          <DialogTitle>Detach Policy from Roles</DialogTitle>
-          <DialogDescription>
-            Before deleting <strong>{policy.name}</strong>, you need to detach it
-            from the following roles.
-          </DialogDescription>
+        <DialogHeader className='border-b pb-4'>
+          <DialogTitle className='text-lg font-semibold'>
+            Detach Policy from Roles
+          </DialogTitle>
         </DialogHeader>
 
-        <div className='space-y-6 py-4'>
+        <div className='space-y-4 pt-6'>
+          <div className='space-y-2'>
+            <DialogDescription className='text-sm'>
+              Before deleting <strong>{policy.name}</strong>, you need to detach it
+              from the following roles.
+            </DialogDescription>
+            <p className='text-sm text-muted-foreground'>
+              To detach, go to <strong>Roles</strong>, select a role, click <strong>Edit</strong>, and remove this policy.
+            </p>
+          </div>
           {/* Roles Section */}
           {roles.length > 0 && (
             <div className='space-y-3'>
@@ -106,6 +113,7 @@ export function DetachPolicyModal({
                     Roles ({roles.length})
                   </Label>
                 </div>
+                {/* COMMENTED OUT: Bulk detach buttons
                 <div className='flex items-center gap-2'>
                   <Button
                     type='button'
@@ -126,23 +134,23 @@ export function DetachPolicyModal({
                     Detach All
                   </Button>
                 </div>
+                */}
               </div>
               <div className='max-h-[300px] overflow-y-auto border rounded-md'>
                 {roles.map((role, index) => (
                   <div
                     key={role.id}
-                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${
-                      selectedRoles.includes(role.id)
-                        ? 'bg-primary/5'
-                        : 'hover:bg-muted/50'
-                    } ${index !== roles.length - 1 ? 'border-b' : ''}`}
-                    onClick={() => toggleRole(role.id)}
+                    className={`flex items-center gap-3 px-3 py-2 transition-colors hover:bg-muted/50 ${
+                      index !== roles.length - 1 ? 'border-b' : ''
+                    }`}
                   >
+                    {/* COMMENTED OUT: Checkbox for selection
                     <Checkbox
                       checked={selectedRoles.includes(role.id)}
                       onCheckedChange={() => toggleRole(role.id)}
                       onClick={e => e.stopPropagation()}
                     />
+                    */}
                     <div className='flex-1 min-w-0'>
                       <div className='font-medium text-sm truncate'>
                         {role.name}
@@ -168,6 +176,7 @@ export function DetachPolicyModal({
           <Button variant='outline' onClick={handleClose} disabled={loading}>
             Cancel
           </Button>
+          {/* COMMENTED OUT: Detach CTA button
           <Button
             onClick={handleDetach}
             disabled={loading || selectedRoles.length === 0}
@@ -177,6 +186,7 @@ export function DetachPolicyModal({
               ? 'Detaching...'
               : `Detach (${selectedRoles.length})`}
           </Button>
+          */}
         </DialogFooter>
       </DialogContent>
     </Dialog>

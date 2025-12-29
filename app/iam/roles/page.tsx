@@ -4,14 +4,16 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageShell } from '@/components/page-shell';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ShadcnDataTable, type Column } from '@/components/ui/shadcn-data-table';
 import { ActionMenu } from '@/components/action-menu';
+import { VercelTabs } from '@/components/ui/vercel-tabs';
 import {
   mockRoles,
   type Role,
   getRoleById,
   canDeleteRole,
+  getGroupsByRoleId,
+  getUsersByRoleId,
 } from '@/lib/iam-data';
 import { CreateRoleModal } from '@/components/modals/create-role-modal';
 import { EditRoleModal } from '@/components/modals/edit-role-modal';
@@ -22,12 +24,18 @@ import { useToast } from '@/hooks/use-toast';
 export default function RolesPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<'custom' | 'managed'>('custom');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [detachModalOpen, setDetachModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [roles, setRoles] = useState(mockRoles);
+
+  // Filter roles based on active tab
+  const filteredRoles = roles.filter(role => 
+    activeTab === 'custom' ? role.type === 'custom' : role.type === 'preset'
+  );
 
   const handleCreateSuccess = () => {
     setCreateModalOpen(false);
@@ -127,19 +135,6 @@ export default function RolesPage() {
       ),
     },
     {
-      key: 'type',
-      label: 'Type',
-      sortable: true,
-      render: (value: string) => (
-        <Badge 
-          variant={value === 'default' ? 'secondary' : 'outline'}
-          className='text-xs capitalize'
-        >
-          {value}
-        </Badge>
-      ),
-    },
-    {
       key: 'policyIds',
       label: 'Policies',
       render: (_: unknown, row: Role) => (
@@ -147,6 +142,30 @@ export default function RolesPage() {
           {row.policyIds.length} polic{row.policyIds.length !== 1 ? 'ies' : 'y'}
         </div>
       ),
+    },
+    {
+      key: 'groups',
+      label: 'Groups',
+      render: (_: unknown, row: Role) => {
+        const groups = getGroupsByRoleId(row.id);
+        return (
+          <div className='text-sm'>
+            {groups.length} group{groups.length !== 1 ? 's' : ''}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'users',
+      label: 'Users',
+      render: (_: unknown, row: Role) => {
+        const users = getUsersByRoleId(row.id);
+        return (
+          <div className='text-sm'>
+            {users.length} user{users.length !== 1 ? 's' : ''}
+          </div>
+        );
+      },
     },
     {
       key: 'createdAt',
@@ -190,16 +209,28 @@ export default function RolesPage() {
           </Button>
         }
       >
-        <ShadcnDataTable
+        <div className='space-y-6'>
+          <VercelTabs
+            tabs={[
+              { id: 'custom', label: 'Custom Roles' },
+              { id: 'managed', label: 'Managed Roles' },
+            ]}
+            activeTab={activeTab}
+            onTabChange={(tabId) => setActiveTab(tabId as 'custom' | 'managed')}
+            size='lg'
+          />
+
+          <ShadcnDataTable
           columns={columns}
-          data={roles}
+          data={filteredRoles}
           searchableColumns={['name', 'description']}
           defaultSort={{ column: 'name', direction: 'asc' }}
           pageSize={10}
           enableSearch={true}
           enablePagination={true}
-          searchPlaceholder='Search roles by name or description...'
-        />
+          searchPlaceholder={`Search ${activeTab} roles by name or description...`}
+          />
+        </div>
       </PageShell>
 
       <CreateRoleModal

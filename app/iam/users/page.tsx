@@ -144,8 +144,13 @@ export default function UsersPage() {
       label: 'Name',
       sortable: true,
       searchable: true,
-      render: (value: string) => (
-        <div className='font-medium text-sm'>{value}</div>
+      render: (value: string, row: User) => (
+        <div 
+          className='font-medium text-sm text-primary hover:underline cursor-pointer'
+          onClick={() => router.push(`/iam/users/${row.id}`)}
+        >
+          {value}
+        </div>
       ),
     },
     {
@@ -155,16 +160,6 @@ export default function UsersPage() {
       searchable: true,
       render: (value: string) => (
         <div className='text-sm'>{value}</div>
-      ),
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      sortable: true,
-      render: (value: User['status']) => (
-        <StatusBadge status={getStatusVariant(value)}>
-          {value.charAt(0).toUpperCase() + value.slice(1)}
-        </StatusBadge>
       ),
     },
     {

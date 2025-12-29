@@ -63,18 +63,19 @@ export function InviteUserModal({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [consoleAccess, setConsoleAccess] = useState(false);
-  const [programmaticAccess, setProgrammaticAccess] = useState(false);
+  const [consoleAccess, setConsoleAccess] = useState(true); // Pre-selected by default
+  const [programmaticAccess, setProgrammaticAccess] = useState(false); // Commented out in UI
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [roleSearch, setRoleSearch] = useState('');
   const [groupSearch, setGroupSearch] = useState('');
   const [viewMode, setViewMode] = useState<'roles' | 'groups'>('roles');
 
-  // Generate password when modal opens
+  // Generate password and set console access when modal opens
   useEffect(() => {
     if (open) {
       setPassword(generatePassword());
+      setConsoleAccess(true); // Ensure console access is always enabled
     }
   }, [open]);
 
@@ -95,8 +96,8 @@ export function InviteUserModal({
 
   const handleNext = () => {
     if (step === 1) {
-      // Validate step 1
-      if (!email || !username || !password || (!consoleAccess && !programmaticAccess)) {
+      // Validate step 1 - consoleAccess is always true by default
+      if (!email || !username || !password) {
         return;
       }
       setStep(2);
@@ -141,7 +142,7 @@ export function InviteUserModal({
     setPassword('');
     setShowPassword(false);
     setCopied(false);
-    setConsoleAccess(false);
+    setConsoleAccess(true); // Keep console access as default
     setProgrammaticAccess(false);
     setSelectedRoles([]);
     setSelectedGroups([]);
@@ -177,7 +178,7 @@ export function InviteUserModal({
     group.description.toLowerCase().includes(groupSearch.toLowerCase())
   );
 
-  const isValidStep1 = email && username && password && (consoleAccess || programmaticAccess);
+  const isValidStep1 = email && username && password; // Console access is always true by default
   const isValidStep2 = selectedRoles.length > 0; // Groups not available, only roles required
 
   return (
@@ -244,15 +245,17 @@ export function InviteUserModal({
                   <Checkbox
                     id='console'
                     checked={consoleAccess}
+                    disabled={true}
                     onCheckedChange={checked => setConsoleAccess(checked === true)}
                   />
                   <Label
                     htmlFor='console'
-                    className='text-sm font-normal cursor-pointer'
+                    className='text-sm font-normal cursor-not-allowed opacity-70'
                   >
                     Console Access
                   </Label>
                 </div>
+                {/* COMMENTED OUT: Programmatic Access
                 <div className='flex items-center space-x-2'>
                   <Checkbox
                     id='programmatic'
@@ -268,10 +271,13 @@ export function InviteUserModal({
                     Programmatic Access
                   </Label>
                 </div>
+                */}
               </div>
+              {/* COMMENTED OUT: Access type validation message
               <p className='text-xs text-muted-foreground'>
                 Select at least one access type
               </p>
+              */}
             </div>
 
             <div className='space-y-2'>

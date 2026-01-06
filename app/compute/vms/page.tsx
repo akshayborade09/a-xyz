@@ -23,6 +23,7 @@ import {
   Activity,
   Lock,
   Unlock,
+  ShieldAlert,
 } from 'lucide-react';
 import { CpuPricingCards } from './cpu/components/pricing-cards';
 import { GpuPricingCards } from './gpu/components/pricing-cards';
@@ -62,6 +63,7 @@ import {
   PublicIPManagementModal,
 } from '@/components/modals/vm-attachment-modals';
 import { VMEditModal } from '@/components/modals/vm-edit-modal';
+import { EmptyState } from '@/components/ui/empty-state';
 
 // VM Data and interfaces
 interface VirtualMachine {
@@ -149,6 +151,23 @@ function GpuBaremetalSection() {
   return (
     <div className='space-y-6'>
       <GpuBaremetalPricingCards />
+    </div>
+  );
+}
+
+function MyInstancesIAMSection() {
+  return (
+    <div className='space-y-6'>
+      <EmptyState
+        title='Access Restricted'
+        description='You do not have permission to view or access VM instances. Please contact your root user to request access.'
+        className='min-h-[400px]'
+        icon={
+          <div className='bg-red-50 rounded-full p-4'>
+            <ShieldAlert className='h-16 w-16 text-red-500' />
+          </div>
+        }
+      />
     </div>
   );
 }
@@ -822,6 +841,7 @@ const tabs = [
   { id: 'gpu', label: 'GPU VMs' },
   { id: 'gpu-baremetal', label: 'GPU Baremetal' },
   { id: 'instances', label: 'My Instances' },
+  { id: 'instances-iam', label: 'My Instance (IAM User)' },
 ];
 
 export default function VMsPage() {
@@ -838,6 +858,9 @@ export default function VMsPage() {
     }
     if (pathname.includes('/gpu-baremetal')) {
       return 'gpu-baremetal';
+    }
+    if (pathname.includes('/instances-iam')) {
+      return 'instances-iam';
     }
     if (pathname.includes('/instances')) {
       return 'instances';
@@ -881,6 +904,11 @@ export default function VMsPage() {
           title: 'My Instances',
           description: 'View and manage all your virtual machine instances',
         };
+      case 'instances-iam':
+        return {
+          title: 'My Instances (IAM User)',
+          description: 'Virtual machine instances accessible to IAM users',
+        };
       default:
         return {
           title: 'Virtual Machines',
@@ -906,6 +934,7 @@ export default function VMsPage() {
           {activeTab === 'gpu' && <GpuVmSection />}
           {activeTab === 'gpu-baremetal' && <GpuBaremetalSection />}
           {activeTab === 'instances' && <MyInstancesSection />}
+          {activeTab === 'instances-iam' && <MyInstancesIAMSection />}
         </div>
       </PageLayout>
     </TooltipProvider>

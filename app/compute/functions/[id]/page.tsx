@@ -938,8 +938,10 @@ uvicorn==0.25.0`,
                     </div>
                   </div>
 
-                  {/* Duration Chart */}
-                  <Card>
+                  {/* 2x2 Grid Layout */}
+                  <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 items-start'>
+                    {/* Duration Chart */}
+                    <Card>
                     <CardContent className='p-6'>
                       <div className='flex items-center gap-2 mb-4'>
                         <Activity className='h-5 w-5 text-muted-foreground' />
@@ -1051,10 +1053,10 @@ uvicorn==0.25.0`,
                         }}
                       />
                     </CardContent>
-                  </Card>
+                    </Card>
 
-                  {/* Invocations Chart */}
-                  <Card>
+                    {/* Invocations Chart */}
+                    <Card>
                     <CardContent className='p-6'>
                       <div className='flex items-center gap-2 mb-4'>
                         <Activity className='h-5 w-5 text-muted-foreground' />
@@ -1148,10 +1150,10 @@ uvicorn==0.25.0`,
                         }}
                       />
                     </CardContent>
-                  </Card>
+                    </Card>
 
-                  {/* Error Count and Success Rate Chart */}
-                  <Card>
+                    {/* Error Count and Success Rate Chart */}
+                    <Card>
                     <CardContent className='p-6'>
                       <div className='flex items-center gap-2 mb-4'>
                         <AlertCircle className='h-5 w-5 text-muted-foreground' />
@@ -1294,39 +1296,40 @@ uvicorn==0.25.0`,
                         }}
                       />
                     </CardContent>
-                  </Card>
+                    </Card>
 
-                  {/* Metrics Cards */}
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                    {/* Avg Response Time */}
-                    <Card>
-                      <CardContent className='p-6'>
-                        <div className='space-y-2'>
+                    {/* Metrics Cards - Stacked */}
+                    <div className='flex flex-col gap-6 h-full'>
+                      {/* Avg Response Time */}
+                      <Card className='flex-1'>
+                        <CardContent className='p-6 h-full flex flex-col justify-between'>
                           <p className='text-sm text-muted-foreground'>Avg Response Time</p>
-                          <p className='text-4xl font-semibold'>142ms</p>
-                          <div className='flex items-center gap-1 text-sm text-muted-foreground'>
-                            <TrendingDown className='h-4 w-4 text-red-600' />
-                            <span className='text-red-600'>12%</span>
-                            <span>from yesterday</span>
+                          <div className='space-y-2'>
+                            <p className='text-4xl font-semibold'>142ms</p>
+                            <div className='flex items-center gap-1 text-sm text-muted-foreground'>
+                              <TrendingDown className='h-4 w-4 text-red-600' />
+                              <span className='text-red-600'>12%</span>
+                              <span>from yesterday</span>
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
 
-                    {/* Success Rate */}
-                    <Card>
-                      <CardContent className='p-6'>
-                        <div className='space-y-2'>
+                      {/* Success Rate */}
+                      <Card className='flex-1'>
+                        <CardContent className='p-6 h-full flex flex-col justify-between'>
                           <p className='text-sm text-muted-foreground'>Success Rate</p>
-                          <p className='text-4xl font-semibold'>99.73%</p>
-                          <div className='flex items-center gap-1 text-sm text-muted-foreground'>
-                            <TrendingUp className='h-4 w-4 text-green-600' />
-                            <span className='text-green-600'>0.1%</span>
-                            <span>from yesterday</span>
+                          <div className='space-y-2'>
+                            <p className='text-4xl font-semibold'>99.73%</p>
+                            <div className='flex items-center gap-1 text-sm text-muted-foreground'>
+                              <TrendingUp className='h-4 w-4 text-green-600' />
+                              <span className='text-green-600'>0.1%</span>
+                              <span>from yesterday</span>
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </div>
                   </div>
 
                   {/* Build Logs */}

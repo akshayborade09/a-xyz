@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { VercelTabs } from '@/components/ui/vercel-tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -23,7 +24,15 @@ import {
 } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { vpcs } from '@/lib/data';
-import { HelpCircle, Play, Maximize2, Plus, Trash2 } from 'lucide-react';
+import { HelpCircle, Play, Maximize2, Plus, Trash2, AlertTriangle } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { Check, ChevronDown, Search } from 'lucide-react';
@@ -52,6 +61,7 @@ export default function CreateFunctionPage() {
   const [output, setOutput] = useState('');
   const [logs, setLogs] = useState('');
   const [fontSize, setFontSize] = useState('14px');
+  const [isUseTemplateModalOpen, setIsUseTemplateModalOpen] = useState(false);
 
   const [formData, setFormData] = useState<FunctionFormData>({
     region: '',
@@ -248,6 +258,7 @@ uvicorn==0.25.0`,
   };
 
   return (
+    <>
     <PageLayout
       title='Create Function'
       description="Configure your function's runtime, resources, and execution settings."
@@ -353,10 +364,10 @@ uvicorn==0.25.0`,
                       <Label htmlFor='memory'>
                         Memory (MB) <span className='text-red-500'>*</span>
                       </Label>
-                      <TooltipProvider>
+                      <TooltipProvider delayDuration={0}>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <HelpCircle className='h-4 w-4 text-muted-foreground hover:text-foreground cursor-help' />
+                            <HelpCircle className='h-4 w-4 text-muted-foreground hover:text-foreground' />
                           </TooltipTrigger>
                           <TooltipContent side='right' className='max-w-sm'>
                             <p className='text-sm'>
@@ -515,33 +526,26 @@ uvicorn==0.25.0`,
               </p>
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
-              <div className='flex items-end justify-between pl-2 pr-4 py-3 border-b'>
-                <TabsList className='bg-transparent p-0 h-auto'>
-                  <TabsTrigger
-                    value='func-py'
-                    className='data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2'
-                  >
-                    func.py
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value='requirements'
-                    className='data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2'
-                  >
-                    requirements.txt
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value='config'
-                    className='data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2'
-                  >
-                    Function Configuration
-                  </TabsTrigger>
-                </TabsList>
+            <div>
+              <div className='flex items-end justify-between pr-4 py-3 border-b'>
+                <div className='px-2'>
+                  <VercelTabs
+                    tabs={[
+                      { id: 'func-py', label: 'func.py' },
+                      { id: 'requirements', label: 'requirements.txt' },
+                      { id: 'config', label: 'Function Configuration' },
+                    ]}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    size='md'
+                  />
+                </div>
 
                 <div className='flex items-center gap-2 self-center'>
                   <Button
                     variant='outline'
                     size='sm'
+                    onClick={() => setIsUseTemplateModalOpen(true)}
                     className='bg-black text-white hover:bg-black/90 hover:text-white border-black'
                   >
                     Use Template
@@ -574,16 +578,16 @@ uvicorn==0.25.0`,
                 </div>
               </div>
 
-              <TabsContent value='func-py' className='m-0 p-0'>
+              {activeTab === 'func-py' && (
                 <Textarea
                   value={codeFiles.funcPy}
                   onChange={e => handleCodeChange('funcPy', e.target.value)}
                   className='min-h-[400px] font-mono rounded-none border-0 resize-none focus-visible:ring-0 bg-[#1e1e1e] text-white p-4'
                   style={{ fontSize }}
                 />
-              </TabsContent>
+              )}
 
-              <TabsContent value='requirements' className='m-0 p-0'>
+              {activeTab === 'requirements' && (
                 <Textarea
                   value={codeFiles.requirementsTxt}
                   onChange={e =>
@@ -592,9 +596,10 @@ uvicorn==0.25.0`,
                   className='min-h-[400px] font-mono rounded-none border-0 resize-none focus-visible:ring-0 bg-[#1e1e1e] text-white p-4'
                   style={{ fontSize }}
                 />
-              </TabsContent>
+              )}
 
-              <TabsContent value='config' className='m-0 p-6'>
+              {activeTab === 'config' && (
+                <div className='p-6'>
                 <div className='space-y-6'>
                   <div>
                     <h3 className='text-lg font-semibold'>Function Configuration</h3>
@@ -654,48 +659,42 @@ uvicorn==0.25.0`,
                     </Button>
                   </div>
                 </div>
-              </TabsContent>
-            </Tabs>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
         {/* Section 3: Terminal Output and Logs */}
         <Card>
           <CardContent className='p-0'>
-            <Tabs value={outputTab} onValueChange={setOutputTab} className='w-full'>
-              <div className='border-b px-2 pt-2'>
-                <TabsList className='bg-transparent p-0 h-auto'>
-                  <TabsTrigger
-                    value='output'
-                    className='data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2'
-                  >
-                    Output
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value='logs'
-                    className='data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2'
-                  >
-                    Logs
-                  </TabsTrigger>
-                </TabsList>
+            <div className='px-2 pt-4'>
+              <VercelTabs
+                tabs={[
+                  { id: 'output', label: 'Output' },
+                  { id: 'logs', label: 'Logs' },
+                ]}
+                activeTab={outputTab}
+                onTabChange={setOutputTab}
+                size='md'
+              />
+            </div>
+
+            {outputTab === 'output' && (
+              <div className='p-6'>
+                <p className='text-sm text-muted-foreground font-mono'>
+                  {output || 'Run the function to see output here.'}
+                </p>
               </div>
+            )}
 
-              <TabsContent value='output' className='m-0'>
-                <div className='p-6'>
-                  <p className='text-sm text-muted-foreground font-mono'>
-                    {output || 'Run the function to see output here.'}
-                  </p>
-                </div>
-              </TabsContent>
-
-              <TabsContent value='logs' className='m-0'>
-                <div className='p-6'>
-                  <pre className='text-sm text-muted-foreground font-mono whitespace-pre-wrap'>
-                    {logs || 'No logs available yet. Run the function to see logs.'}
-                  </pre>
-                </div>
-              </TabsContent>
-            </Tabs>
+            {outputTab === 'logs' && (
+              <div className='p-6'>
+                <pre className='text-sm text-muted-foreground font-mono whitespace-pre-wrap'>
+                  {logs || 'No logs available yet. Run the function to see logs.'}
+                </pre>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -708,6 +707,54 @@ uvicorn==0.25.0`,
         </div>
       </div>
     </PageLayout>
+
+      {/* Use Template Modal */}
+      <Dialog open={isUseTemplateModalOpen} onOpenChange={setIsUseTemplateModalOpen}>
+        <DialogContent className='max-w-2xl'>
+          <DialogHeader>
+            <DialogTitle className='text-2xl'>Use Template</DialogTitle>
+          </DialogHeader>
+          
+          <div className='space-y-4 py-4'>
+            <p className='text-base text-foreground'>
+              Are you sure you want to apply this template?
+            </p>
+            
+            {/* Warning Box */}
+            <div className='bg-amber-50 border border-amber-200 rounded-lg p-4 flex gap-3'>
+              <AlertTriangle className='h-5 w-5 text-amber-700 flex-shrink-0 mt-0.5' />
+              <div>
+                <p className='text-sm text-amber-900'>
+                  <span className='font-semibold'>Warning:</span> This will replace all existing code with the template&apos;s code and your current changes won&apos;t be saved.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setIsUseTemplateModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                // Apply template logic here
+                toast({
+                  title: 'Template Applied',
+                  description: 'The template has been successfully applied to your function.',
+                });
+                setIsUseTemplateModalOpen(false);
+              }}
+              className='bg-black text-white hover:bg-black/90'
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

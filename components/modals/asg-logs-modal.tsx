@@ -695,81 +695,90 @@ export function ASGLogsModal({ isOpen, onClose, asgName }: ASGLogsModalProps) {
           </div>
         </div>
         
-        <div className="flex-1 overflow-auto border rounded-lg">
-          <table className="w-full">
-            <thead className="bg-muted sticky top-0 z-10">
-              <tr className="border-b">
-                <th className="text-left px-4 py-3 text-sm font-medium">Event ID</th>
-                <th className="text-left px-4 py-3 text-sm font-medium">Event Type</th>
-                <th className="text-left px-4 py-3 text-sm font-medium">Source</th>
-                <th className="text-left px-4 py-3 text-sm font-medium">Status</th>
-                <th className="text-left px-4 py-3 text-sm font-medium">Details</th>
-                <th className="text-left px-4 py-3 text-sm font-medium">Timestamp</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedEvents.map((event, index) => {
-                const isExpanded = expandedRows.has(event.event_id);
-                return (
-                  <>
-                    <tr
-                      key={event.event_id}
-                      className={`border-b ${
-                        index % 2 === 0 ? 'bg-background' : 'bg-muted/30'
-                      } hover:bg-muted/50 transition-colors`}
-                    >
-                      <td className="px-4 py-3 text-sm font-mono">{event.event_id}</td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className="font-medium">{event.event_type}</span>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
-                          {event.source}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <StatusBadge status={event.event_status} />
-                      </td>
-                      <td className="px-4 py-3 text-sm max-w-md">
-                        <div className="flex items-start gap-2">
-                          <button
-                            onClick={() => toggleRowExpansion(event.event_id)}
-                            className="hover:bg-muted rounded p-1 flex-shrink-0"
-                          >
-                            {isExpanded ? (
-                              <ChevronUp className="h-4 w-4" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4" />
-                            )}
-                          </button>
-                          <span className="flex-1">{event.message}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
-                        {formatTimestamp(event.timestamp)}
-                      </td>
-                    </tr>
-                    {isExpanded && (
-                      <tr className={`border-b ${
-                        index % 2 === 0 ? 'bg-background' : 'bg-muted/30'
-                      }`}>
-                        <td colSpan={4}></td>
-                        <td colSpan={2} className="px-4 py-3">
+        <div className="h-[600px] overflow-auto border rounded-lg">
+          {filteredEvents.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center py-12">
+                <p className="text-lg font-medium text-muted-foreground">No logs available</p>
+                <p className="text-sm text-muted-foreground mt-2">Try adjusting your filters to see more results</p>
+              </div>
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-muted sticky top-0 z-10">
+                <tr className="border-b">
+                  <th className="text-left px-4 py-3 text-sm font-medium">Event ID</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium">Event Type</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium">Source</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium">Status</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium">Details</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium">Timestamp</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedEvents.map((event, index) => {
+                  const isExpanded = expandedRows.has(event.event_id);
+                  return (
+                    <>
+                      <tr
+                        key={event.event_id}
+                        className={`border-b ${
+                          index % 2 === 0 ? 'bg-background' : 'bg-muted/30'
+                        } hover:bg-muted/50 transition-colors`}
+                      >
+                        <td className="px-4 py-3 text-sm font-mono">{event.event_id}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className="font-medium">{event.event_type}</span>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                            {event.source}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <StatusBadge status={event.event_status} />
+                        </td>
+                        <td className="px-4 py-3 text-sm max-w-md">
                           <div className="flex items-start gap-2">
-                            <div className="w-6 flex-shrink-0"></div>
-                            <div className="flex-1 p-2 bg-muted/50 rounded-lg">
-                              <div className="text-sm text-muted-foreground mb-1">Action Taken:</div>
-                              <div className="text-sm text-muted-foreground">{event.action}</div>
-                            </div>
+                            <button
+                              onClick={() => toggleRowExpansion(event.event_id)}
+                              className="hover:bg-muted rounded p-1 flex-shrink-0"
+                            >
+                              {isExpanded ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </button>
+                            <span className="flex-1">{event.message}</span>
                           </div>
                         </td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
+                          {formatTimestamp(event.timestamp)}
+                        </td>
                       </tr>
-                    )}
-                  </>
-                );
-              })}
-            </tbody>
-          </table>
+                      {isExpanded && (
+                        <tr className={`border-b ${
+                          index % 2 === 0 ? 'bg-background' : 'bg-muted/30'
+                        }`}>
+                          <td colSpan={4}></td>
+                          <td colSpan={2} className="px-4 py-3">
+                            <div className="flex items-start gap-2">
+                              <div className="w-6 flex-shrink-0"></div>
+                              <div className="flex-1 p-2 bg-muted/50 rounded-lg">
+                                <div className="text-sm text-muted-foreground mb-1">Action Taken:</div>
+                                <div className="text-sm text-muted-foreground">{event.action}</div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Pagination */}

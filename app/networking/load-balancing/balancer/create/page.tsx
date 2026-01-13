@@ -17,9 +17,11 @@ export default function CreateLoadBalancerPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showModal, setShowModal] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
   const [config, setConfig] = useState<LoadBalancerConfiguration>({
     loadBalancerType: '',
   });
+  const [loadBalancerData, setLoadBalancerData] = useState<any>(null);
 
   // Show modal on page load if no configuration is set
   useEffect(() => {
@@ -33,6 +35,7 @@ export default function CreateLoadBalancerPage() {
   ) => {
     setConfig(configuration);
     setShowModal(false);
+    setCurrentStep(1); // Start at step 1
   };
 
   const handleModalClose = () => {
@@ -43,7 +46,17 @@ export default function CreateLoadBalancerPage() {
   const handleBack = () => {
     // Reset configuration and show modal again
     setConfig({ loadBalancerType: '' });
+    setCurrentStep(1);
     setShowModal(true);
+  };
+
+  const handleStepComplete = (data: any) => {
+    setLoadBalancerData(data);
+    setCurrentStep(2); // Move to listener details
+  };
+
+  const handleStepBack = () => {
+    setCurrentStep(1); // Go back to load balancer details
   };
 
   // Show modal if configuration is not complete
@@ -69,6 +82,10 @@ export default function CreateLoadBalancerPage() {
         config={config}
         onBack={handleBack}
         onCancel={() => router.push('/networking/load-balancing/balancer')}
+        currentStep={currentStep}
+        onStepComplete={handleStepComplete}
+        onStepBack={handleStepBack}
+        loadBalancerData={loadBalancerData}
       />
     );
   }
@@ -80,6 +97,10 @@ export default function CreateLoadBalancerPage() {
         config={config}
         onBack={handleBack}
         onCancel={() => router.push('/networking/load-balancing/balancer')}
+        currentStep={currentStep}
+        onStepComplete={handleStepComplete}
+        onStepBack={handleStepBack}
+        loadBalancerData={loadBalancerData}
       />
     );
   }

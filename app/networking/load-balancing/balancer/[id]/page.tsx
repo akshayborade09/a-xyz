@@ -16,8 +16,23 @@ import {
   HealthIndicator,
   calculateOverallHealth,
 } from '@/components/ui/health-indicator';
-import { Edit, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Edit, Trash2, ChevronDown, ChevronRight, MoreVertical, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ListenerViewEditModal } from '../create/components/listener-view-edit-modal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 // Mock data for demonstration - in real app, this would come from API
 const mockLoadBalancers = {
@@ -34,6 +49,7 @@ const mockLoadBalancers = {
     subnet: 'subnet-prod-1',
     availabilityZones: ['ap-south-1a', 'ap-south-1b'],
     created: '2024-01-15T10:30:00Z',
+    securityGroups: ['sg-0a1b2c3d4e5f6g7h8', 'sg-9i8h7g6f5e4d3c2b1'],
     targetGroupsDetails: [
       {
         id: 'tg-web-1',
@@ -81,6 +97,36 @@ const mockLoadBalancers = {
           targetGroupStatus: 'healthy',
           targetCount: 4,
           healthyTargets: 4,
+          registeredTargets: [
+            {
+              name: 'vm-rkd-1231',
+              ipAddress: '192.168.1.87',
+              port: 80,
+              weight: 1,
+              health: 'healthy',
+            },
+            {
+              name: 'vm-rkd-1232',
+              ipAddress: '192.168.1.88',
+              port: 80,
+              weight: 1,
+              health: 'unhealthy',
+            },
+            {
+              name: 'vm-rkd-1233',
+              ipAddress: '192.168.1.89',
+              port: 80,
+              weight: 2,
+              health: 'healthy',
+            },
+            {
+              name: 'vm-rkd-1234',
+              ipAddress: '192.168.1.90',
+              port: 80,
+              weight: 1,
+              health: 'healthy',
+            },
+          ],
         },
       },
       {
@@ -112,6 +158,22 @@ const mockLoadBalancers = {
           targetGroupStatus: 'healthy',
           targetCount: 2,
           healthyTargets: 2,
+          registeredTargets: [
+            {
+              name: 'vm-api-1',
+              ipAddress: '192.168.2.10',
+              port: 8080,
+              weight: 1,
+              health: 'healthy',
+            },
+            {
+              name: 'vm-api-2',
+              ipAddress: '192.168.2.11',
+              port: 8080,
+              weight: 1,
+              health: 'healthy',
+            },
+          ],
         },
       },
     ],
@@ -130,6 +192,7 @@ const mockLoadBalancers = {
     subnet: 'subnet-prod-3',
     availabilityZones: ['ap-south-1a', 'ap-south-1b'],
     created: '2024-01-20T14:20:00Z',
+    securityGroups: ['sg-internal-123abc'],
     targetGroupsDetails: [
       {
         id: 'tg-tcp-1',
@@ -159,6 +222,22 @@ const mockLoadBalancers = {
           targetGroupStatus: 'healthy',
           targetCount: 2,
           healthyTargets: 2,
+          registeredTargets: [
+            {
+              name: 'vm-db-1',
+              ipAddress: '10.0.6.20',
+              port: 3306,
+              weight: 1,
+              health: 'healthy',
+            },
+            {
+              name: 'vm-db-2',
+              ipAddress: '10.0.6.21',
+              port: 3306,
+              weight: 1,
+              health: 'healthy',
+            },
+          ],
         },
       },
     ],
@@ -176,6 +255,7 @@ const mockLoadBalancers = {
     subnet: 'subnet-prod-2',
     availabilityZones: ['ap-south-1a', 'ap-south-1b'],
     created: '2024-01-18T12:15:00Z',
+    securityGroups: ['sg-api-gateway-xyz789'],
     targetGroupsDetails: [
       {
         id: 'tg-api-gateway-1',
@@ -216,6 +296,29 @@ const mockLoadBalancers = {
           targetGroupStatus: 'healthy',
           targetCount: 3,
           healthyTargets: 3,
+          registeredTargets: [
+            {
+              name: 'vm-gateway-1',
+              ipAddress: '10.0.4.30',
+              port: 8080,
+              weight: 1,
+              health: 'healthy',
+            },
+            {
+              name: 'vm-gateway-2',
+              ipAddress: '10.0.4.31',
+              port: 8080,
+              weight: 1,
+              health: 'healthy',
+            },
+            {
+              name: 'vm-gateway-3',
+              ipAddress: '10.0.4.32',
+              port: 8080,
+              weight: 1,
+              health: 'healthy',
+            },
+          ],
         },
       },
     ],
@@ -234,6 +337,7 @@ const mockLoadBalancers = {
     subnet: 'subnet-dev-1',
     availabilityZones: ['ap-south-1a'],
     created: '2024-02-01T09:00:00Z',
+    securityGroups: ['6be38054-49cf-4fb3-b8c6-c34545o497c1'],
     targetGroupsDetails: [
       {
         id: 'tg-dev-1',
@@ -274,6 +378,15 @@ const mockLoadBalancers = {
           targetGroupStatus: 'healthy',
           targetCount: 1,
           healthyTargets: 1,
+          registeredTargets: [
+            {
+              name: 'vm-dev-1',
+              ipAddress: '10.0.8.10',
+              port: 8080,
+              weight: 1,
+              health: 'healthy',
+            },
+          ],
         },
       },
     ],
@@ -291,6 +404,7 @@ const mockLoadBalancers = {
     subnet: 'subnet-staging-1',
     availabilityZones: ['us-west-2a', 'us-west-2b'],
     created: '2024-01-10T16:20:00Z',
+    securityGroups: ['sg-staging-456def', 'sg-staging-backup-789'],
     targetGroupsDetails: [
       {
         id: 'tg-staging-web-1',
@@ -331,6 +445,22 @@ const mockLoadBalancers = {
           targetGroupStatus: 'unhealthy',
           targetCount: 2,
           healthyTargets: 0,
+          registeredTargets: [
+            {
+              name: 'vm-staging-1',
+              ipAddress: '10.0.9.10',
+              port: 80,
+              weight: 1,
+              health: 'unhealthy',
+            },
+            {
+              name: 'vm-staging-2',
+              ipAddress: '10.0.9.11',
+              port: 80,
+              weight: 1,
+              health: 'unhealthy',
+            },
+          ],
         },
       },
     ],
@@ -395,6 +525,10 @@ export default function LoadBalancerDetailsPage({
   const { toast } = useToast();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [expandedTargetGroups, setExpandedTargetGroups] = useState(false);
+  const [isListenerModalOpen, setIsListenerModalOpen] = useState(false);
+  const [selectedListener, setSelectedListener] = useState<any>(null);
+  const [listenerModalMode, setListenerModalMode] = useState<'view' | 'edit'>('view');
+  const [isNewListener, setIsNewListener] = useState(false);
 
   // Unwrap the params Promise using React.use()
   const { id } = use(params);
@@ -545,19 +679,8 @@ export default function LoadBalancerDetailsPage({
             </div>
           </div>
 
-          {/* Runtime Information from List Page - Third Row: Provisioning Status, Operating Status, Target Group Health, IP Addresses */}
+          {/* Runtime Information from List Page - Third Row: Operating Status, Target Group Health, IP Addresses, Security Groups */}
           <div className='col-span-full grid grid-cols-4 gap-4 mt-4'>
-            <div className='space-y-1'>
-              <label
-                className='text-sm font-normal text-gray-700'
-                style={{ fontSize: '13px' }}
-              >
-                Provisioning Status
-              </label>
-              <div>
-                <StatusBadge status={loadBalancer.provisioningStatus} />
-              </div>
-            </div>
             <div className='space-y-1'>
               <label
                 className='text-sm font-normal text-gray-700'
@@ -711,6 +834,19 @@ export default function LoadBalancerDetailsPage({
                 )}
               </div>
             </div>
+            <div className='space-y-1'>
+              <label
+                className='text-sm font-normal text-gray-700'
+                style={{ fontSize: '13px' }}
+              >
+                Security Groups
+              </label>
+              <div className='font-medium' style={{ fontSize: '14px' }}>
+                {loadBalancer.securityGroups?.[0] || (
+                  <span className='text-muted-foreground'>—</span>
+                )}
+              </div>
+            </div>
           </div>
         </DetailGrid>
       </div>
@@ -718,255 +854,176 @@ export default function LoadBalancerDetailsPage({
       {/* Listeners */}
       <Card className='mt-4'>
         <CardContent className='pt-6 space-y-6'>
-          <div className='flex items-center gap-2'>
-            <h2 className='text-lg font-semibold'>Listeners</h2>
-            <div className='flex items-center justify-center w-6 h-6 bg-primary text-primary-foreground text-sm font-medium rounded-full'>
-              {loadBalancer.listeners.length}
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-2'>
+              <h2 className='text-lg font-semibold'>Listeners</h2>
+              <div className='flex items-center justify-center w-6 h-6 bg-primary text-primary-foreground text-sm font-medium rounded-full'>
+                {loadBalancer.listeners.length}
+              </div>
             </div>
+            <Button
+              onClick={() => {
+                // Create a new empty listener
+                const newListener = {
+                  id: crypto.randomUUID(),
+                  name: '',
+                  protocol: isALB ? 'HTTP' : 'TCP',
+                  port: 80,
+                  certificate: '',
+                  policies: [
+                    {
+                      id: crypto.randomUUID(),
+                      name: '',
+                      action: '',
+                    },
+                  ],
+                  rules: [
+                    {
+                      id: crypto.randomUUID(),
+                      ruleType: '',
+                      comparator: '',
+                      value: '',
+                      key: '',
+                    },
+                  ],
+                  pools: [
+                    {
+                      id: crypto.randomUUID(),
+                      name: '',
+                      protocol: 'HTTP',
+                      algorithm: '',
+                      targetGroup: '',
+                    },
+                  ],
+                };
+                setSelectedListener(newListener);
+                setListenerModalMode('edit');
+                setIsNewListener(true);
+                setIsListenerModalOpen(true);
+              }}
+              className='gap-2'
+            >
+              <Plus className='h-4 w-4' />
+              Add Listener
+            </Button>
           </div>
 
-          <div className='space-y-6'>
-            {loadBalancer.listeners.map((listener, index) => (
-              <Card key={listener.id} className='overflow-hidden'>
-            <CardHeader className='pb-3'>
-              <CardTitle className='text-base'>
-                {listener.name} ({listener.protocol}:{listener.port})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              {/* Listener Settings */}
-              <div className='space-y-4'>
-                <h4 className='font-medium text-sm text-gray-700'>
-                  Listener Settings
-                </h4>
-                <div className='grid grid-cols-2 md:grid-cols-4 gap-4 p-4 border rounded-lg bg-muted/20'>
-                  <div className='space-y-1'>
-                    <label
-                      className='text-sm font-normal text-gray-700'
-                      style={{ fontSize: '13px' }}
-                    >
-                      Protocol
-                    </label>
-                    <div className='font-medium' style={{ fontSize: '14px' }}>
-                      {listener.protocol}
-                    </div>
-                  </div>
-                  <div className='space-y-1'>
-                    <label
-                      className='text-sm font-normal text-gray-700'
-                      style={{ fontSize: '13px' }}
-                    >
-                      Port
-                    </label>
-                    <div className='font-medium' style={{ fontSize: '14px' }}>
-                      {listener.port}
-                    </div>
-                  </div>
-                  {listener.alpnProtocol && (
-                    <div className='space-y-1'>
-                      <label
-                        className='text-sm font-normal text-gray-700'
-                        style={{ fontSize: '13px' }}
+          <div className='rounded-md border'>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Protocol</TableHead>
+                  <TableHead>Target Group</TableHead>
+                  <TableHead className='text-right'>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loadBalancer.listeners.map((listener: any) => (
+                  <TableRow key={listener.id} className='hover:bg-muted/50'>
+                    <TableCell className='font-medium'>
+                      <button
+                        onClick={() => {
+                          setSelectedListener(listener);
+                          setListenerModalMode('view');
+                          setIsNewListener(false);
+                          setIsListenerModalOpen(true);
+                        }}
+                        className='text-left hover:underline cursor-pointer'
                       >
-                        ALPN Protocol
-                      </label>
-                      <div className='font-medium' style={{ fontSize: '14px' }}>
-                        {listener.alpnProtocol}
-                      </div>
-                    </div>
-                  )}
-                  {listener.certificateName && (
-                    <div className='space-y-1'>
-                      <label
-                        className='text-sm font-normal text-gray-700'
-                        style={{ fontSize: '13px' }}
-                      >
-                        SSL Certificate
-                      </label>
-                      <div className='font-medium' style={{ fontSize: '14px' }}>
-                        {listener.certificateName}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Policy & Rules Configuration (only for ALB) */}
-              {isALB && listener.policy && listener.rule && (
-                <>
-                  <Separator />
-                  <div className='space-y-4'>
-                    <h4 className='font-medium text-sm text-gray-700'>
-                      Policy & Rules Configuration
-                    </h4>
-
-                    {/* Policy Configuration */}
-                    <div className='space-y-3'>
-                      <h5 className='font-medium text-sm'>
-                        Policy Configuration
-                      </h5>
-                      <div className='grid grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/20'>
-                        <div className='space-y-1'>
-                          <label
-                            className='text-sm font-normal text-gray-700'
-                            style={{ fontSize: '13px' }}
+                        {listener.name}
+                      </button>
+                    </TableCell>
+                    <TableCell>
+                      {listener.protocol}:{listener.port}
+                    </TableCell>
+                    <TableCell>{listener.pool.targetGroup}</TableCell>
+                    <TableCell className='text-right'>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            className='h-8 w-8 p-0'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
                           >
-                            Policy Name
-                          </label>
-                          <div
-                            className='font-medium'
-                            style={{ fontSize: '14px' }}
+                            <MoreVertical className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedListener(listener);
+                              setListenerModalMode('view');
+                              setIsNewListener(false);
+                              setIsListenerModalOpen(true);
+                            }}
                           >
-                            {listener.policy.name}
-                          </div>
-                        </div>
-                        <div className='space-y-1'>
-                          <label
-                            className='text-sm font-normal text-gray-700'
-                            style={{ fontSize: '13px' }}
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedListener(listener);
+                              setListenerModalMode('edit');
+                              setIsNewListener(false);
+                              setIsListenerModalOpen(true);
+                            }}
                           >
-                            Action
-                          </label>
-                          <div
-                            className='font-medium'
-                            style={{ fontSize: '14px' }}
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toast({
+                                title: 'Delete Listener',
+                                description: 'Delete functionality to be implemented',
+                              });
+                            }}
+                            className='text-red-600'
                           >
-                            {listener.policy.action}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Rule Configuration */}
-                    <div className='space-y-3'>
-                      <h5 className='font-medium text-sm'>
-                        Rule Configuration
-                      </h5>
-                      <div className='grid grid-cols-2 md:grid-cols-3 gap-4 p-4 border rounded-lg bg-muted/20'>
-                        <div className='space-y-1'>
-                          <label
-                            className='text-sm font-normal text-gray-700'
-                            style={{ fontSize: '13px' }}
-                          >
-                            Rule Type
-                          </label>
-                          <div
-                            className='font-medium'
-                            style={{ fontSize: '14px' }}
-                          >
-                            {listener.rule.ruleType}
-                          </div>
-                        </div>
-                        <div className='space-y-1'>
-                          <label
-                            className='text-sm font-normal text-gray-700'
-                            style={{ fontSize: '13px' }}
-                          >
-                            Comparator
-                          </label>
-                          <div
-                            className='font-medium'
-                            style={{ fontSize: '14px' }}
-                          >
-                            {listener.rule.comparator}
-                          </div>
-                        </div>
-                        <div className='space-y-1'>
-                          <label
-                            className='text-sm font-normal text-gray-700'
-                            style={{ fontSize: '13px' }}
-                          >
-                            Value
-                          </label>
-                          <div
-                            className='font-medium'
-                            style={{ fontSize: '14px' }}
-                          >
-                            {listener.rule.value}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Pool Configuration */}
-              <Separator />
-              <div className='space-y-4'>
-                <h4 className='font-medium text-sm text-gray-700'>
-                  Pool Configuration
-                </h4>
-                <div className='grid grid-cols-2 md:grid-cols-4 gap-4 p-4 border rounded-lg bg-muted/20'>
-                  <div className='space-y-1'>
-                    <label
-                      className='text-sm font-normal text-gray-700'
-                      style={{ fontSize: '13px' }}
-                    >
-                      Pool Name
-                    </label>
-                    <div className='font-medium' style={{ fontSize: '14px' }}>
-                      {listener.pool.name}
-                    </div>
-                  </div>
-                  <div className='space-y-1'>
-                    <label
-                      className='text-sm font-normal text-gray-700'
-                      style={{ fontSize: '13px' }}
-                    >
-                      Protocol
-                    </label>
-                    <div className='font-medium' style={{ fontSize: '14px' }}>
-                      {listener.pool.protocol}
-                    </div>
-                  </div>
-                  <div className='space-y-1'>
-                    <label
-                      className='text-sm font-normal text-gray-700'
-                      style={{ fontSize: '13px' }}
-                    >
-                      Algorithm
-                    </label>
-                    <div className='font-medium' style={{ fontSize: '14px' }}>
-                      {listener.pool.algorithm}
-                    </div>
-                  </div>
-                  <div className='space-y-1'>
-                    <label
-                      className='text-sm font-normal text-gray-700'
-                      style={{ fontSize: '13px' }}
-                    >
-                      Target Group
-                    </label>
-                    <div className='flex items-center gap-2'>
-                      <span
-                        className='font-medium'
-                        style={{ fontSize: '14px' }}
-                      >
-                        {listener.pool.targetGroup}
-                      </span>
-                      <StatusBadge status={listener.pool.targetGroupStatus} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Target Group Summary */}
-                <div className='p-3 bg-blue-50 border border-blue-200 rounded-lg'>
-                  <div className='text-sm'>
-                    <div className='font-medium mb-1'>Target Group Health</div>
-                    <div className='text-xs text-muted-foreground'>
-                      {listener.pool.healthyTargets} of{' '}
-                      {listener.pool.targetCount} targets are healthy
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-            ))}
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>
+
+      {/* Listener View/Edit Modal */}
+      <ListenerViewEditModal
+        isOpen={isListenerModalOpen}
+        onClose={() => {
+          setIsListenerModalOpen(false);
+          setSelectedListener(null);
+          setIsNewListener(false);
+        }}
+        listener={selectedListener}
+        onSave={(updatedListener) => {
+          // Handle listener save/update
+          console.log(isNewListener ? 'Listener created:' : 'Listener updated:', updatedListener);
+          
+          setIsListenerModalOpen(false);
+          setSelectedListener(null);
+          setIsNewListener(false);
+          
+          toast({
+            title: isNewListener ? 'Listener created successfully' : 'Listener updated successfully',
+            description: `Listener "${updatedListener.name}" has been ${isNewListener ? 'created' : 'updated'}.`,
+          });
+        }}
+        mode={listenerModalMode}
+        isALB={isALB}
+        isNewListener={isNewListener}
+      />
 
       {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal

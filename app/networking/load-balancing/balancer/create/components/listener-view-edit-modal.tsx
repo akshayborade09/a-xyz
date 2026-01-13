@@ -54,7 +54,40 @@ export function ListenerViewEditModal({
   useEffect(() => {
     if (initialListener && isOpen) {
       // Create a deep copy to avoid mutating the original
-      setListener(JSON.parse(JSON.stringify(initialListener)));
+      let normalizedListener = JSON.parse(JSON.stringify(initialListener));
+      
+      // Normalize data structure (handle both singular and plural formats)
+      // From details page: policy, rule, pool (singular)
+      // From create/edit: policies, rules, pools (plural arrays)
+      
+      // Convert singular policy to policies array
+      if ((normalizedListener as any).policy && !normalizedListener.policies) {
+        normalizedListener.policies = [(normalizedListener as any).policy];
+      }
+      // Ensure policies is an array
+      if (!normalizedListener.policies) {
+        normalizedListener.policies = [];
+      }
+      
+      // Convert singular rule to rules array
+      if ((normalizedListener as any).rule && !normalizedListener.rules) {
+        normalizedListener.rules = [(normalizedListener as any).rule];
+      }
+      // Ensure rules is an array
+      if (!normalizedListener.rules) {
+        normalizedListener.rules = [];
+      }
+      
+      // Convert singular pool to pools array
+      if ((normalizedListener as any).pool && !normalizedListener.pools) {
+        normalizedListener.pools = [(normalizedListener as any).pool];
+      }
+      // Ensure pools is an array
+      if (!normalizedListener.pools) {
+        normalizedListener.pools = [];
+      }
+      
+      setListener(normalizedListener);
       // Ensure mode is set correctly when modal opens
       setMode(initialMode);
     }
@@ -456,51 +489,72 @@ export function ListenerViewEditModal({
                   {/* Policy Configuration */}
                   <div className='space-y-3'>
                     <h4 className='font-semibold text-sm'>Policy Configuration</h4>
-                    {listener.policies?.map((policy: any) => (
-                      <div key={policy.id} className='grid grid-cols-2 gap-6 p-4 border rounded-lg bg-muted/20'>
-                        <div className='space-y-1'>
-                          <div className='text-sm text-muted-foreground'>Policy Name</div>
-                          <div className='font-medium text-sm'>{policy.name || '—'}</div>
+                    {listener.policies && listener.policies.length > 0 ? (
+                      listener.policies.map((policy: any) => (
+                        <div key={policy.id} className='grid grid-cols-2 gap-6 p-4 border rounded-lg bg-muted/20'>
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>Policy Name</div>
+                            <div className='font-medium text-sm'>{policy.name || '—'}</div>
+                          </div>
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>Action</div>
+                            <div className='font-medium text-sm'>{policy.action || '—'}</div>
+                          </div>
                         </div>
-                        <div className='space-y-1'>
-                          <div className='text-sm text-muted-foreground'>Action</div>
-                          <div className='font-medium text-sm'>{policy.action || '—'}</div>
-                        </div>
+                      ))
+                    ) : (
+                      <div className='p-4 border rounded-lg bg-muted/10 text-center'>
+                        <p className='text-sm text-muted-foreground'>No policies configured</p>
                       </div>
-                    ))}
+                    )}
                   </div>
 
                   {/* Rule Configuration */}
                   <div className='space-y-3'>
                     <h4 className='font-semibold text-sm'>Rule Configuration</h4>
-                    {listener.rules?.map((rule: any) => (
-                      <div key={rule.id} className='grid grid-cols-3 gap-6 p-4 border rounded-lg bg-muted/20'>
-                        <div className='space-y-1'>
-                          <div className='text-sm text-muted-foreground'>Rule Type</div>
-                          <div className='font-medium text-sm'>{rule.ruleType || '—'}</div>
+                    {listener.rules && listener.rules.length > 0 ? (
+                      listener.rules.map((rule: any) => (
+                        <div key={rule.id} className='grid grid-cols-3 gap-6 p-4 border rounded-lg bg-muted/20'>
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>Rule Type</div>
+                            <div className='font-medium text-sm'>{rule.ruleType || '—'}</div>
+                          </div>
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>Comparator</div>
+                            <div className='font-medium text-sm'>{rule.comparator || '—'}</div>
+                          </div>
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>Value</div>
+                            <div className='font-medium text-sm'>{rule.value || '—'}</div>
+                          </div>
                         </div>
-                        <div className='space-y-1'>
-                          <div className='text-sm text-muted-foreground'>Comparator</div>
-                          <div className='font-medium text-sm'>{rule.comparator || '—'}</div>
-                        </div>
-                        <div className='space-y-1'>
-                          <div className='text-sm text-muted-foreground'>Value</div>
-                          <div className='font-medium text-sm'>{rule.value || '—'}</div>
-                        </div>
+                      ))
+                    ) : (
+                      <div className='p-4 border rounded-lg bg-muted/10 text-center'>
+                        <p className='text-sm text-muted-foreground'>No rules configured</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               ) : (
                 <div className='border rounded-lg p-4 bg-muted/10'>
                   <PolicyRulesSection
                     formData={{
-                      policies: listener.policies,
-                      rules: listener.rules,
+                      policies: listener.policies || [],
+                      rules: listener.rules || [],
                     } as any}
                     updateFormData={updatePoliciesAndRules}
                     isSection={true}
                   />
+                </div>
+              )}
+
+              {/* Note about Policy Configuration */}
+              {!isViewMode && (
+                <div className='p-4 bg-amber-50 border border-amber-200 rounded-lg'>
+                  <p className='text-sm text-amber-900'>
+                    <span className='font-semibold'>Note:</span> Each listener has one policy configuration. A policy can have multiple rules within it. A policy evaluates to true and results in execution of action when all rules are satisfied by incoming request.
+                  </p>
                 </div>
               )}
             </div>
@@ -511,51 +565,102 @@ export function ListenerViewEditModal({
             <h3 className='font-semibold text-base'>Pool Configuration</h3>
             {isViewMode ? (
               <div className='space-y-4'>
-                {listener.pools?.map((pool: any) => (
-                  <div key={pool.id}>
-                    <div className='grid grid-cols-4 gap-6 p-4 border rounded-lg bg-muted/20'>
-                      <div className='space-y-1'>
-                        <div className='text-sm text-muted-foreground'>Pool Name</div>
-                        <div className='font-medium text-sm'>{pool.name || '—'}</div>
-                      </div>
-                      <div className='space-y-1'>
-                        <div className='text-sm text-muted-foreground'>Protocol</div>
-                        <div className='font-medium text-sm'>{pool.protocol || '—'}</div>
-                      </div>
-                      <div className='space-y-1'>
-                        <div className='text-sm text-muted-foreground'>Algorithm</div>
-                        <div className='font-medium text-sm'>{pool.algorithm || '—'}</div>
-                      </div>
-                      <div className='space-y-1'>
-                        <div className='text-sm text-muted-foreground'>Target Group</div>
-                        <div className='flex items-center gap-2'>
-                          <span className='font-medium text-sm'>{pool.targetGroup || '—'}</span>
-                          {pool.targetGroupStatus && <StatusBadge status={pool.targetGroupStatus} />}
+                {listener.pools && listener.pools.length > 0 ? (
+                  listener.pools.map((pool: any) => (
+                    <div key={pool.id}>
+                      <div className='grid grid-cols-4 gap-6 p-4 border rounded-lg bg-muted/20'>
+                        <div className='space-y-1'>
+                          <div className='text-sm text-muted-foreground'>Pool Name</div>
+                          <div className='font-medium text-sm'>{pool.name || '—'}</div>
+                        </div>
+                        <div className='space-y-1'>
+                          <div className='text-sm text-muted-foreground'>Protocol</div>
+                          <div className='font-medium text-sm'>{pool.protocol || '—'}</div>
+                        </div>
+                        <div className='space-y-1'>
+                          <div className='text-sm text-muted-foreground'>Algorithm</div>
+                          <div className='font-medium text-sm'>{pool.algorithm || '—'}</div>
+                        </div>
+                        <div className='space-y-1'>
+                          <div className='text-sm text-muted-foreground'>Target Group</div>
+                          <div className='flex items-center gap-2'>
+                            <span className='font-medium text-sm'>{pool.targetGroup || '—'}</span>
+                            {pool.targetGroupStatus && <StatusBadge status={pool.targetGroupStatus} />}
+                          </div>
                         </div>
                       </div>
                     </div>
-
-                    {/* Target Group Health Info */}
-                    {pool.targetCount !== undefined && (
-                      <div className='mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg'>
-                        <div className='font-semibold text-sm mb-1'>Target Group Health</div>
-                        <div className='text-sm text-muted-foreground'>
-                          {pool.healthyTargets || 0} of {pool.targetCount} targets are healthy
-                        </div>
-                      </div>
-                    )}
+                  ))
+                ) : (
+                  <div className='p-4 border rounded-lg bg-muted/10 text-center'>
+                    <p className='text-sm text-muted-foreground'>No pools configured</p>
                   </div>
-                ))}
+                )}
               </div>
             ) : (
-              <PoolSection
-                formData={{ pools: listener.pools } as any}
-                updateFormData={updatePools}
-                isSection={true}
-                isEditMode={true}
-              />
+              <>
+                <PoolSection
+                  formData={{ pools: listener.pools || [] } as any}
+                  updateFormData={updatePools}
+                  isSection={true}
+                  isEditMode={true}
+                />
+              </>
             )}
           </div>
+
+          {/* Health Monitor Configuration - Only in View Mode */}
+          {isViewMode && listener.pools && listener.pools.length > 0 && (
+            <div className='space-y-4'>
+              <h3 className='font-semibold text-base'>Health Monitor Configuration</h3>
+              {listener.pools.map((pool: any) => {
+                // Get health check info from the target group
+                const targetGroup = targetGroups.find(tg => tg.name === pool.targetGroup);
+                const healthCheck = targetGroup?.healthCheck;
+                
+                if (!healthCheck) return null;
+                
+                return (
+                  <div key={pool.id} className='grid grid-cols-4 gap-6 p-4 border rounded-lg bg-muted/20'>
+                    <div className='space-y-1'>
+                      <div className='text-sm text-muted-foreground'>Health Check Path</div>
+                      <div className='font-medium text-sm'>{healthCheck.path || '/'}</div>
+                    </div>
+                    <div className='space-y-1'>
+                      <div className='text-sm text-muted-foreground'>Interval (seconds)</div>
+                      <div className='font-medium text-sm'>{healthCheck.interval || '30'}</div>
+                    </div>
+                    <div className='space-y-1'>
+                      <div className='text-sm text-muted-foreground'>Timeout (seconds)</div>
+                      <div className='font-medium text-sm'>{healthCheck.timeout || '5'}</div>
+                    </div>
+                    <div className='space-y-1'>
+                      <div className='text-sm text-muted-foreground'>Success Codes</div>
+                      <div className='font-medium text-sm'>{healthCheck.healthyThreshold || '200'}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Target Group Health - Only in View Mode */}
+          {isViewMode && listener.pools && listener.pools.some((pool: any) => pool.targetCount !== undefined) && (
+            <div className='space-y-4'>
+              <h3 className='font-semibold text-base'>Target Group Health</h3>
+              {listener.pools.map((pool: any) => {
+                if (pool.targetCount === undefined) return null;
+                
+                return (
+                  <div key={pool.id} className='p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+                    <div className='text-sm text-muted-foreground'>
+                      {pool.healthyTargets || 0} of {pool.targetCount} targets are healthy
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Registered Targets Section - Only in View Mode */}
           {isViewMode && (

@@ -31,7 +31,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { PolicyRulesSection } from './sections/policy-rules-section';
 import { PoolSection } from './sections/pool-section';
 import { ALBProgressModal } from './alb-progress-modal';
-import { ListenersTable } from './listeners-table';
+import { ListenerInlineForm } from './listener-inline-form';
 import { ListenerViewEditModal } from './listener-view-edit-modal';
 import { vpcs, targetGroups } from '@/lib/data';
 
@@ -96,6 +96,10 @@ interface ALBCreateFormProps {
   customBreadcrumbs?: Array<{ href: string; title: string }>;
   listenersEditMode?: boolean;
   onToggleListenersEdit?: () => void;
+  currentStep?: number;
+  onStepComplete?: (data: any) => void;
+  onStepBack?: () => void;
+  loadBalancerData?: any;
 }
 
 const getLoadBalancerTypeName = (config: LoadBalancerConfiguration) => {
@@ -103,200 +107,6 @@ const getLoadBalancerTypeName = (config: LoadBalancerConfiguration) => {
     ? 'Application Load Balancer'
     : 'Network Load Balancer';
 };
-
-// Helper component for individual listener configuration
-interface ListenerCardProps {
-  listener: ALBFormData['listeners'][0];
-  updateListener: (listenerId: string, field: string, value: any) => void;
-  isEditMode?: boolean;
-}
-
-function ListenerCard({
-  listener,
-  updateListener,
-  isEditMode = false,
-}: ListenerCardProps) {
-  const protocolOptions = [
-    { value: 'HTTP', label: 'HTTP', defaultPort: 80 },
-    { value: 'HTTPS', label: 'HTTPS', defaultPort: 443 },
-  ];
-
-  const certificateOptions = [
-    { value: 'cert-1', label: 'wildcard.example.com (*.example.com)' },
-    { value: 'cert-2', label: 'api.example.com' },
-    { value: 'cert-3', label: 'app.example.com' },
-    { value: 'cert-4', label: 'staging.example.com' },
-  ];
-
-  const updateListenerField = (field: string, value: string | number) => {
-    if (field === 'protocol') {
-      const protocol = protocolOptions.find(p => p.value === value);
-      if (protocol) {
-        updateListener(listener.id, field, value);
-        updateListener(listener.id, 'port', protocol.defaultPort);
-      }
-    } else {
-      updateListener(listener.id, field, value);
-    }
-  };
-
-  const updatePoliciesAndRules = (section: string, data: any) => {
-    // Handle the "policyRules" section which contains both policies and rules
-    if (section === 'policyRules') {
-      if (data.policies) {
-        updateListener(listener.id, 'policies', data.policies);
-      }
-      if (data.rules) {
-        updateListener(listener.id, 'rules', data.rules);
-      }
-    }
-  };
-
-  const updatePools = (section: string, data: any) => {
-    // Handle the "pools" section
-    if (section === 'pools') {
-      if (data.pools) {
-        updateListener(listener.id, 'pools', data.pools);
-      }
-    }
-  };
-
-  return (
-    <div className='space-y-6'>
-      {/* Listener Basic Configuration */}
-      <div className='space-y-4'>
-        <div className='grid md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/20'>
-          {/* Listener Name */}
-          <div>
-            <Label className='block mb-2 font-medium'>
-              Listener Name <span className='text-destructive'>*</span>
-            </Label>
-            <Input
-              placeholder='e.g., web-listener, api-listener'
-              value={listener.name}
-              onChange={e => updateListenerField('name', e.target.value)}
-              className='focus:ring-2 focus:ring-ring focus:ring-offset-2'
-            />
-          </div>
-
-          {/* Protocol */}
-          <div>
-            <Label className='block mb-2 font-medium'>
-              Protocol <span className='text-destructive'>*</span>
-            </Label>
-            <Select
-              value={listener.protocol}
-              onValueChange={value => updateListenerField('protocol', value)}
-              disabled={isEditMode}
-            >
-              <SelectTrigger
-                className={isEditMode ? 'bg-muted text-muted-foreground' : ''}
-              >
-                <SelectValue placeholder='Select protocol' />
-              </SelectTrigger>
-              <SelectContent>
-                {protocolOptions.map(protocol => (
-                  <SelectItem key={protocol.value} value={protocol.value}>
-                    {protocol.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Port */}
-          <div>
-            <Label className='block mb-2 font-medium'>
-              Port <span className='text-destructive'>*</span>
-            </Label>
-            <Input
-              type='number'
-              min='1'
-              max='65535'
-              placeholder='80'
-              value={listener.port}
-              onChange={e =>
-                updateListenerField('port', parseInt(e.target.value) || 80)
-              }
-              className={`focus:ring-2 focus:ring-ring focus:ring-offset-2 ${isEditMode ? 'bg-muted text-muted-foreground' : ''}`}
-              disabled={isEditMode}
-            />
-            {!isEditMode && (
-              <p className='text-xs text-muted-foreground mt-1'>
-                Port auto-fills based on protocol selection
-              </p>
-            )}
-          </div>
-
-          {/* Certificate */}
-          {(listener.protocol === 'HTTPS' ||
-            listener.protocol === 'TERMINATED_HTTPS') && (
-            <div className='md:col-span-2'>
-              <div className='flex items-center gap-2 mb-2'>
-                <Label className='font-medium'>
-                  SSL Certificate <span className='text-destructive'>*</span>
-                </Label>
-                <TooltipWrapper
-                  content='Select an SSL certificate for HTTPS listeners. The certificate must be valid and associated with your domain.'
-                  side='top'
-                >
-                  <HelpCircle className='h-4 w-4 text-muted-foreground hover:text-foreground cursor-help' />
-                </TooltipWrapper>
-              </div>
-              <Select
-                value={listener.certificate}
-                onValueChange={value =>
-                  updateListenerField('certificate', value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Select SSL certificate' />
-                </SelectTrigger>
-                <SelectContent>
-                  {certificateOptions.map(cert => (
-                    <SelectItem key={cert.value} value={cert.value}>
-                      {cert.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Nested Policy & Rules Section */}
-      <div className='space-y-4'>
-        <h4 className='font-medium text-base'>Policy & Rules Configuration</h4>
-        <div className='border rounded-lg p-4 bg-muted/10'>
-          <PolicyRulesSection
-            formData={{
-              ...({} as ALBFormData),
-              policies: listener.policies,
-              rules: listener.rules,
-            }}
-            updateFormData={updatePoliciesAndRules}
-            isSection={true}
-          />
-        </div>
-      </div>
-
-      {/* Nested Pool Section */}
-      <div className='space-y-4'>
-        <h4 className='font-medium text-base'>Pool Configuration</h4>
-        <PoolSection
-          formData={{
-            ...({} as ALBFormData),
-            pools: listener.pools,
-          }}
-          updateFormData={updatePools}
-          isSection={true}
-          isEditMode={isEditMode}
-        />
-      </div>
-    </div>
-  );
-}
 
 export function ALBCreateForm({
   config,
@@ -307,6 +117,10 @@ export function ALBCreateForm({
   customBreadcrumbs,
   listenersEditMode = false,
   onToggleListenersEdit,
+  currentStep = 1,
+  onStepComplete,
+  onStepBack,
+  loadBalancerData,
 }: ALBCreateFormProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -327,8 +141,8 @@ export function ALBCreateForm({
   
   // Initialize form data from localStorage if available, otherwise use defaults
   const getInitialFormData = (): ALBFormData => {
-    // Try to load from localStorage first
-    if (typeof window !== 'undefined') {
+    // Only load from localStorage in edit mode
+    if (isEditMode && typeof window !== 'undefined') {
       const savedData = localStorage.getItem(storageKey);
       if (savedData) {
         try {
@@ -362,12 +176,19 @@ export function ALBCreateForm({
 
   const [formData, setFormData] = useState<ALBFormData>(getInitialFormData());
   
-  // Save form data to localStorage whenever it changes
+  // Clear localStorage on mount in create mode
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (!isEditMode && typeof window !== 'undefined') {
+      localStorage.removeItem(storageKey);
+    }
+  }, []);
+  
+  // Save form data to localStorage whenever it changes (only in edit mode)
+  useEffect(() => {
+    if (isEditMode && typeof window !== 'undefined') {
       localStorage.setItem(storageKey, JSON.stringify(formData));
     }
-  }, [formData, storageKey]);
+  }, [formData, storageKey, isEditMode]);
 
   // Initialize with default listener (only in create mode)
   useEffect(() => {
@@ -600,6 +421,22 @@ export function ALBCreateForm({
       localStorage.removeItem(storageKey);
     }
     
+    // Reset form data to initial state
+    setFormData({
+      name: '',
+      description: '',
+      loadBalancerType: getLoadBalancerTypeName(config),
+      region: '',
+      vpc: '',
+      subnet: '',
+      securityGroup: '',
+      performanceTier: 'standard',
+      standardConfig: 'high-availability',
+      ipAddressType: '',
+      reservedIpId: '',
+      listeners: [],
+    });
+    
     // Show success toast
     toast({
       title: 'Application Load Balancer created successfully',
@@ -635,73 +472,154 @@ export function ALBCreateForm({
     return basicValid && listenersValid;
   };
 
+  // Determine step title and description for create mode
+  const getStepTitle = () => {
+    if (isEditMode) return `Edit ${editData?.name}`;
+    return 'Set Up Your Load Balancer';
+  };
+
+  const getStepDescription = () => {
+    if (isEditMode) return 'Modify your Application Load Balancer configuration';
+    return 'Configure and deploy a new Application load balancer with enterprise-grade reliability';
+  };
+
   return (
     <PageLayout
-      title={
-        isEditMode
-          ? `Edit ${editData?.name}`
-          : 'Create Application Load Balancer'
-      }
-      description={
-        isEditMode
-          ? 'Modify your Application Load Balancer configuration'
-          : 'Configure your Application Load Balancer for content based HTTP/HTTPS routing'
-      }
+      title={getStepTitle()}
+      description={getStepDescription()}
       customBreadcrumbs={customBreadcrumbs}
       hideViewDocs={false}
     >
+      {/* Step Indicator - only show in create mode */}
+      {!isEditMode && (
+        <div className='mb-12 flex items-center justify-center'>
+          {/* Step 1 */}
+          <div className='flex items-center gap-3'>
+            <div
+              className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${
+                currentStep === 1
+                  ? 'bg-black text-white'
+                  : currentStep > 1
+                    ? 'bg-black text-white'
+                    : 'bg-gray-200 text-gray-600'
+              }`}
+            >
+              1
+            </div>
+            <span
+              className={`text-base font-medium ${
+                currentStep === 1 ? 'text-black' : 'text-gray-500'
+              }`}
+            >
+              Load Balancer Details
+            </span>
+          </div>
+
+          {/* Connecting Line */}
+          <div className='mx-8 h-px w-24 bg-gray-300'></div>
+
+          {/* Step 2 */}
+          <div className='flex items-center gap-3'>
+            <div
+              className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${
+                currentStep === 2
+                  ? 'bg-black text-white'
+                  : 'bg-gray-200 text-gray-600'
+              }`}
+            >
+              2
+            </div>
+            <span
+              className={`text-base font-medium ${
+                currentStep === 2 ? 'text-black' : 'text-gray-500'
+              }`}
+            >
+              Listener Details
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className='flex flex-col lg:flex-row gap-6'>
         {/* Main Content */}
         <div className='flex-1 space-y-4'>
-          {/* Load Balancer Details Section */}
-          <Card>
-            <CardContent className='pt-6'>
-              <BasicSection
-                formData={formData}
-                updateFormData={updateFormData}
-                isSection={true}
-                isEditMode={isEditMode}
-                onCreateVPC={() => setShowCreateVPCModal(true)}
-                onCreateSubnet={() => setShowCreateSubnetModal(true)}
-                onCreateSecurityGroup={() => setShowCreateSecurityGroupModal(true)}
-              />
-            </CardContent>
-          </Card>
+          {/* Step 1: Load Balancer Details Section */}
+          {(!isEditMode && currentStep === 1) || (isEditMode && !listenersEditMode) ? (
+            <Card>
+              <CardContent className='pt-6'>
+                <BasicSection
+                  formData={formData}
+                  updateFormData={updateFormData}
+                  isSection={true}
+                  isEditMode={isEditMode}
+                  onCreateVPC={() => setShowCreateVPCModal(true)}
+                  onCreateSubnet={() => setShowCreateSubnetModal(true)}
+                  onCreateSecurityGroup={() => setShowCreateSecurityGroupModal(true)}
+                />
+              </CardContent>
+            </Card>
+          ) : null}
 
-          {/* Listeners Section */}
-          <Card>
-            <CardContent className='pt-6 space-y-6'>
-              <div className='flex items-center justify-between'>
-                <div className='flex items-center gap-2'>
-                  <h2 className='text-lg font-semibold'>Listeners</h2>
-                  <div className='flex items-center justify-center w-6 h-6 bg-primary text-primary-foreground text-sm font-medium rounded-full'>
-                    {formData.listeners.length}
+          {/* Step 2: Listeners Section - only show in create mode step 2 or when in listener edit mode */}
+          {((!isEditMode && currentStep === 2) || (isEditMode && listenersEditMode)) && (
+            <>
+              <div className='space-y-6'>
+                <div className='space-y-2'>
+                  <div className='flex items-center justify-between'>
+                    <h2 className='text-lg font-semibold'>Listeners</h2>
+                    {/* Only allow adding one listener in create mode */}
+                    {(formData.listeners.length === 0 || isEditMode) && (
+                      <Button
+                        type='button'
+                        variant='outline'
+                        onClick={addListener}
+                        className='flex items-center gap-2'
+                      >
+                        <Plus className='h-4 w-4' />
+                        Add Listener
+                      </Button>
+                    )}
                   </div>
+                  {!isEditMode && (
+                    <p className='text-sm text-muted-foreground'>
+                      Start by adding a listener for your load balancer. You'll be able to add more listeners after deployment.
+                    </p>
+                  )}
                 </div>
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={addListener}
-                  className='flex items-center gap-2'
-                >
-                  <Plus className='h-4 w-4' />
-                  Add Listener
-                </Button>
+
+                {/* Listener Forms */}
+                {formData.listeners.length > 0 ? (
+                  <div className='space-y-4'>
+                    {formData.listeners.map((listener, index) => (
+                      <ListenerInlineForm
+                        key={listener.id}
+                        listener={listener}
+                        onUpdate={(updatedListener) => {
+                          const updatedListeners = [...formData.listeners];
+                          updatedListeners[index] = updatedListener;
+                          setFormData(prev => ({ ...prev, listeners: updatedListeners }));
+                        }}
+                        onDelete={formData.listeners.length > 1 ? () => handleDeleteListener(listener.id) : undefined}
+                        isALB={true}
+                        showDelete={formData.listeners.length > 1}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className='flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-muted/20'>
+                    <p className='text-sm font-medium text-muted-foreground'>
+                      No listeners configured
+                    </p>
+                    <p className='text-sm text-muted-foreground'>
+                      Click "Add Listener" to create one
+                    </p>
+                  </div>
+                )}
               </div>
+            </>
+          )}
 
-              {/* Listeners Table */}
-              <ListenersTable
-                listeners={formData.listeners}
-                onView={handleViewListener}
-                onEdit={handleEditListener}
-                onDelete={handleDeleteListener}
-                isEditMode={isEditMode}
-                listenersEditMode={listenersEditMode}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Submit Actions - show different buttons based on mode */}
+          {/* Submit Actions - show different buttons based on mode and step */}
           <div className='flex justify-end gap-4'>
             {isEditMode && listenersEditMode ? (
               // Listener edit mode buttons
@@ -728,8 +646,87 @@ export function ALBCreateForm({
                   Save Listeners
                 </Button>
               </>
+            ) : !isEditMode && currentStep === 1 ? (
+              // Step 1 buttons - Create mode
+              <>
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='hover:bg-secondary transition-colors'
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    // Validate step 1
+                    const basicValid =
+                      formData.name?.trim().length > 0 &&
+                      formData.region?.length > 0 &&
+                      formData.vpc?.length > 0 &&
+                      formData.subnet?.length > 0 &&
+                      formData.securityGroup?.length > 0 &&
+                      formData.performanceTier?.length > 0;
+
+                    if (!basicValid) {
+                      toast({
+                        title: 'Incomplete Configuration',
+                        description: 'Please fill in all required fields.',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+
+                    // Move to step 2
+                    if (onStepComplete) {
+                      onStepComplete(formData);
+                    }
+                  }}
+                  className='bg-black text-white hover:bg-black/90'
+                >
+                  Next: Listener Details
+                </Button>
+              </>
+            ) : !isEditMode && currentStep === 2 ? (
+              // Step 2 buttons - Create mode
+              <>
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='hover:bg-secondary transition-colors'
+                  onClick={() => {
+                    if (onStepBack) {
+                      onStepBack();
+                    }
+                  }}
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleReviewAndCreate}
+                  disabled={formData.listeners.length === 0 || !formData.listeners.some(
+                    listener =>
+                      listener.name?.trim().length > 0 &&
+                      listener.protocol?.length > 0 &&
+                      listener.port > 0
+                  )}
+                  className={`transition-colors ${
+                    formData.listeners.length > 0 &&
+                    formData.listeners.some(
+                      listener =>
+                        listener.name?.trim().length > 0 &&
+                        listener.protocol?.length > 0 &&
+                        listener.port > 0
+                    )
+                      ? 'bg-black text-white hover:bg-black/90'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  Review & Create
+                </Button>
+              </>
             ) : (
-              // Normal edit/create mode buttons
+              // Edit mode buttons
               <>
                 <Button
                   type='button'
@@ -748,7 +745,7 @@ export function ALBCreateForm({
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  {isEditMode ? 'Save Changes' : 'Review & Create'}
+                  Save Changes
                 </Button>
               </>
             )}
@@ -820,9 +817,7 @@ export function ALBCreateForm({
                 <span className='text-sm text-muted-foreground'>per hour</span>
               </div>
               <p className='text-sm text-muted-foreground'>
-                Application Load Balancer with{' '}
-                {config.infrastructureType === 'SW' ? 'software' : 'hardware'}{' '}
-                infrastructure.
+                Application Load Balancer with standard infrastructure.
               </p>
               <div className='text-xs text-muted-foreground pt-2 border-t'>
                 <p>• ALB Setup: ₹1.20/hour</p>

@@ -30,7 +30,7 @@ import { PoolSection } from './sections/pool-section';
 import { CreateVPCModal } from '@/components/modals/vm-creation-modals';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { NLBProgressModal } from './nlb-progress-modal';
-import { ListenersTable } from './listeners-table';
+import { ListenerInlineForm } from './listener-inline-form';
 import { ListenerViewEditModal } from './listener-view-edit-modal';
 import { vpcs, targetGroups } from '@/lib/data';
 
@@ -80,6 +80,10 @@ interface NLBCreateFormProps {
   customBreadcrumbs?: Array<{ href: string; title: string }>;
   listenersEditMode?: boolean;
   onToggleListenersEdit?: () => void;
+  currentStep?: number;
+  onStepComplete?: (data: any) => void;
+  onStepBack?: () => void;
+  loadBalancerData?: any;
 }
 
 const getLoadBalancerTypeName = (config: LoadBalancerConfiguration) => {
@@ -260,6 +264,10 @@ export function NLBCreateForm({
   customBreadcrumbs,
   listenersEditMode = false,
   onToggleListenersEdit,
+  currentStep = 1,
+  onStepComplete,
+  onStepBack,
+  loadBalancerData,
 }: NLBCreateFormProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -280,8 +288,8 @@ export function NLBCreateForm({
   
   // Initialize form data from localStorage if available, otherwise use defaults
   const getInitialFormData = (): NLBFormData => {
-    // Try to load from localStorage first
-    if (typeof window !== 'undefined') {
+    // Only load from localStorage in edit mode
+    if (isEditMode && typeof window !== 'undefined') {
       const savedData = localStorage.getItem(storageKey);
       if (savedData) {
         try {
@@ -315,12 +323,19 @@ export function NLBCreateForm({
 
   const [formData, setFormData] = useState<NLBFormData>(getInitialFormData());
   
-  // Save form data to localStorage whenever it changes
+  // Clear localStorage on mount in create mode
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (!isEditMode && typeof window !== 'undefined') {
+      localStorage.removeItem(storageKey);
+    }
+  }, []);
+  
+  // Save form data to localStorage whenever it changes (only in edit mode)
+  useEffect(() => {
+    if (isEditMode && typeof window !== 'undefined') {
       localStorage.setItem(storageKey, JSON.stringify(formData));
     }
-  }, [formData, storageKey]);
+  }, [formData, storageKey, isEditMode]);
 
   // Initialize with default listener (only in create mode)
   useEffect(() => {
@@ -537,6 +552,22 @@ export function NLBCreateForm({
       localStorage.removeItem(storageKey);
     }
     
+    // Reset form data to initial state
+    setFormData({
+      name: '',
+      description: '',
+      loadBalancerType: getLoadBalancerTypeName(config),
+      region: '',
+      vpc: '',
+      subnet: '',
+      securityGroup: '',
+      performanceTier: 'standard',
+      standardConfig: 'high-availability',
+      ipAddressType: '',
+      reservedIpId: '',
+      listeners: [],
+    });
+    
     // Show success toast
     toast({
       title: 'Network Load Balancer created successfully',
@@ -572,69 +603,152 @@ export function NLBCreateForm({
     return basicValid && listenersValid;
   };
 
+  // Determine step title and description for create mode
+  const getStepTitle = () => {
+    if (isEditMode) return `Edit ${editData?.name}`;
+    return 'Set Up Your Load Balancer';
+  };
+
+  const getStepDescription = () => {
+    if (isEditMode) return 'Modify your Network Load Balancer configuration';
+    return 'Configure and deploy a new Network load balancer with enterprise-grade reliability';
+  };
+
   return (
     <PageLayout
-      title={
-        isEditMode ? `Edit ${editData?.name}` : 'Create Network Load Balancer'
-      }
-      description={
-        isEditMode
-          ? 'Modify your Network Load Balancer configuration'
-          : 'Configure your Network Load Balancer for high-performance TCP/UDP traffic routing'
-      }
+      title={getStepTitle()}
+      description={getStepDescription()}
       customBreadcrumbs={customBreadcrumbs}
       hideViewDocs={false}
     >
+      {/* Step Indicator - only show in create mode */}
+      {!isEditMode && (
+        <div className='mb-12 flex items-center justify-center'>
+          {/* Step 1 */}
+          <div className='flex items-center gap-3'>
+            <div
+              className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${
+                currentStep === 1
+                  ? 'bg-black text-white'
+                  : currentStep > 1
+                    ? 'bg-black text-white'
+                    : 'bg-gray-200 text-gray-600'
+              }`}
+            >
+              1
+            </div>
+            <span
+              className={`text-base font-medium ${
+                currentStep === 1 ? 'text-black' : 'text-gray-500'
+              }`}
+            >
+              Load Balancer Details
+            </span>
+          </div>
+
+          {/* Connecting Line */}
+          <div className='mx-8 h-px w-24 bg-gray-300'></div>
+
+          {/* Step 2 */}
+          <div className='flex items-center gap-3'>
+            <div
+              className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${
+                currentStep === 2
+                  ? 'bg-black text-white'
+                  : 'bg-gray-200 text-gray-600'
+              }`}
+            >
+              2
+            </div>
+            <span
+              className={`text-base font-medium ${
+                currentStep === 2 ? 'text-black' : 'text-gray-500'
+              }`}
+            >
+              Listener Details
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className='flex flex-col lg:flex-row gap-6'>
         {/* Main Content */}
         <div className='flex-1 space-y-4'>
-          {/* Load Balancer Details Section */}
-          <Card>
-            <CardContent className='pt-6'>
-              <BasicSection
-                formData={formData as any}
-                updateFormData={updateFormData}
-                isSection={true}
-                isEditMode={isEditMode}
-                onCreateVPC={() => setShowCreateVPCModal(true)}
-                onCreateSubnet={() => setShowCreateSubnetModal(true)}
-                onCreateSecurityGroup={() => setShowCreateSecurityGroupModal(true)}
-              />
-            </CardContent>
-          </Card>
+          {/* Step 1: Load Balancer Details Section */}
+          {(!isEditMode && currentStep === 1) || (isEditMode && !listenersEditMode) ? (
+            <Card>
+              <CardContent className='pt-6'>
+                <BasicSection
+                  formData={formData as any}
+                  updateFormData={updateFormData}
+                  isSection={true}
+                  isEditMode={isEditMode}
+                  onCreateVPC={() => setShowCreateVPCModal(true)}
+                  onCreateSubnet={() => setShowCreateSubnetModal(true)}
+                  onCreateSecurityGroup={() => setShowCreateSecurityGroupModal(true)}
+                />
+              </CardContent>
+            </Card>
+          ) : null}
 
-          {/* Listeners Section */}
-          <Card>
-            <CardContent className='pt-6 space-y-6'>
-              <div className='flex items-center justify-between'>
-                <div className='flex items-center gap-2'>
-                  <h2 className='text-lg font-semibold'>Listeners</h2>
-                  <div className='flex items-center justify-center w-6 h-6 bg-primary text-primary-foreground text-sm font-medium rounded-full'>
-                    {formData.listeners.length}
+          {/* Step 2: Listeners Section - only show in create mode step 2 or when in listener edit mode */}
+          {((!isEditMode && currentStep === 2) || (isEditMode && listenersEditMode)) && (
+            <>
+              <div className='space-y-6'>
+                <div className='space-y-2'>
+                  <div className='flex items-center justify-between'>
+                    <h2 className='text-lg font-semibold'>Listeners</h2>
+                    {/* Only allow adding one listener in create mode */}
+                    {(formData.listeners.length === 0 || isEditMode) && (
+                      <Button
+                        type='button'
+                        variant='outline'
+                        onClick={addListener}
+                        className='flex items-center gap-2'
+                      >
+                        <Plus className='h-4 w-4' />
+                        Add Listener
+                      </Button>
+                    )}
                   </div>
+                  {!isEditMode && (
+                    <p className='text-sm text-muted-foreground'>
+                      Start by adding a listener for your load balancer. You'll be able to add more listeners after deployment.
+                    </p>
+                  )}
                 </div>
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={addListener}
-                  className='flex items-center gap-2'
-                >
-                  <Plus className='h-4 w-4' />
-                  Add Listener
-                </Button>
-              </div>
 
-              {/* Listeners Table */}
-              <ListenersTable
-                listeners={formData.listeners}
-                onView={handleViewListener}
-                onEdit={handleEditListener}
-                onDelete={handleDeleteListener}
-                isEditMode={isEditMode}
-                listenersEditMode={listenersEditMode}
-              />
-            </CardContent>
-          </Card>
+                {/* Listener Forms */}
+                {formData.listeners.length > 0 ? (
+                  <div className='space-y-4'>
+                    {formData.listeners.map((listener, index) => (
+                      <ListenerInlineForm
+                        key={listener.id}
+                        listener={listener}
+                        onUpdate={(updatedListener) => {
+                          const updatedListeners = [...formData.listeners];
+                          updatedListeners[index] = updatedListener;
+                          setFormData(prev => ({ ...prev, listeners: updatedListeners }));
+                        }}
+                        onDelete={formData.listeners.length > 1 ? () => handleDeleteListener(listener.id) : undefined}
+                        isALB={false}
+                        showDelete={formData.listeners.length > 1}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className='flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-muted/20'>
+                    <p className='text-sm font-medium text-muted-foreground'>
+                      No listeners configured
+                    </p>
+                    <p className='text-sm text-muted-foreground'>
+                      Click "Add Listener" to create one
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           {/* Submit Actions - show different buttons based on mode */}
           <div className='flex justify-end gap-4'>
@@ -663,8 +777,87 @@ export function NLBCreateForm({
                   Save Listeners
                 </Button>
               </>
+            ) : !isEditMode && currentStep === 1 ? (
+              // Step 1 buttons - Create mode
+              <>
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='hover:bg-secondary transition-colors'
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    // Validate step 1
+                    const basicValid =
+                      formData.name?.trim().length > 0 &&
+                      formData.region?.length > 0 &&
+                      formData.vpc?.length > 0 &&
+                      formData.subnet?.length > 0 &&
+                      formData.securityGroup?.length > 0 &&
+                      formData.performanceTier?.length > 0;
+
+                    if (!basicValid) {
+                      toast({
+                        title: 'Incomplete Configuration',
+                        description: 'Please fill in all required fields.',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+
+                    // Move to step 2
+                    if (onStepComplete) {
+                      onStepComplete(formData);
+                    }
+                  }}
+                  className='bg-black text-white hover:bg-black/90'
+                >
+                  Next: Listener Details
+                </Button>
+              </>
+            ) : !isEditMode && currentStep === 2 ? (
+              // Step 2 buttons - Create mode
+              <>
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='hover:bg-secondary transition-colors'
+                  onClick={() => {
+                    if (onStepBack) {
+                      onStepBack();
+                    }
+                  }}
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleReviewAndCreate}
+                  disabled={formData.listeners.length === 0 || !formData.listeners.some(
+                    listener =>
+                      listener.name?.trim().length > 0 &&
+                      listener.protocol?.length > 0 &&
+                      listener.port > 0
+                  )}
+                  className={`transition-colors ${
+                    formData.listeners.length > 0 &&
+                    formData.listeners.some(
+                      listener =>
+                        listener.name?.trim().length > 0 &&
+                        listener.protocol?.length > 0 &&
+                        listener.port > 0
+                    )
+                      ? 'bg-black text-white hover:bg-black/90'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  Review & Create
+                </Button>
+              </>
             ) : (
-              // Normal edit/create mode buttons
+              // Edit mode buttons
               <>
                 <Button
                   type='button'
@@ -683,7 +876,7 @@ export function NLBCreateForm({
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  {isEditMode ? 'Save Changes' : 'Review & Create'}
+                  Save Changes
                 </Button>
               </>
             )}

@@ -75,17 +75,26 @@ export default function CreateLoadBalancerPage() {
     );
   }
 
+  // Custom breadcrumbs to remove "Balancer" segment
+  const customBreadcrumbs = [
+    { href: '/dashboard', title: 'Home' },
+    { href: '/networking', title: 'Networking' },
+    { href: '/networking/load-balancing', title: 'Load Balancers' },
+    { href: '/networking/load-balancing/balancer/create', title: 'Create' },
+  ];
+
   // Show appropriate form based on configuration
   if (config.loadBalancerType === 'ALB') {
     return (
       <ALBCreateForm
         config={config}
         onBack={handleBack}
-        onCancel={() => router.push('/networking/load-balancing/balancer')}
+        onCancel={() => router.push('/networking/load-balancing')}
         currentStep={currentStep}
         onStepComplete={handleStepComplete}
         onStepBack={handleStepBack}
         loadBalancerData={loadBalancerData}
+        customBreadcrumbs={customBreadcrumbs}
       />
     );
   }
@@ -96,11 +105,12 @@ export default function CreateLoadBalancerPage() {
       <NLBCreateForm
         config={config}
         onBack={handleBack}
-        onCancel={() => router.push('/networking/load-balancing/balancer')}
+        onCancel={() => router.push('/networking/load-balancing')}
         currentStep={currentStep}
         onStepComplete={handleStepComplete}
         onStepBack={handleStepBack}
         loadBalancerData={loadBalancerData}
+        customBreadcrumbs={customBreadcrumbs}
       />
     );
   }

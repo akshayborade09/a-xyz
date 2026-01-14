@@ -59,12 +59,21 @@ export default function CreateLoadBalancerPage() {
     setCurrentStep(1); // Go back to load balancer details
   };
 
+  // Custom breadcrumbs to remove "Balancer" segment
+  const customBreadcrumbs = [
+    { href: '/dashboard', title: 'Home' },
+    { href: '/networking', title: 'Networking' },
+    { href: '/networking/load-balancing', title: 'Load Balancers' },
+    { href: '/networking/load-balancing/balancer/create', title: 'Create' },
+  ];
+
   // Show modal if configuration is not complete
   if (showModal || !config.loadBalancerType) {
     return (
       <PageLayout
         title='Create Load Balancer'
         description='Choose your load balancer configuration to get started'
+        customBreadcrumbs={customBreadcrumbs}
       >
         <LoadBalancerConfigurationModal
           isOpen={showModal}
@@ -74,14 +83,6 @@ export default function CreateLoadBalancerPage() {
       </PageLayout>
     );
   }
-
-  // Custom breadcrumbs to remove "Balancer" segment
-  const customBreadcrumbs = [
-    { href: '/dashboard', title: 'Home' },
-    { href: '/networking', title: 'Networking' },
-    { href: '/networking/load-balancing', title: 'Load Balancers' },
-    { href: '/networking/load-balancing/balancer/create', title: 'Create' },
-  ];
 
   // Show appropriate form based on configuration
   if (config.loadBalancerType === 'ALB') {
@@ -120,6 +121,7 @@ export default function CreateLoadBalancerPage() {
     <PageLayout
       title='Create Load Balancer'
       description='Please select a load balancer type to continue'
+      customBreadcrumbs={customBreadcrumbs}
     >
       <div className='flex items-center justify-center min-h-[400px]'>
         <div className='text-center'>

@@ -292,11 +292,11 @@ export default function DatabaseListPage() {
             onClick: () => handleRestart(row),
             icon: <RotateCcw className='mr-2 h-4 w-4' />,
           },
-          {
-            label: 'Create DB from Backup',
-            onClick: () => handleCreateFromBackup(row),
-            icon: <FolderDown className='mr-2 h-4 w-4' />,
-          },
+          // {
+          //   label: 'Create DB from Backup',
+          //   onClick: () => handleCreateFromBackup(row),
+          //   icon: <FolderDown className='mr-2 h-4 w-4' />,
+          // },
           {
             label: 'Restore DB from Backup',
             onClick: () => handleRestoreFromBackup(row),

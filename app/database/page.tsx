@@ -16,6 +16,7 @@ import { EmptyState } from '../../components/ui/empty-state';
 import { Card, CardContent } from '../../components/ui/card';
 import { Database, Pause, Play, RotateCcw, FolderDown, ArrowUpCircle, HardDrive } from 'lucide-react';
 import { UpdateDatabaseStorageModal } from '../../components/modals/update-database-storage-modal';
+import { RestoreDatabaseModal } from '../../components/modals/restore-database-modal';
 import {
   Dialog,
   DialogContent,
@@ -50,6 +51,8 @@ export default function DatabaseListPage() {
   const [selectedUpgradeVersion, setSelectedUpgradeVersion] = useState('');
   const [updateStorageModalOpen, setUpdateStorageModalOpen] = useState(false);
   const [selectedDatabaseForStorageUpdate, setSelectedDatabaseForStorageUpdate] = useState<any>(null);
+  const [restoreModalOpen, setRestoreModalOpen] = useState(false);
+  const [selectedDatabaseForRestore, setSelectedDatabaseForRestore] = useState<any>(null);
   
   // Toast hook
   const { toast } = useToast();
@@ -130,8 +133,25 @@ export default function DatabaseListPage() {
   };
 
   const handleRestoreFromBackup = (database: any) => {
-    console.log('Restore DB from backup:', database.name);
-    // Mock navigation to restore flow
+    setSelectedDatabaseForRestore(database);
+    setRestoreModalOpen(true);
+  };
+
+  const handleRestoreConfirm = (backupId: string) => {
+    if (!selectedDatabaseForRestore) return;
+    
+    // Mock API call
+    console.log('Restoring database:', selectedDatabaseForRestore.name, 'from backup:', backupId);
+    
+    // Show success toast
+    toast({
+      title: 'Database Restore Initiated',
+      description: `${selectedDatabaseForRestore.name} is being restored from the selected backup. This may take several minutes.`,
+    });
+    
+    // Close modal and reset
+    setRestoreModalOpen(false);
+    setSelectedDatabaseForRestore(null);
   };
 
   const handleUpgrade = (database: any) => {
@@ -567,6 +587,24 @@ export default function DatabaseListPage() {
             storage: selectedDatabaseForStorageUpdate.storage,
           }}
           onUpdate={handleStorageUpdate}
+        />
+      )}
+
+      {/* Restore Database Modal */}
+      {selectedDatabaseForRestore && (
+        <RestoreDatabaseModal
+          isOpen={restoreModalOpen}
+          onClose={() => {
+            setRestoreModalOpen(false);
+            setSelectedDatabaseForRestore(null);
+          }}
+          database={{
+            id: selectedDatabaseForRestore.id,
+            name: selectedDatabaseForRestore.name,
+            dbEngine: selectedDatabaseForRestore.dbEngine,
+            engineVersion: selectedDatabaseForRestore.engineVersion,
+          }}
+          onRestore={handleRestoreConfirm}
         />
       )}
     </PageShell>

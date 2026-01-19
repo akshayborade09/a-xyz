@@ -50,6 +50,11 @@ const backupSchedules = [
     schedule: 'Every hour at minute 0',
     storageBucket: 'backup-storage-us-east',
     maxBackups: 7,
+    minute: '0',
+    hour: '*',
+    day: '*',
+    month: '*',
+    weekday: '*',
   },
   {
     id: 'backup-2',
@@ -57,6 +62,11 @@ const backupSchedules = [
     schedule: 'Daily at 12:00 AM',
     storageBucket: 'backup-storage-us-west',
     maxBackups: 30,
+    minute: '0',
+    hour: '0',
+    day: '*',
+    month: '*',
+    weekday: '*',
   },
 ];
 
@@ -183,6 +193,8 @@ export default function DatabaseDetailsPage({ params }: { params: { id: string }
   
   // Create Backup Modal State
   const [isCreateBackupModalOpen, setIsCreateBackupModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingBackupId, setEditingBackupId] = useState<string | null>(null);
   const [backupFormData, setBackupFormData] = useState({
     backupName: '',
     storageBucket: '',
@@ -193,6 +205,13 @@ export default function DatabaseDetailsPage({ params }: { params: { id: string }
     month: '*',
     weekday: '*',
   });
+  
+  // Delete Backup Modal State
+  const [isDeleteBackupModalOpen, setIsDeleteBackupModalOpen] = useState(false);
+  const [deletingBackupType, setDeletingBackupType] = useState<'schedule' | 'history'>('schedule');
+  const [deletingBackupName, setDeletingBackupName] = useState('');
+  const [deletingBackupId, setDeletingBackupId] = useState('');
+  
   const database = getDatabase(params.id);
 
   if (!database) {
@@ -261,14 +280,41 @@ export default function DatabaseDetailsPage({ params }: { params: { id: string }
     setBackupFormData({ ...backupFormData, maxBackups: value });
   };
 
+  // Handle opening edit modal
+  const handleEditBackup = (backup: typeof backupSchedules[0]) => {
+    setIsEditMode(true);
+    setEditingBackupId(backup.id);
+    setBackupFormData({
+      backupName: backup.name,
+      storageBucket: backup.storageBucket,
+      maxBackups: backup.maxBackups,
+      minute: backup.minute,
+      hour: backup.hour,
+      day: backup.day,
+      month: backup.month,
+      weekday: backup.weekday,
+    });
+    setIsCreateBackupModalOpen(true);
+  };
+
   // Handle backup form submission
   const handleCreateBackup = () => {
-    console.log('Creating backup with data:', backupFormData);
-    toast({
-      title: 'Backup Schedule Created',
-      description: `Backup schedule "${backupFormData.backupName}" has been created successfully.`,
-    });
+    if (isEditMode) {
+      console.log('Updating backup with data:', backupFormData, 'ID:', editingBackupId);
+      toast({
+        title: 'Backup Schedule Updated',
+        description: `Backup schedule "${backupFormData.backupName}" has been updated successfully.`,
+      });
+    } else {
+      console.log('Creating backup with data:', backupFormData);
+      toast({
+        title: 'Backup Schedule Created',
+        description: `Backup schedule "${backupFormData.backupName}" has been created successfully.`,
+      });
+    }
     setIsCreateBackupModalOpen(false);
+    setIsEditMode(false);
+    setEditingBackupId(null);
     // Reset form
     setBackupFormData({
       backupName: '',
@@ -280,6 +326,29 @@ export default function DatabaseDetailsPage({ params }: { params: { id: string }
       month: '*',
       weekday: '*',
     });
+  };
+
+  // Handle delete backup confirmation
+  const handleDeleteBackupClick = (id: string, name: string, type: 'schedule' | 'history') => {
+    setDeletingBackupId(id);
+    setDeletingBackupName(name);
+    setDeletingBackupType(type);
+    setIsDeleteBackupModalOpen(true);
+  };
+
+  // Handle delete backup
+  const handleDeleteBackup = () => {
+    console.log(`Deleting ${deletingBackupType}:`, deletingBackupId);
+    
+    toast({
+      title: `${deletingBackupType === 'schedule' ? 'Backup Schedule' : 'Backup'} Deleted`,
+      description: `"${deletingBackupName}" has been deleted successfully.`,
+    });
+    
+    // In real app, this would remove from data
+    // Reset state
+    setDeletingBackupId('');
+    setDeletingBackupName('');
   };
 
   // Mock connection details
@@ -821,10 +890,20 @@ export default function DatabaseDetailsPage({ params }: { params: { id: string }
                         <p className='text-sm text-muted-foreground'>{schedule.schedule}</p>
                       </div>
                       <div className='flex items-center gap-2'>
-                        <Button variant='ghost' size='sm' className='h-8 w-8 p-0'>
+                        <Button 
+                          variant='ghost' 
+                          size='sm' 
+                          className='h-8 w-8 p-0'
+                          onClick={() => handleEditBackup(schedule)}
+                        >
                           <Edit className='h-4 w-4' />
                         </Button>
-                        <Button variant='ghost' size='sm' className='h-8 w-8 p-0'>
+                        <Button 
+                          variant='ghost' 
+                          size='sm' 
+                          className='h-8 w-8 p-0 text-muted-foreground hover:text-red-600'
+                          onClick={() => handleDeleteBackupClick(schedule.id, schedule.name, 'schedule')}
+                        >
                           <Trash2 className='h-4 w-4' />
                         </Button>
                       </div>
@@ -878,6 +957,21 @@ export default function DatabaseDetailsPage({ params }: { params: { id: string }
                     label: 'Finished',
                     sortable: true,
                     render: (value: string) => <span className='text-sm'>{value}</span>,
+                  },
+                  {
+                    key: 'actions',
+                    label: 'Actions',
+                    sortable: false,
+                    render: (_value: string, row: any) => (
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        className='h-8 w-8 p-0 text-muted-foreground hover:text-red-600'
+                        onClick={() => handleDeleteBackupClick(row.id, row.name, 'history')}
+                      >
+                        <Trash2 className='h-4 w-4' />
+                      </Button>
+                    ),
                   },
                 ]}
                 data={backupHistory}
@@ -1199,13 +1293,29 @@ export default function DatabaseDetailsPage({ params }: { params: { id: string }
         onConfirm={handleDelete}
       />
 
-      {/* Create Backup Modal */}
-      <Dialog open={isCreateBackupModalOpen} onOpenChange={setIsCreateBackupModalOpen}>
+      {/* Create/Edit Backup Modal */}
+      <Dialog open={isCreateBackupModalOpen} onOpenChange={(open) => {
+        setIsCreateBackupModalOpen(open);
+        if (!open) {
+          setIsEditMode(false);
+          setEditingBackupId(null);
+          setBackupFormData({
+            backupName: '',
+            storageBucket: '',
+            maxBackups: 7,
+            minute: '30',
+            hour: '*',
+            day: '*',
+            month: '*',
+            weekday: '*',
+          });
+        }
+      }}>
         <DialogContent className='max-w-2xl max-h-[90vh] flex flex-col'>
           <DialogHeader>
-            <DialogTitle>Create Backup Schedule</DialogTitle>
+            <DialogTitle>{isEditMode ? 'Edit Backup Schedule' : 'Create Backup Schedule'}</DialogTitle>
             <DialogDescription>
-              Configure a backup schedule for your database instance.
+              {isEditMode ? 'Update the backup schedule configuration.' : 'Configure a backup schedule for your database instance.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -1413,12 +1523,16 @@ export default function DatabaseDetailsPage({ params }: { params: { id: string }
           <DialogFooter>
             <Button
               variant='outline'
-              onClick={() => setIsCreateBackupModalOpen(false)}
+              onClick={() => {
+                setIsCreateBackupModalOpen(false);
+                setIsEditMode(false);
+                setEditingBackupId(null);
+              }}
             >
               Cancel
             </Button>
-            <Button onClick={handleCreateBackup}>
-              Create Backup
+            <Button onClick={handleCreateBackup} className='bg-black text-white hover:bg-black/90'>
+              {isEditMode ? 'Update Backup' : 'Create Backup'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1434,6 +1548,17 @@ export default function DatabaseDetailsPage({ params }: { params: { id: string }
           storage: database.storage,
         }}
         onUpdate={handleStorageUpdate}
+      />
+
+      {/* Delete Backup Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteBackupModalOpen}
+        onClose={() => setIsDeleteBackupModalOpen(false)}
+        resourceName={deletingBackupName}
+        resourceType={deletingBackupType === 'schedule' ? 'Backup Schedule' : 'Backup'}
+        onConfirm={handleDeleteBackup}
+        title='Confirm Deletion'
+        description={`Are you sure you want to delete this ${deletingBackupType === 'schedule' ? 'backup schedule' : 'backup'}? This action cannot be undone.`}
       />
     </PageLayout>
   );

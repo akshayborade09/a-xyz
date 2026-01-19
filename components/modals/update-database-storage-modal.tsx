@@ -220,7 +220,7 @@ export function UpdateDatabaseStorageModal({
                     ₹{storagePrice}/mo
                   </div>
                   <div className='text-xs text-muted-foreground'>
-                    ₹{(parseFloat(storagePrice) / 730).toFixed(2)}/hour
+                    Rs 7.88/GB
                   </div>
                 </div>
               </div>

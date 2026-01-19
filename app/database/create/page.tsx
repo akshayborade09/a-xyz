@@ -34,6 +34,7 @@ import {
 import { TooltipWrapper } from '../../../components/ui/tooltip-wrapper';
 import { HelpCircle, Copy, Check } from 'lucide-react';
 import { vpcs, subnets } from '../../../lib/data';
+import { AttachStorageBucketModal } from '@/components/modals/attach-storage-bucket-modal';
 
 // Mock data for storage buckets
 const storageBuckets = [
@@ -85,8 +86,10 @@ const configurationTiers = [
 
 // Quick select storage options
 const storageQuickSelect = [
-  { label: '20GB', value: 20 },
+  { label: '40GB', value: 40 },
   { label: '100GB', value: 100 },
+  { label: '200GB', value: 200 },
+  { label: '400GB', value: 400 },
   { label: '500GB', value: 500 },
   { label: '1TB', value: 1024 },
 ];
@@ -97,8 +100,8 @@ export default function CreateDatabasePage() {
     dbType: 'relational',
     engine: 'mysql',
     version: '',
-    configuration: '',
-    storageSize: 100,
+    configuration: 'tier-1',
+    storageSize: 40,
     replicaConfig: 'no-standby',
     databaseName: '',
     username: '',
@@ -120,6 +123,8 @@ export default function CreateDatabasePage() {
   const [formTouched, setFormTouched] = useState(false);
   const [customStorageInput, setCustomStorageInput] = useState('');
   const [cronCopied, setCronCopied] = useState(false);
+  const [attachBucketModalOpen, setAttachBucketModalOpen] = useState(false);
+  const [attachedBucketName, setAttachedBucketName] = useState('');
 
   // Get subnets for selected VPC
   const selectedVpc = vpcs.find(vpc => vpc.id === formData.vpc);
@@ -163,6 +168,17 @@ export default function CreateDatabasePage() {
     setTimeout(() => setCronCopied(false), 2000);
   };
 
+  const handleAttachBucket = (bucketData: {
+    bucket: string;
+    accessKey: string;
+    secretKey: string;
+  }) => {
+    // Store bucket data
+    setFormData(prev => ({ ...prev, storageBucket: bucketData.bucket }));
+    setAttachedBucketName(bucketData.bucket);
+    console.log('Bucket attached:', bucketData);
+  };
+
   // Form validation
   const isFormValid = () => {
     return (
@@ -182,19 +198,57 @@ export default function CreateDatabasePage() {
   };
 
   const handleSelectChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData: any = { ...prev };
+      
+      // Parse value as number for storageSize field
+      if (field === 'storageSize') {
+        const parsedValue = parseInt(value) || 0;
+        // Ensure the value respects the minimum for the selected tier
+        const selectedTier = configurationTiers.find(tier => tier.id === prev.configuration);
+        const minStorage = selectedTier?.storage || 40;
+        newData[field] = Math.max(parsedValue, minStorage);
+      } else {
+        newData[field] = value;
+      }
+      
+      // When configuration changes, set storage to the tier's minimum
+      if (field === 'configuration') {
+        const selectedTier = configurationTiers.find(tier => tier.id === value);
+        if (selectedTier) {
+          // Set storage to the tier's minimum storage (slider should move to this position)
+          newData.storageSize = selectedTier.storage;
+          setCustomStorageInput('');
+        }
+      }
+      
+      return newData;
+    });
     if (!formTouched) setFormTouched(true);
   };
 
   const handleStorageQuickSelect = (value: number) => {
-    setFormData(prev => ({ ...prev, storageSize: value }));
-    setCustomStorageInput('');
+    const selectedTier = configurationTiers.find(tier => tier.id === formData.configuration);
+    const minStorage = selectedTier?.storage || 40;
+    
+    // Only allow selection if value meets minimum requirement
+    if (value >= minStorage) {
+      setFormData(prev => ({ ...prev, storageSize: value }));
+      setCustomStorageInput('');
+    }
   };
 
   const handleCustomStorageApply = () => {
-    const value = parseInt(customStorageInput);
-    if (!isNaN(value) && value >= 4 && value <= 2048) {
-      setFormData(prev => ({ ...prev, storageSize: value }));
+    const value = parseFloat(customStorageInput);
+    if (!isNaN(value)) {
+      // Convert TB to GB
+      const gbValue = Math.round(value * 1024);
+      const selectedTier = configurationTiers.find(tier => tier.id === formData.configuration);
+      const minStorage = selectedTier?.storage || 40;
+      
+      if (gbValue >= minStorage && gbValue <= 2048) {
+        setFormData(prev => ({ ...prev, storageSize: gbValue }));
+      }
     }
   };
 
@@ -387,14 +441,14 @@ export default function CreateDatabasePage() {
                     className='space-y-3'
                   >
                     {configurationTiers.map(tier => (
-                      <div
+                      <Label
                         key={tier.id}
+                        htmlFor={tier.id}
                         className={`relative flex items-start p-4 border rounded-lg cursor-pointer transition-colors ${
                           formData.configuration === tier.id
                             ? 'border-primary bg-primary/5'
                             : 'hover:border-primary/50'
                         }`}
-                        onClick={() => handleSelectChange('configuration', tier.id)}
                       >
                         <RadioGroupItem
                           value={tier.id}
@@ -403,12 +457,9 @@ export default function CreateDatabasePage() {
                         />
                         <div className='ml-3 flex-1'>
                           <div>
-                            <Label
-                              htmlFor={tier.id}
-                              className='text-base font-semibold cursor-pointer'
-                            >
+                            <div className='text-base font-semibold cursor-pointer'>
                               ₹{tier.price.toFixed(2)}/mo
-                            </Label>
+                            </div>
                             <p className='text-sm text-muted-foreground mt-1'>
                               {tier.vcpu} vCPU / {tier.ram} GB RAM / Storage minimum:{' '}
                               {tier.storage} GB
@@ -418,7 +469,7 @@ export default function CreateDatabasePage() {
                             </p>
                           </div>
                         </div>
-                      </div>
+                      </Label>
                     ))}
                   </RadioGroup>
                 </div>
@@ -438,24 +489,31 @@ export default function CreateDatabasePage() {
                       <Label className='mb-3 block text-sm font-medium'>
                         Size (GB) *
                       </Label>
-                      <div className='flex gap-2 mb-4'>
+                      <div className='flex gap-2 mb-4 flex-wrap'>
                         <div className='text-sm font-medium'>Quick Select</div>
-                        {storageQuickSelect.map(option => (
-                          <Button
-                            key={option.value}
-                            type='button'
-                            variant={
-                              formData.storageSize === option.value
-                                ? 'default'
-                                : 'outline'
-                            }
-                            size='sm'
-                            onClick={() => handleStorageQuickSelect(option.value)}
-                            className='rounded-full'
-                          >
-                            {option.label}
-                          </Button>
-                        ))}
+                        {storageQuickSelect.map(option => {
+                          const selectedTier = configurationTiers.find(tier => tier.id === formData.configuration);
+                          const minStorage = selectedTier?.storage || 40;
+                          const isDisabled = option.value < minStorage;
+                          
+                          return (
+                            <Button
+                              key={option.value}
+                              type='button'
+                              variant={
+                                formData.storageSize === option.value
+                                  ? 'default'
+                                  : 'outline'
+                              }
+                              size='sm'
+                              onClick={() => handleStorageQuickSelect(option.value)}
+                              className='rounded-full'
+                              disabled={isDisabled}
+                            >
+                              {option.label}
+                            </Button>
+                          );
+                        })}
                         <div className='flex items-center gap-2'>
                           <Input
                             type='number'
@@ -463,10 +521,9 @@ export default function CreateDatabasePage() {
                             value={customStorageInput}
                             onChange={e => setCustomStorageInput(e.target.value)}
                             className='w-24 h-9'
-                            min={4}
-                            max={2048}
+                            step='0.1'
                           />
-                          <span className='text-sm text-muted-foreground'>GB</span>
+                          <span className='text-sm text-muted-foreground'>TB</span>
                         </div>
                         {customStorageInput && (
                           <Button
@@ -481,17 +538,23 @@ export default function CreateDatabasePage() {
                       </div>
 
                       <Slider
+                        key={`slider-${formData.configuration}-${formData.storageSize}`}
                         value={[formData.storageSize]}
-                        onValueChange={([value]) =>
-                          handleSelectChange('storageSize', value.toString())
-                        }
-                        min={4}
+                        onValueChange={([value]) => {
+                          const selectedTier = configurationTiers.find(tier => tier.id === formData.configuration);
+                          const minStorage = selectedTier?.storage || 40;
+                          // Only allow values >= minimum for selected tier
+                          if (value >= minStorage) {
+                            handleSelectChange('storageSize', value.toString());
+                          }
+                        }}
+                        min={40}
                         max={2048}
                         step={1}
                         className='mb-2'
                       />
                       <div className='flex justify-between text-xs text-muted-foreground'>
-                        <span>4 GB</span>
+                        <span>40 GB</span>
                         <span>2048 GB</span>
                       </div>
                     </div>
@@ -858,29 +921,30 @@ export default function CreateDatabasePage() {
 
                           {/* Storage Bucket */}
                           <div>
-                            <Label
-                              htmlFor='storageBucket'
-                              className='mb-2 block font-medium'
-                            >
+                            <Label className='mb-2 block font-medium'>
                               Storage Bucket
                             </Label>
-                            <Select
-                              value={formData.storageBucket}
-                              onValueChange={value =>
-                                handleSelectChange('storageBucket', value)
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder='Select storage bucket' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {storageBuckets.map(bucket => (
-                                  <SelectItem key={bucket.value} value={bucket.value}>
-                                    {bucket.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            {attachedBucketName ? (
+                              <div className='flex items-center justify-between p-3 border rounded-lg bg-muted/30'>
+                                <span className='text-sm font-medium'>{attachedBucketName}</span>
+                                <Button
+                                  type='button'
+                                  variant='outline'
+                                  size='sm'
+                                  onClick={() => setAttachBucketModalOpen(true)}
+                                >
+                                  Change
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                type='button'
+                                onClick={() => setAttachBucketModalOpen(true)}
+                                className='bg-black text-white hover:bg-black/90'
+                              >
+                                Attach storage bucket
+                              </Button>
+                            )}
                           </div>
 
                           {/* Maximum Backups */}
@@ -1286,12 +1350,18 @@ export default function CreateDatabasePage() {
                 {formData.replicaConfig === 'two-standby' && (
                   <p>• High Availability (2 standby): ₹462.70/month</p>
                 )}
-                <p className='pt-1'>• Data transfer charges may apply</p>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Attach Storage Bucket Modal */}
+      <AttachStorageBucketModal
+        isOpen={attachBucketModalOpen}
+        onClose={() => setAttachBucketModalOpen(false)}
+        onAttach={handleAttachBucket}
+      />
     </PageLayout>
   );
 }

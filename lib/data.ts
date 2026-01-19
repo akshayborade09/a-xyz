@@ -3991,7 +3991,98 @@ export const autoScalingTemplates: AutoScalingTemplate[] = [
   }
 ]
 
+// Database Backup interface
+export interface DatabaseBackup {
+  id: string
+  name: string
+  databaseId: string
+  databaseName: string
+  size: string
+  createdOn: string
+  status: "available" | "creating" | "failed"
+  type: "automatic" | "manual"
+}
+
+// Database Backups data
+export const databaseBackups: DatabaseBackup[] = [
+  {
+    id: "bkp-1",
+    name: "production-db-auto-2024-01-19",
+    databaseId: "db-1",
+    databaseName: "production-db",
+    size: "98 GB",
+    createdOn: "2024-01-19T02:00:00Z",
+    status: "available",
+    type: "automatic"
+  },
+  {
+    id: "bkp-2",
+    name: "production-db-auto-2024-01-18",
+    databaseId: "db-1",
+    databaseName: "production-db",
+    size: "97 GB",
+    createdOn: "2024-01-18T02:00:00Z",
+    status: "available",
+    type: "automatic"
+  },
+  {
+    id: "bkp-3",
+    name: "production-db-manual-pre-migration",
+    databaseId: "db-1",
+    databaseName: "production-db",
+    size: "96 GB",
+    createdOn: "2024-01-17T15:30:00Z",
+    status: "available",
+    type: "manual"
+  },
+  {
+    id: "bkp-4",
+    name: "production-db-auto-2024-01-17",
+    databaseId: "db-1",
+    databaseName: "production-db",
+    size: "95 GB",
+    createdOn: "2024-01-17T02:00:00Z",
+    status: "available",
+    type: "automatic"
+  },
+  {
+    id: "bkp-5",
+    name: "analytics-postgres-auto-2024-01-19",
+    databaseId: "db-2",
+    databaseName: "analytics-postgres",
+    size: "485 GB",
+    createdOn: "2024-01-19T03:00:00Z",
+    status: "available",
+    type: "automatic"
+  },
+  {
+    id: "bkp-6",
+    name: "dev-mongodb-manual-backup",
+    databaseId: "db-3",
+    databaseName: "dev-mongodb",
+    size: "48 GB",
+    createdOn: "2024-01-18T10:15:00Z",
+    status: "available",
+    type: "manual"
+  },
+  {
+    id: "bkp-7",
+    name: "staging-mysql-auto-2024-01-15",
+    databaseId: "db-4",
+    databaseName: "staging-mysql",
+    size: "47 GB",
+    createdOn: "2024-01-15T02:00:00Z",
+    status: "available",
+    type: "automatic"
+  }
+]
+
 // Helper functions for Load Balancer data
 export const getLoadBalancer = (id: string) => {
   return loadBalancers.find(lb => lb.id === id)
+}
+
+// Helper function to get backups for a database
+export const getDatabaseBackups = (databaseId: string) => {
+  return databaseBackups.filter(backup => backup.databaseId === databaseId && backup.status === 'available')
 }

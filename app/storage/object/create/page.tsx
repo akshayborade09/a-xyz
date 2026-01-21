@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -37,6 +38,7 @@ export default function CreateBucketPage() {
     bucketName: '',
     region: '',
     accessControl: '',
+    storageClass: 'standard',
     bucketVersioning: false,
     defaultEncryption: true,
   });
@@ -197,6 +199,57 @@ export default function CreateBucketPage() {
                       <SelectItem value='authenticated-read'>Authenticated Read</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Storage Class */}
+                <div className='mb-6'>
+                  <Label className='block mb-3 font-medium'>Storage Class</Label>
+                  <RadioGroup
+                    value={formData.storageClass}
+                    onValueChange={(value) => handleChange('storageClass', value)}
+                    className='grid grid-cols-2 gap-3'
+                  >
+                    <label
+                      htmlFor='standard'
+                      className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${
+                        formData.storageClass === 'standard'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <RadioGroupItem
+                        value='standard'
+                        id='standard'
+                        className='mt-0.5'
+                      />
+                      <div className='flex-1'>
+                        <div className='text-sm font-medium mb-1'>Standard</div>
+                        <p className='text-sm text-muted-foreground'>
+                          For frequently accessed data with low-latency performance. Best for user-facing workloads.
+                        </p>
+                      </div>
+                    </label>
+                    <label
+                      htmlFor='infrequent-access'
+                      className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${
+                        formData.storageClass === 'infrequent-access'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <RadioGroupItem
+                        value='infrequent-access'
+                        id='infrequent-access'
+                        className='mt-0.5'
+                      />
+                      <div className='flex-1'>
+                        <div className='text-sm font-medium mb-1'>Infrequent Access</div>
+                        <p className='text-sm text-muted-foreground'>
+                          For data accessed occasionally at a lower storage cost. Best for backups, logs, and historical data.
+                        </p>
+                      </div>
+                    </label>
+                  </RadioGroup>
                 </div>
 
                 {/* Bucket Versioning */}
@@ -374,59 +427,76 @@ export default function CreateBucketPage() {
             <div className="pb-4">
               <h3 className="text-base font-semibold">Price Summary</h3>
             </div>
-            <div className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">0 to 5GB</span>
-                  <div className="text-right">
-                    <div className="font-medium">₹0.00 /GB</div>
-                    <div className="text-xs text-muted-foreground">₹0.00000000000 /credit</div>
+            {formData.storageClass === 'standard' ? (
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">0 to 5GB</span>
+                    <div className="text-right">
+                      <div className="font-medium">₹0.00 /GB</div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">5 GB to 50 TB</span>
+                    <div className="text-right">
+                      <div className="font-medium">₹1.66 /GB</div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">50 TB to 500 TB</span>
+                    <div className="text-right">
+                      <div className="font-medium">₹1.61 /GB</div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Above 500 TB</span>
+                    <div className="text-right">
+                      <div className="font-medium">₹1.54 /GB</div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">5 GB to 50 TB</span>
-                  <div className="text-right">
-                    <div className="font-medium">₹1.66 /GB</div>
-                    <div className="text-xs text-muted-foreground">₹0.00230555556 /credit</div>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">50 TB to 500 TB</span>
-                  <div className="text-right">
-                    <div className="font-medium">₹1.61 /GB</div>
-                    <div className="text-xs text-muted-foreground">₹0.00223611111 /credit</div>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Above 500 TB</span>
-                  <div className="text-right">
-                    <div className="font-medium">₹1.54 /GB</div>
-                    <div className="text-xs text-muted-foreground">₹0.00213888889 /credit</div>
-                  </div>
+                
+                <div className="pt-3 border-t border-gray-200">
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li className='flex items-start gap-2'>
+                      <span>•</span>
+                      <span>Pricing is per GB per month</span>
+                    </li>
+                    <li className='flex items-start gap-2'>
+                      <span>•</span>
+                      <span>Billed based on actual usage (post-usage)</span>
+                    </li>
+                    <li className='flex items-start gap-2'>
+                      <span>•</span>
+                      <span>First 5GB is free every month</span>
+                    </li>
+                  </ul>
                 </div>
               </div>
-              
-              <div className="pt-3 border-t border-gray-200">
-                <ul className="text-xs text-muted-foreground space-y-1">
-                  <li className='flex items-start gap-2'>
-                    <span>•</span>
-                    <span>Pricing is per GB per month</span>
-                  </li>
-                  <li className='flex items-start gap-2'>
-                    <span>•</span>
-                    <span>Billed based on actual usage (post-usage)</span>
-                  </li>
-                  <li className='flex items-start gap-2'>
-                    <span>•</span>
-                    <span>First 5GB is free every month</span>
-                  </li>
-                  <li className='flex items-start gap-2'>
-                    <span>•</span>
-                    <span>Credit rates shown for billing cycle calculations</span>
-                  </li>
-                </ul>
+            ) : (
+              <div className="space-y-4">
+                <div className="pb-2">
+                  <div className="text-2xl font-bold">₹0.99 /GB</div>
+                </div>
+                
+                <div className="pt-3 border-t border-gray-200">
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li className='flex items-start gap-2'>
+                      <span>•</span>
+                      <span>Pricing is per GB per month.</span>
+                    </li>
+                    <li className='flex items-start gap-2'>
+                      <span>•</span>
+                      <span>Billed based on actual usage (post-usage).</span>
+                    </li>
+                    <li className='flex items-start gap-2'>
+                      <span>•</span>
+                      <span>Lower costs compared to standard storage class.</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

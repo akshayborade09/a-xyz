@@ -218,17 +218,6 @@ export default function BucketDetailsPage() {
                   Lifecycle rules are only available for 'Standard' buckets.
                 </p>
               </div>
-              
-              {/* Create Rule Button */}
-              <Button
-                className='text-md bg-black text-white hover:bg-black/90 rounded-full px-4'
-                onClick={() => {
-                  // Handle create rule action
-                  console.log('Create rule clicked');
-                }}
-              >
-                Create Rule
-              </Button>
             </div>
           </div>
         </div>

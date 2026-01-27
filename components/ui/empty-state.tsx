@@ -106,7 +106,7 @@ export function EmptyState({
         </div>
 
         <h3 className='text-lg font-semibold text-gray-900 mb-2'>{title}</h3>
-        <p className='text-sm text-gray-600 text-center max-w-md mb-6'>
+        <p className='text-sm text-gray-500 text-center max-w-md mb-6'>
           {description}
         </p>
 

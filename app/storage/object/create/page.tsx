@@ -174,33 +174,6 @@ export default function CreateBucketPage() {
                   </Select>
                 </div>
 
-                {/* Access Control */}
-                <div className='mb-6'>
-                  <Label htmlFor='accessControl' className='block mb-2 font-medium'>
-                    Access Control <span className='text-destructive'>*</span>
-                  </Label>
-                  <Select
-                    value={formData.accessControl}
-                    onValueChange={(value) => handleChange('accessControl', value)}
-                  >
-                    <SelectTrigger
-                      className={`${
-                        formTouched && !formData.accessControl
-                          ? 'border-red-300 bg-red-50'
-                          : ''
-                      }`}
-                    >
-                      <SelectValue placeholder='Select Access Control' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='private'>Private</SelectItem>
-                      <SelectItem value='public-read'>Public Read</SelectItem>
-                      <SelectItem value='public-read-write'>Public Read/Write</SelectItem>
-                      <SelectItem value='authenticated-read'>Authenticated Read</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 {/* Storage Class */}
                 <div className='mb-6'>
                   <Label className='block mb-3 font-medium'>Storage Class</Label>
@@ -250,6 +223,33 @@ export default function CreateBucketPage() {
                       </div>
                     </label>
                   </RadioGroup>
+                </div>
+
+                {/* Access Control */}
+                <div className='mb-6'>
+                  <Label htmlFor='accessControl' className='block mb-2 font-medium'>
+                    Access Control <span className='text-destructive'>*</span>
+                  </Label>
+                  <Select
+                    value={formData.accessControl}
+                    onValueChange={(value) => handleChange('accessControl', value)}
+                  >
+                    <SelectTrigger
+                      className={`${
+                        formTouched && !formData.accessControl
+                          ? 'border-red-300 bg-red-50'
+                          : ''
+                      }`}
+                    >
+                      <SelectValue placeholder='Select Access Control' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='private'>Private</SelectItem>
+                      <SelectItem value='public-read'>Public Read</SelectItem>
+                      <SelectItem value='public-read-write'>Public Read/Write</SelectItem>
+                      <SelectItem value='authenticated-read'>Authenticated Read</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Bucket Versioning */}
@@ -307,7 +307,7 @@ export default function CreateBucketPage() {
                       onClick={handleAddTag}
                       className='flex items-center gap-2'
                     >
-                      <Plus className='h-4 w-4' />
+                      <Plus className='h-6 w-6' />
                       Add Tag
                     </Button>
                   </div>

@@ -876,12 +876,20 @@ export default function UsageMetricsPage() {
         credits: 0.5945,
       },
       {
-        name: 'Test 3',
-        type: 'Object Storage',
+        name: 'Test 31',
+        type: 'Object Storage (Standard)',
         time: '10 hrs 15mins',
         size: '10 GB',
         rate: '₹1.61/GB/Month',
-        credits: 0.2292,
+        credits: 0.23,
+      },
+      {
+        name: 'Test 32',
+        type: 'Object Storage (Infrequent Access)',
+        time: '10 hrs 15mins',
+        size: '10 GB',
+        rate: '₹0.99/GB/Month',
+        credits: 0.14,
       },
       {
         name: 'Test 4',
@@ -908,7 +916,7 @@ export default function UsageMetricsPage() {
         credits: 0.2975,
       },
     ];
-    const storageTotal = 3.168;
+    const storageTotal = 3.3085;
 
     const networkData = [
       {

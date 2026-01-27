@@ -22,6 +22,7 @@ const mockBuckets: any[] = [
     id: 'bucket-1',
     name: 'user-uploads',
     region: 'us-west-2',
+    storageClass: 'standard',
     size: '0 B',
     createdOn: '2024-05-10T16:30:00Z',
     status: 'success',
@@ -30,6 +31,7 @@ const mockBuckets: any[] = [
     id: 'bucket-2',
     name: 'media-backups',
     region: 'ap-south-1',
+    storageClass: 'infrequent-access',
     size: '850 MB',
     createdOn: '2024-05-02T00:15:00Z',
     status: 'updating',
@@ -38,6 +40,7 @@ const mockBuckets: any[] = [
     id: 'bucket-3',
     name: 'project-assets',
     region: 'us-east-1',
+    storageClass: 'standard',
     size: '12.4 GB',
     createdOn: '2024-04-10T19:53:00Z',
     status: 'success',
@@ -46,6 +49,7 @@ const mockBuckets: any[] = [
     id: 'bucket-4',
     name: 'logs-archive',
     region: 'eu-west-1',
+    storageClass: 'infrequent-access',
     size: '2.1 TB',
     createdOn: '2024-03-22T14:40:00Z',
     status: 'success',
@@ -145,6 +149,14 @@ export default function ObjectStoragePage() {
       label: 'Region',
       sortable: true,
       searchable: true,
+    },
+    {
+      key: 'storageClass',
+      label: 'Storage Class',
+      sortable: true,
+      render: (value: string) => {
+        return value === 'standard' ? 'Standard' : 'Infrequent Access';
+      },
     },
     {
       key: 'size',
@@ -739,6 +751,13 @@ export default function ObjectStoragePage() {
           onRefresh={handleRefresh}
           enableAutoRefresh={true}
           enableVpcFilter={false}
+          enableStorageClassFilter={true}
+          storageClassOptions={[
+            { value: 'all', label: 'All Storage Class' },
+            { value: 'standard', label: 'Standard' },
+            { value: 'infrequent-access', label: 'Infrequent Access' },
+          ]}
+          storageClassFilterColumn='storageClass'
         />
       )}
 

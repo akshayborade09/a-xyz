@@ -94,6 +94,10 @@ interface ShadcnDataTableProps<T = any> {
   statusOptions?: { value: string; label: string }[];
   onStatusChange?: (status: string) => void;
   statusFilterColumn?: string;
+  enableStorageClassFilter?: boolean;
+  storageClassOptions?: { value: string; label: string }[];
+  onStorageClassChange?: (storageClass: string) => void;
+  storageClassFilterColumn?: string;
   searchPlaceholder?: string;
 }
 
@@ -117,6 +121,10 @@ export function ShadcnDataTable<T = any>({
   statusOptions = [],
   onStatusChange,
   statusFilterColumn = 'jobStatus',
+  enableStorageClassFilter = false,
+  storageClassOptions = [],
+  onStorageClassChange,
+  storageClassFilterColumn = 'storageClass',
   searchPlaceholder,
 }: ShadcnDataTableProps<T>) {
   const [sorting, setSorting] = React.useState<SortingState>(() => {
@@ -172,6 +180,9 @@ export function ShadcnDataTable<T = any>({
   // Status filter state
   const [selectedStatus, setSelectedStatus] = React.useState('all');
 
+  // Storage class filter state
+  const [selectedStorageClass, setSelectedStorageClass] = React.useState('all');
+
   // Get unique names for the filter dropdown
   const uniqueNames = React.useMemo(() => {
     if (!enableNameFilter || !nameFilterColumn) {
@@ -193,7 +204,7 @@ export function ShadcnDataTable<T = any>({
     );
   }, [data, selectedNames, enableNameFilter, nameFilterColumn]);
 
-  // Filter data based on selected status
+  // Filter data based on selected status and storage class
   const filteredData = React.useMemo(() => {
     let result = filteredByNames;
 
@@ -204,8 +215,15 @@ export function ShadcnDataTable<T = any>({
       );
     }
 
+    // Apply storage class filter
+    if (enableStorageClassFilter && selectedStorageClass !== 'all') {
+      result = result.filter(
+        item => (item as any)[storageClassFilterColumn] === selectedStorageClass
+      );
+    }
+
     return result;
-  }, [filteredByNames, enableStatusFilter, selectedStatus, statusFilterColumn]);
+  }, [filteredByNames, enableStatusFilter, selectedStatus, statusFilterColumn, enableStorageClassFilter, selectedStorageClass, storageClassFilterColumn]);
 
   // Helper function to format relative time
   const formatRelativeTime = (date: Date): string => {
@@ -299,6 +317,13 @@ export function ShadcnDataTable<T = any>({
     setSelectedStatus(value);
     if (onStatusChange) {
       onStatusChange(value);
+    }
+  };
+
+  const handleStorageClassChange = (value: string) => {
+    setSelectedStorageClass(value);
+    if (onStorageClassChange) {
+      onStorageClassChange(value);
     }
   };
 
@@ -449,6 +474,24 @@ export function ShadcnDataTable<T = any>({
                     {statusOptions.map(status => (
                       <SelectItem key={status.value} value={status.value}>
                         {status.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {enableStorageClassFilter && storageClassOptions.length > 0 && (
+                <Select
+                  value={selectedStorageClass}
+                  onValueChange={handleStorageClassChange}
+                >
+                  <SelectTrigger className='h-9 w-[180px] rounded-md'>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {storageClassOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>

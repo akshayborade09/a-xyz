@@ -127,8 +127,16 @@ export default function BucketDetailsPage() {
     />
   );
 
+  // Custom breadcrumbs with bucket name
+  const customBreadcrumbs = [
+    { href: '/dashboard', title: 'Home' },
+    { href: '/storage', title: 'Storage' },
+    { href: '/storage/object', title: 'Object' },
+    { href: `/storage/object/${bucketId}`, title: bucket.name },
+  ];
+
   return (
-    <PageLayout title={bucket.name}>
+    <PageLayout title={bucket.name} customBreadcrumbs={customBreadcrumbs}>
       <div>
         <VercelTabs
           tabs={tabs}

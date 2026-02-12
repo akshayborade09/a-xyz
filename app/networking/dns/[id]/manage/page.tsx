@@ -23,7 +23,7 @@ import { StatusBadge } from '@/components/status-badge';
 import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
 import { EmptyState } from '@/components/ui/empty-state';
 import { getEmptyStateMessage } from '@/lib/demo-data-filter';
-import { vpcs } from '@/lib/data';
+import { vpcs, hostedZones } from '@/lib/data';
 import {
   Dialog,
   DialogContent,
@@ -160,11 +160,11 @@ const dnsRecordsIcon = (
   </svg>
 );
 
-// Mock hosted zone data (in real app, fetch from API based on ID)
-const hostedZoneData = {
+// Fallback hosted zone data
+const defaultHostedZoneData = {
   id: 'hz-1',
   domainName: 'example.com',
-  type: 'Private',
+  type: 'Public',
   status: 'success',
   recordCount: 8,
   createdOn: '2023-10-15T10:00:00Z',
@@ -284,6 +284,15 @@ export default function ManageHostedZonePage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const isNewlyCreated = searchParams?.get('created') === 'true';
+
+  // Look up the hosted zone from mock data based on the route param ID
+  const matchedZone = hostedZones.find((z: any) => z.id === params.id);
+  const hostedZoneData = matchedZone
+    ? {
+        ...matchedZone,
+        publicIp: matchedZone.type === 'Public' ? '192.0.2.8' : undefined,
+      }
+    : defaultHostedZoneData;
 
   const [showSkipMessage, setShowSkipMessage] = useState(isNewlyCreated);
   const [activeRecordTab, setActiveRecordTab] = useState('A');

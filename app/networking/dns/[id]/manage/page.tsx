@@ -168,6 +168,7 @@ const hostedZoneData = {
   status: 'success',
   recordCount: 8,
   createdOn: '2023-10-15T10:00:00Z',
+  publicIp: '192.0.2.8',
 };
 
 // Mock DNS records data
@@ -818,7 +819,7 @@ export default function ManageHostedZonePage({
       case 'NS':
         return 'Defines the name servers that control DNS settings for your domain.';
       case 'TXT':
-        return 'Can be used to attach textual data to a domain. Often used to prove domain ownership (for services like Google or AWS) or to set up email safety checks.';
+        return 'Can be used to attach textual data to a domain.';
       default:
         return '';
     }
@@ -868,9 +869,9 @@ export default function ManageHostedZonePage({
       title={`Manage Hosted Zone - ${hostedZoneData.domainName}`}
       description='Configure DNS records and manage your hosted zone settings'
     >
-      <div className='flex flex-col md:flex-row gap-6'>
+      <div className='flex flex-col gap-6'>
         {/* Main Content */}
-        <div className='flex-1 space-y-6'>
+        <div className='space-y-6'>
           {/* Skip Message for newly created zones */}
           {showSkipMessage && (
             <Card
@@ -921,8 +922,8 @@ export default function ManageHostedZonePage({
             }}
           >
             <DetailGrid>
-              {/* Domain Name, Type, Status, Created On in first row */}
-              <div className='col-span-full grid grid-cols-4 gap-4'>
+              {/* Domain Name, Type, Status, Created On (+ Public IP for public zones) in first row */}
+              <div className={`col-span-full grid ${hostedZoneData.type === 'Public' ? 'grid-cols-5' : 'grid-cols-4'} gap-4`}>
                 <div className='space-y-1'>
                   <label
                     className='text-sm font-normal text-gray-700'
@@ -976,103 +977,120 @@ export default function ManageHostedZonePage({
                     {new Date(hostedZoneData.createdOn).toLocaleTimeString()}
                   </div>
                 </div>
+                {hostedZoneData.type === 'Public' && (
+                  <div className='space-y-1'>
+                    <label
+                      className='text-sm font-normal text-gray-700'
+                      style={{ fontSize: '13px' }}
+                    >
+                      Public IP
+                    </label>
+                    <div className='font-medium font-mono' style={{ fontSize: '14px' }}>
+                      {hostedZoneData.publicIp}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Description removed as per requirements */}
             </DetailGrid>
           </div>
 
-          {/* Associated VPCs Section */}
-          <Card>
-            <CardHeader className='pb-4'>
-              <div className='flex items-start justify-between gap-2'>
-                <div>
-                  <CardTitle className='text-lg font-semibold'>VPCs</CardTitle>
-                  <p className='text-sm text-muted-foreground mt-1'>
-                    VPCs associated with this private hosted zone.
-                  </p>
-                </div>
-                <Button
-                  onClick={() => setIsAttachModalOpen(true)}
-                  className='bg-black text-white hover:bg-black/90'
-                >
-                  Attach VPC
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              {associatedVpcs.length > 0 ? (
-                <ShadcnDataTable
-                  columns={vpcColumns}
-                  data={associatedVpcs as any}
-                  searchableColumns={['name', 'region']}
-                  pageSize={5}
-                  enableSearch={false}
-                  enableColumnVisibility={false}
-                  enablePagination={true}
-                />
-              ) : (
-                <div className='border rounded-lg'>
-                  <EmptyState
-                    title='No VPCs associated'
-                    description='This hosted zone is not associated with any VPCs.'
-                    actionText=''
-                  />
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Attach VPC Modal */}
-          <Dialog open={isAttachModalOpen} onOpenChange={setIsAttachModalOpen}>
-            <DialogContent className='sm:max-w-[480px]'>
-              <DialogHeader>
-                <DialogTitle>Attach VPC</DialogTitle>
-              </DialogHeader>
-              <div className='space-y-4 pt-2'>
-                {availableVpcsToAttach.length > 0 ? (
-                  <div>
-                    <Label className='block mb-2'>Select VPC</Label>
-                    <Select
-                      value={selectedAttachVpc}
-                      onValueChange={value => setSelectedAttachVpc(value)}
+          {/* Associated VPCs Section - only for Private hosted zones */}
+          {hostedZoneData.type === 'Private' && (
+            <>
+              <Card>
+                <CardHeader className='pb-4'>
+                  <div className='flex items-start justify-between gap-2'>
+                    <div>
+                      <CardTitle className='text-lg font-semibold'>VPCs</CardTitle>
+                      <p className='text-sm text-muted-foreground mt-1'>
+                        VPCs associated with this private hosted zone.
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => setIsAttachModalOpen(true)}
+                      className='bg-black text-white hover:bg-black/90'
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder='Select a VPC' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableVpcsToAttach.map(v => (
-                          <SelectItem key={v.id} value={v.id}>
-                            {v.name} ({v.id}) • {v.region}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      Attach VPC
+                    </Button>
                   </div>
-                ) : (
-                  <p className='text-sm text-muted-foreground'>
-                    All available VPCs are already attached.
-                  </p>
-                )}
-              </div>
-              <div className='flex justify-end gap-3 pt-4'>
-                <Button variant='outline' onClick={() => setIsAttachModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleConfirmAttachVpc}
-                  disabled={!selectedAttachVpc}
-                  className={
-                    selectedAttachVpc
-                      ? 'bg-black text-white hover:bg-black/90'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }
-                >
-                  Attach VPC
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+                </CardHeader>
+                <CardContent className='space-y-6'>
+                  {associatedVpcs.length > 0 ? (
+                    <ShadcnDataTable
+                      columns={vpcColumns}
+                      data={associatedVpcs as any}
+                      searchableColumns={['name', 'region']}
+                      pageSize={5}
+                      enableSearch={false}
+                      enableColumnVisibility={false}
+                      enablePagination={true}
+                    />
+                  ) : (
+                    <div className='border rounded-lg'>
+                      <EmptyState
+                        title='No VPCs associated'
+                        description='This hosted zone is not associated with any VPCs.'
+                        actionText=''
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Attach VPC Modal */}
+              <Dialog open={isAttachModalOpen} onOpenChange={setIsAttachModalOpen}>
+                <DialogContent className='sm:max-w-[480px]'>
+                  <DialogHeader>
+                    <DialogTitle>Attach VPC</DialogTitle>
+                  </DialogHeader>
+                  <div className='space-y-4 pt-2'>
+                    {availableVpcsToAttach.length > 0 ? (
+                      <div>
+                        <Label className='block mb-2'>Select VPC</Label>
+                        <Select
+                          value={selectedAttachVpc}
+                          onValueChange={value => setSelectedAttachVpc(value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select a VPC' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableVpcsToAttach.map(v => (
+                              <SelectItem key={v.id} value={v.id}>
+                                {v.name} ({v.id}) • {v.region}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <p className='text-sm text-muted-foreground'>
+                        All available VPCs are already attached.
+                      </p>
+                    )}
+                  </div>
+                  <div className='flex justify-end gap-3 pt-4'>
+                    <Button variant='outline' onClick={() => setIsAttachModalOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleConfirmAttachVpc}
+                      disabled={!selectedAttachVpc}
+                      className={
+                        selectedAttachVpc
+                          ? 'bg-black text-white hover:bg-black/90'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }
+                    >
+                      Attach VPC
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
 
           {/* DNS Records Section */}
           <Card>
@@ -1603,94 +1621,6 @@ export default function ManageHostedZonePage({
           </div>
         </div>
 
-        {/* Side Panel */}
-        <div className='w-full md:w-80 space-y-6'>
-          {/* DNS Management Tips */}
-          <Card>
-            <CardHeader>
-              <CardTitle className='text-base font-normal'>
-                DNS Best Practices
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className='space-y-3'>
-                <li className='flex items-start gap-2'>
-                  <div className='w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0'></div>
-                  <span
-                    className='text-muted-foreground'
-                    style={{ fontSize: '13px' }}
-                  >
-                    Use lower TTL values for testing and higher values for
-                    production
-                  </span>
-                </li>
-                <li className='flex items-start gap-2'>
-                  <div className='w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0'></div>
-                  <span
-                    className='text-muted-foreground'
-                    style={{ fontSize: '13px' }}
-                  >
-                    Always test DNS changes in a staging environment first
-                  </span>
-                </li>
-                <li className='flex items-start gap-2'>
-                  <div className='w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0'></div>
-                  <span
-                    className='text-muted-foreground'
-                    style={{ fontSize: '13px' }}
-                  >
-                    Use CNAME records for subdomains that point to other domains
-                  </span>
-                </li>
-                <li className='flex items-start gap-2'>
-                  <div className='w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0'></div>
-                  <span
-                    className='text-muted-foreground'
-                    style={{ fontSize: '13px' }}
-                  >
-                    Keep DNS records organized and documented
-                  </span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          {/* Pricing Summary */}
-          <div
-            style={{
-              borderRadius: '16px',
-              border: '4px solid #FFF',
-              background:
-                'linear-gradient(265deg, #FFF -13.17%, #F7F8FD 133.78%)',
-              boxShadow: '0px 8px 39.1px -9px rgba(0, 27, 135, 0.08)',
-              padding: '1.5rem',
-            }}
-          >
-            <div className='pb-4'>
-              <div className='flex items-center justify-between'>
-                <h3 className='text-base font-semibold'>Pricing Summary</h3>
-              </div>
-            </div>
-            <div>
-              <div className='space-y-3'>
-                <div className='flex items-baseline gap-2'>
-                  <span className='text-2xl font-bold'>₹0.50</span>
-                  <span className='text-sm text-muted-foreground'>
-                    per month
-                  </span>
-                </div>
-                <p className='text-sm text-muted-foreground'>
-                  Per hosted zone. Includes 1 million queries per month.
-                </p>
-                <div className='text-xs text-muted-foreground pt-2 border-t'>
-                  <p>• Hosted Zone: ₹0.50/month</p>
-                  <p>• DNS queries: ₹0.40 per million</p>
-                  <p>• Health checks: ₹0.50 per check/month</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Delete DNS Record Modal */}

@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { TooltipWrapper } from '@/components/ui/tooltip-wrapper';
@@ -179,12 +178,11 @@ export default function CreateHostedZonePage() {
                       onValueChange={value => handleChange('type', value)}
                       className='grid grid-cols-1 md:grid-cols-2 gap-4'
                     >
-                      <div className='flex items-start space-x-3 p-4 border rounded-lg opacity-60 cursor-not-allowed'>
+                      <div className='flex items-start space-x-3 p-4 border rounded-lg'>
                         <RadioGroupItem
                           value='Public'
                           id='public'
                           className='mt-0.5'
-                          disabled
                         />
                         <div className='space-y-1'>
                           <Label
@@ -192,9 +190,6 @@ export default function CreateHostedZonePage() {
                             className='text-base font-medium'
                           >
                             Public Hosted Zone
-                            <Badge variant='secondary' className='ml-2'>
-                              Coming soon
-                            </Badge>
                           </Label>
                           <p className='text-sm text-muted-foreground'>
                             Creates a public hosted zone. Route traffic on the
@@ -427,19 +422,17 @@ export default function CreateHostedZonePage() {
             </div>
             <div>
               <div className='space-y-3'>
-                <div className='flex items-baseline gap-2'>
-                  <span className='text-2xl font-bold'>₹0.50</span>
-                  <span className='text-sm text-muted-foreground'>
-                    per month
+                <p className='text-2xl font-bold text-foreground leading-tight whitespace-nowrap'>
+                  <span className='font-bold'>Rs 18.00</span>{' '}
+                  <span className='text-sm font-normal text-muted-foreground'>
+                    per month. Per Hosted Zone.
                   </span>
-                </div>
-                <p className='text-sm text-muted-foreground'>
-                  Per hosted zone. Includes 1 million queries per month.
                 </p>
-                <div className='text-xs text-muted-foreground pt-2 border-t'>
-                  <p>• Hosted Zone: ₹0.50/month</p>
-                  <p>• DNS queries: ₹0.40 per million</p>
-                  <p>• Health checks: ₹0.50 per check/month</p>
+                <div className='text-xs text-muted-foreground pt-2 border-t space-y-1'>
+                  <p>• Hosted Zone: Rs 18/month (for 0-25 zones)</p>
+                  <p>• Hosted Zone: Rs 8.81/month (for 25+ zones)</p>
+                  <p>• Queries: Rs 35.26/million/month (upto 1 billion queries)</p>
+                  <p>• Queries: Rs 17.63/million/month (above 1 billion queries)</p>
                 </div>
               </div>
             </div>
